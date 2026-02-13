@@ -8,14 +8,21 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isVerified, logout } = useAuth();
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/inloggen');
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/inloggen');
+    } else if (!isLoading && isAuthenticated && !isVerified) {
+      router.push('/verificatie');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isVerified, router]);
 
   if (isLoading) {
     return (
@@ -28,7 +35,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !isVerified) {
     return null;
   }
 
@@ -50,7 +57,21 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
           <div className="flex-1" />
-          <ThemeToggle />
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px]"
+              aria-label="Uitloggen"
+              title="Uitloggen"
+            >
+              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="hidden sm:inline">Uitloggen</span>
+            </button>
+          </div>
         </header>
 
         {/* Main content */}
