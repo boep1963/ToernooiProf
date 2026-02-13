@@ -1,0 +1,250 @@
+import { NextRequest, NextResponse } from 'next/server';
+import db from '@/lib/db';
+import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, formatPlayerName } from '@/lib/billiards';
+
+interface RouteParams {
+  params: Promise<{ orgNr: string; compNr: string }>;
+}
+
+/**
+ * GET /api/organizations/:orgNr/competitions/:compNr/matches
+ * List all matches in a competition
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, compNr } = await params;
+    const orgNummer = parseInt(orgNr, 10);
+    const compNumber = parseInt(compNr, 10);
+
+    if (isNaN(orgNummer) || isNaN(compNumber)) {
+      return NextResponse.json(
+        { error: 'Ongeldige parameters' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[MATCHES] Querying database for matches of competition:', compNumber, 'in org:', orgNummer);
+    const snapshot = await db.collection('matches')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .get();
+
+    const matches: Record<string, unknown>[] = [];
+    snapshot.forEach((doc) => {
+      matches.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Sort by uitslag_code for consistent display
+    matches.sort((a, b) => {
+      const codeA = (a.uitslag_code as string) || '';
+      const codeB = (b.uitslag_code as string) || '';
+      return codeA.localeCompare(codeB);
+    });
+
+    console.log(`[MATCHES] Found ${matches.length} matches for competition ${compNumber}`);
+    return NextResponse.json({
+      matches,
+      count: matches.length,
+    });
+  } catch (error) {
+    console.error('[MATCHES] Error fetching matches:', error);
+    return NextResponse.json(
+      { error: 'Fout bij ophalen wedstrijden', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/organizations/:orgNr/competitions/:compNr/matches
+ * Generate Round Robin match schedule
+ */
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, compNr } = await params;
+    const orgNummer = parseInt(orgNr, 10);
+    const compNumber = parseInt(compNr, 10);
+
+    if (isNaN(orgNummer) || isNaN(compNumber)) {
+      return NextResponse.json(
+        { error: 'Ongeldige parameters' },
+        { status: 400 }
+      );
+    }
+
+    // Get competition details
+    console.log('[MATCHES] Fetching competition details...');
+    const compSnapshot = await db.collection('competitions')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .limit(1)
+      .get();
+
+    if (compSnapshot.empty) {
+      return NextResponse.json(
+        { error: 'Competitie niet gevonden' },
+        { status: 404 }
+      );
+    }
+
+    const compData = compSnapshot.docs[0].data();
+    const discipline = compData?.discipline || 1;
+    const periode = compData?.periode || 1;
+    const sorteren = compData?.sorteren || 1;
+
+    // Get discipline-specific caramboles key
+    const carKeyMap: Record<number, string> = {
+      1: 'spc_car_1', 2: 'spc_car_2', 3: 'spc_car_3', 4: 'spc_car_4', 5: 'spc_car_5',
+    };
+    const carKey = carKeyMap[discipline] || 'spc_car_1';
+
+    // Get all players in the competition
+    console.log('[MATCHES] Fetching players...');
+    const playersSnapshot = await db.collection('competition_players')
+      .where('spc_org', '==', orgNummer)
+      .where('spc_competitie', '==', compNumber)
+      .get();
+
+    const players: Array<{
+      nummer: number;
+      naam: string;
+      caramboles: number;
+      vnaam: string;
+      tv: string;
+      anaam: string;
+    }> = [];
+
+    playersSnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data) {
+        players.push({
+          nummer: Number(data.spc_nummer) || 0,
+          naam: formatPlayerName(
+            data.spa_vnaam || '',
+            data.spa_tv || '',
+            data.spa_anaam || '',
+            sorteren
+          ),
+          caramboles: Number(data[carKey]) || 0,
+          vnaam: data.spa_vnaam || '',
+          tv: data.spa_tv || '',
+          anaam: data.spa_anaam || '',
+        });
+      }
+    });
+
+    if (players.length < 2) {
+      return NextResponse.json(
+        { error: 'Minimaal 2 spelers nodig voor het genereren van wedstrijden' },
+        { status: 400 }
+      );
+    }
+
+    // Check if matches already exist
+    const existingMatches = await db.collection('matches')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .limit(1)
+      .get();
+
+    // Parse optional body for regeneration flag
+    let forceRegenerate = false;
+    try {
+      const body = await request.json();
+      forceRegenerate = body?.force === true;
+    } catch {
+      // No body or invalid JSON, that's fine
+    }
+
+    if (!existingMatches.empty && !forceRegenerate) {
+      return NextResponse.json(
+        { error: 'Er bestaan al wedstrijden voor deze competitie. Gebruik force=true om opnieuw te genereren.' },
+        { status: 409 }
+      );
+    }
+
+    // Delete existing matches if regenerating
+    if (!existingMatches.empty && forceRegenerate) {
+      console.log('[MATCHES] Deleting existing matches...');
+      const allExisting = await db.collection('matches')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .get();
+
+      for (const doc of allExisting.docs) {
+        await doc.ref.delete();
+      }
+      console.log('[MATCHES] Deleted existing matches.');
+    }
+
+    // Generate Round Robin schedule
+    const playerNumbers = players.map((p) => p.nummer);
+    const isEven = playerNumbers.length % 2 === 0;
+
+    console.log(`[MATCHES] Generating Round Robin schedule for ${playerNumbers.length} players (${isEven ? 'even' : 'odd'})...`);
+
+    let roundsMatches: [number, number][][];
+
+    if (isEven) {
+      roundsMatches = scheduleRoundRobinEven(playerNumbers);
+    } else {
+      const result = scheduleRoundRobinOdd(playerNumbers);
+      roundsMatches = result.matches;
+    }
+
+    // Build player lookup for fast access
+    const playerLookup = new Map(players.map((p) => [p.nummer, p]));
+
+    // Create match documents
+    const createdMatches: Record<string, unknown>[] = [];
+
+    for (let roundIdx = 0; roundIdx < roundsMatches.length; roundIdx++) {
+      const round = roundsMatches[roundIdx];
+      for (const [playerANr, playerBNr] of round) {
+        const playerA = playerLookup.get(playerANr);
+        const playerB = playerLookup.get(playerBNr);
+
+        if (!playerA || !playerB) continue;
+
+        const matchCode = generateMatchCode(periode, playerANr, playerBNr);
+
+        const matchData = {
+          org_nummer: orgNummer,
+          comp_nr: compNumber,
+          nummer_A: playerANr,
+          naam_A: playerA.naam,
+          cartem_A: playerA.caramboles,
+          tafel: '000000000000', // No table assigned yet (binary string, 12 tables)
+          nummer_B: playerBNr,
+          naam_B: playerB.naam,
+          cartem_B: playerB.caramboles,
+          periode: periode,
+          uitslag_code: matchCode,
+          gespeeld: 0, // Not played yet
+          ronde: roundIdx + 1, // Round number for display
+        };
+
+        console.log(`[MATCHES] Creating match: ${playerA.naam} vs ${playerB.naam} (${matchCode})`);
+        const docRef = await db.collection('matches').add(matchData);
+        createdMatches.push({ id: docRef.id, ...matchData });
+      }
+    }
+
+    const totalExpectedMatches = (playerNumbers.length * (playerNumbers.length - 1)) / 2;
+    console.log(`[MATCHES] Created ${createdMatches.length} matches (expected: ${totalExpectedMatches})`);
+
+    return NextResponse.json({
+      matches: createdMatches,
+      count: createdMatches.length,
+      rounds: roundsMatches.length,
+      players: playerNumbers.length,
+      message: `${createdMatches.length} wedstrijden succesvol gegenereerd (${roundsMatches.length} rondes)`,
+    }, { status: 201 });
+  } catch (error) {
+    console.error('[MATCHES] Error generating matches:', error);
+    return NextResponse.json(
+      { error: 'Fout bij genereren wedstrijden', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}
