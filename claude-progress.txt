@@ -385,3 +385,54 @@ NEXT STEPS:
 - Score entry system refinements
 - Standings display
 - Responsive layout features
+
+=== Session 10 - 2026-02-13 ===
+Agent: Auth & Security Features (#13, #99, #14)
+
+COMPLETED:
+- Feature #13: User can logout ✅
+  - Added "Uitloggen" button with logout icon to dashboard header
+  - Button calls logout() from AuthContext → POST /api/auth/logout
+  - Session cookie cleared (httpOnly, maxAge=0), state reset
+  - Redirects to /inloggen after logout
+  - All protected routes redirect to /inloggen after logout
+  - Zero console errors
+
+- Feature #99: Session expires and redirects to login ✅
+  - Verified existing session expiry mechanism works correctly
+  - Session cookie has 7-day maxAge, httpOnly flag
+  - When cookie expires/is cleared, /api/auth/session returns 401
+  - AuthContext detects unauthenticated state on mount
+  - Dashboard layout redirects to /inloggen when not authenticated
+  - Tested: cleared session server-side, navigated to /competities → redirected to /inloggen
+  - No stale data accessible after session expiry
+
+- Feature #14: Unauthenticated users are redirected to login ✅
+  - Verified all protected routes redirect unauthenticated users to /inloggen:
+    - /dashboard → /inloggen ✓
+    - /competities → /inloggen ✓
+    - /leden → /inloggen ✓
+    - /instellingen → /inloggen ✓
+  - Auth protection in dashboard layout checks session on mount
+  - Zero console errors
+
+INFRASTRUCTURE:
+- Seeded test organization into Firestore (org_nummer: 1205, code: 1205_AAY@#)
+  - Server is now connected to real Firestore (scoreboard-35372)
+  - Created /api/seed endpoint for development convenience
+  - Previous sessions used local .data/ JSON storage; now using Firestore
+
+CODE CHANGES:
+- Modified: src/app/(dashboard)/layout.tsx - Added logout button to header
+- Created: src/app/api/seed/route.ts - Test data seeding for Firestore
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 45/148 features passing (30.4%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- More competition workflow features
+- Score entry system refinements
+- Standings display
+- Responsive layout features
