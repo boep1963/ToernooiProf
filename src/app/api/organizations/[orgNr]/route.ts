@@ -38,6 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       org_nummer: orgData?.org_nummer,
+      org_code: orgData?.org_code || '',
       org_naam: orgData?.org_naam,
       org_wl_naam: orgData?.org_wl_naam,
       org_wl_email: orgData?.org_wl_email,
