@@ -1,0 +1,5 @@
+AuthUserFile /home/deb129009n4/domains/hanseekels.nl/public_html/Dashboard/.htpasswd
+AuthGroupFile /dev/null
+AuthName "HansEekels"
+AuthType Basic
+require valid-user

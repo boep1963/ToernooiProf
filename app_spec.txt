@@ -1,0 +1,810 @@
+<project_specification>
+  <project_name>ClubMatch</project_name>
+
+  <overview>
+    ClubMatch is a Dutch billiard competition management system for club administrators. It enables managing club members, organizing competitions across multiple billiard disciplines (Libre, Bandstoten, Driebanden klein, Driebanden groot, Kader), scheduling matches using Round Robin algorithms, recording scores with automatic point calculation, generating standings, and displaying live scoreboards. This is a migration from PHP 8.2 + MariaDB to Next.js 15.5.9 + Firestore, maintaining full feature parity with improved UX/design. The existing PHP source code in the /PHPcode/ directory serves as the complete functional reference.
+  </overview>
+
+  <technology_stack>
+    <frontend>
+      <framework>Next.js 15.5.9 (React 19, App Router)</framework>
+      <styling>Tailwind CSS with dual theme support (light/dark, user selectable)</styling>
+      <language>TypeScript</language>
+      <responsive>Fully responsive - mobile, tablet, desktop</responsive>
+      <ui_language>Dutch only</ui_language>
+    </frontend>
+    <backend>
+      <runtime>Node.js (Next.js API routes / Server Actions)</runtime>
+      <database>Google Firestore</database>
+      <authentication>Dual authentication - legacy login code system + Firebase Auth (email/password). User chooses login method.</authentication>
+    </backend>
+    <communication>
+      <api>Next.js Server Actions and API Routes (REST where needed)</api>
+    </communication>
+  </technology_stack>
+
+  <prerequisites>
+    <environment_setup>
+      - Node.js 20+ LTS
+      - npm or yarn
+      - Firebase project with Firestore and Authentication enabled
+      - Firebase Admin SDK credentials (service account JSON)
+      - Environment variables for Firebase configuration
+    </environment_setup>
+  </prerequisites>
+
+  <feature_count>148</feature_count>
+
+  <security_and_access_control>
+    <user_roles>
+      <role name="organization_admin">
+        <description>Each user is an organization administrator who manages their own club. Data is fully isolated per organization.</description>
+        <permissions>
+          - Full CRUD on own organization settings
+          - Full CRUD on own members
+          - Full CRUD on own competitions
+          - Full CRUD on own match results
+          - Upload/manage own logo and avatars
+          - Manage own scoreboard settings
+          - Manage own advertisements/slideshow
+          - View own dashboard and news
+          - Manage device configuration (mouse/tablet)
+        </permissions>
+        <protected_routes>
+          - /competities/* (own competitions only)
+          - /leden/* (own members only)
+          - /scoreborden/* (own scoreboards only)
+          - /instellingen/* (own settings only)
+          - /dashboard/* (own dashboard only)
+        </protected_routes>
+      </role>
+      <role name="public_viewer">
+        <description>Unauthenticated users can view public scoreboards if the organization has made them public.</description>
+        <permissions>
+          - View public scoreboards (if organization allows)
+          - View public standings (if organization allows)
+        </permissions>
+      </role>
+    </user_roles>
+    <authentication>
+      <method>Dual: legacy login code (e.g., "1205_AAY@#") AND Firebase Auth email/password. User selects method on login page.</method>
+      <login_code_format>Format: NNNN_XXXXX where N=digits, X=alphanumeric+special chars. The first 4 digits are the organization number.</login_code_format>
+      <session_management>Firebase session tokens with automatic refresh</session_management>
+    </authentication>
+    <data_isolation>
+      All data is scoped to org_nummer (organization number). Users can only access data belonging to their own organization. Firestore security rules must enforce this.
+    </data_isolation>
+  </security_and_access_control>
+
+  <core_features>
+    <infrastructure>
+      - Firestore connection established and verified
+      - Firestore collections and document structure applied correctly
+      - Data persists across server restart
+      - No mock data patterns in codebase
+      - Backend API queries real Firestore database
+    </infrastructure>
+
+    <authentication_and_account>
+      - Login page with dual authentication choice (login code or email/password)
+      - Login with legacy code (validates against organizations collection)
+      - Login with Firebase Auth email/password
+      - New user registration (generates login code, sends via email)
+      - Email verification flow
+      - Account management page (view/edit organization details)
+      - Account deletion (multi-step confirmation)
+      - Organization name change
+      - Logout functionality
+      - Session management and auto-redirect
+      - Newsletter subscription toggle
+      - Login date tracking
+    </authentication_and_account>
+
+    <organization_management>
+      - Organization profile display (name, contact person, email)
+      - Logo upload and display
+      - Number of tables configuration (1-12)
+      - Device configuration per table (mouse or tablet input)
+      - Organization name and details editing
+      - Contact form
+      - Contact info display
+      - Organization settings overview
+    </organization_management>
+
+    <member_management>
+      - Member list/overview with all members
+      - Create new member (first name, prefix/tussenvoegsel, last name)
+      - Edit member details
+      - Delete member (with confirmation)
+      - Moyenne per discipline for each member (Libre, Bandstoten, Driebanden klein, Driebanden groot, Kader)
+      - Search/filter members
+      - Name display sort preference (first name first vs. last name first)
+      - Member count display
+      - Validation (required fields, duplicate checking)
+      - Member detail view
+    </member_management>
+
+    <competition_management>
+      - Create new competition with configuration:
+        - Competition name
+        - Date
+        - Discipline selection (1=Libre, 2=Bandstoten, 3=Driebanden klein, 4=Driebanden groot, 5=Kader)
+        - Scoring system (WRV 2-1-0 with optional bonus, 10-point, Belgian)
+        - Moyenne formula (x15, x20, x25, x30, x40, x50, x60)
+        - Minimum caramboles setting
+        - Maximum turns (beurten) setting (0=unlimited, 10-60 in steps of 5)
+        - Fixed turns toggle
+        - Name sort order (first name / last name)
+      - Edit competition settings
+      - Delete competition (with confirmation and cascade)
+      - Select/switch active competition
+      - Competition overview/list
+      - Period management:
+        - Create new period (up to 5 periods per competition)
+        - Delete period
+        - Carambole recalculation when new period starts
+        - Period selection for viewing results
+      - Competition data validation (Controle)
+      - Link/couple competitions (Doorkoppelen)
+    </competition_management>
+
+    <player_competition_assignment>
+      - Add member as player to a competition
+      - Remove player from competition
+      - Player list per competition
+      - Auto-calculate caramboles from moyenne using formula (moyenne x formula multiplier)
+      - Minimum caramboles enforcement
+      - Moyenne tracking per period (up to 5 periods with separate moyenne/caramboles)
+      - Player overview per competition with caramboles display
+      - Player name display with caramboles: "Name (car)"
+      - Carry-over moyenne between periods
+      - Bulk player assignment
+    </player_competition_assignment>
+
+    <match_scheduling_and_planning>
+      - Create match (pair two players)
+      - Round Robin scheduling algorithm for even number of players
+      - Round Robin scheduling algorithm for odd number of players (with bye/rest)
+      - Table assignment per match (binary string encoding for up to 12 tables)
+      - Match matrix view (who plays whom)
+      - Planning overview per period
+      - Match exists validation (prevent duplicate pairings)
+      - Match code generation (format: period_playerA_playerB, e.g., "1_007_012")
+      - Invert match code (swap player order)
+      - Already-played check per period
+      - Matches played count per player per period
+      - Delete match
+      - Match overview per period
+      - Match planning with table selection
+    </match_scheduling_and_planning>
+
+    <score_entry_and_results>
+      - Enter match result:
+        - Caramboles made (player 1 and player 2)
+        - Number of turns (beurten)
+        - Highest series (hoogste serie) for both players
+      - Modify existing result
+      - Delete result
+      - Automatic point calculation - WRV system:
+        - Win (reached target caramboles, opponent didn't): 2 points
+        - Loss: 0 points
+        - Draw (both reached target or same percentage): 1 point each
+        - When match not finished (max turns): compare by percentage of target caramboles
+        - Optional bonus point for playing above moyenne (win +1, draw +1, loss +1 configurable)
+      - Automatic point calculation - 10-point system:
+        - Points = floor(caramboles_made / target_caramboles * 10)
+      - Automatic point calculation - Belgian system:
+        - Same as 10-point but winner gets 12 (not 10), draw = 11 each
+      - Fixed turns mode calculation (always by percentage)
+      - Result validation
+      - Result overview per competition per period
+      - Play date recording
+      - Win/remise/loss (WRV) tracking
+    </score_entry_and_results>
+
+    <standings>
+      - Generate standings per competition
+      - Standings sorted by: points, then percentage caramboles, then moyenne, then highest series
+      - Standings table display with columns: rank, name, matches played, caramboles made, caramboles target, percentage, turns, moyenne, highest series, points
+      - Standings per period
+      - Overall standings across all periods
+      - Standings calculation with proper tiebreakers
+      - Standings for public display (if enabled)
+      - Standings auto-update after result entry
+    </standings>
+
+    <scoreboards>
+      - Scoreboard display page (full-screen for external monitors)
+      - Select table for scoreboard display
+      - Start match on scoreboard (status: waiting -> started)
+      - Live score entry/update on scoreboard
+      - End match display (status: started -> result)
+      - Remote/tablet responsive layout (optimized for tablet input)
+      - Scoreboard selection view (choose which table to display)
+      - Device selection (mouse vs. tablet input mode)
+      - Real-time data refresh
+      - Scoreboard per table view
+      - Player avatar display on scoreboard
+      - Match status tracking (0=waiting, 1=started, 2=result)
+      - Score input helper tables (for tracking during live play)
+      - Alert system for turn tracking
+    </scoreboards>
+
+    <advertisements_slideshow>
+      - Upload advertisement images
+      - Delete advertisement images
+      - Slideshow display on scoreboards (rotating ads)
+      - Slideshow management interface
+      - Logo display on scoreboard header
+      - Image file management
+    </advertisements_slideshow>
+
+    <dashboard_and_news>
+      - Dashboard overview page
+      - News article creation
+      - News article display
+      - News list view
+      - Comments/reactions on news articles
+      - Edit comment
+      - Delete comment
+      - Comment timestamp display
+    </dashboard_and_news>
+
+    <ui_ux_and_theme>
+      - Light theme
+      - Dark theme
+      - Theme toggle with user preference persistence
+      - Responsive design (mobile 375px, tablet 768px, desktop 1920px)
+      - Dutch language throughout all UI elements
+      - Modern card-based layout with subtle shadows and rounded corners
+      - Sidebar/top navigation with clear section structure
+      - Loading states and spinners
+      - Empty states (what shows when there's no data)
+      - Error handling displays with user-friendly Dutch messages
+    </ui_ux_and_theme>
+
+    <help_system>
+      - Help pages per feature area
+      - Help navigation/index
+      - Help content display with instructions
+      - Contextual help links from relevant pages
+      - Visual help with screenshots/illustrations
+      - Help for: accounts, competitions, members, results, standings, scoreboards
+    </help_system>
+
+    <contact>
+      - Contact form with fields
+      - Contact form submission
+      - Contact information display
+    </contact>
+  </core_features>
+
+  <database_schema>
+    <firestore_collections>
+      <description>
+        Firestore collections mapped from the original MariaDB schema. Each organization's data is scoped by org_nummer for data isolation.
+      </description>
+
+      <collection name="organizations">
+        Document fields (mapped from bj_organisaties):
+        - org_nummer: number (unique identifier)
+        - org_code: string (login code, e.g., "1205_AAY@#")
+        - org_naam: string (organization name)
+        - org_wl_naam: string (contact person name)
+        - org_wl_email: string (contact email)
+        - org_logo: string (logo filename/URL)
+        - aantal_tafels: number (number of tables, 1-12)
+        - return_code: number
+        - time_start: number
+        - code_ontvangen: number (0=no, 1=yes)
+        - date_start: timestamp
+        - date_inlog: timestamp (last login date)
+        - nieuwsbrief: number (0=no, 1=yes)
+        - reminder_send: number
+        - firebase_uid: string (optional, linked Firebase Auth user ID)
+      </collection>
+
+      <collection name="competitions">
+        Document fields (mapped from bj_competities):
+        - org_nummer: number
+        - comp_nr: number (competition number within org)
+        - comp_naam: string (competition name)
+        - comp_datum: string (date)
+        - discipline: number (1=Libre, 2=Bandstoten, 3=Driebanden klein, 4=Driebanden groot, 5=Kader)
+        - periode: number (current period, 1-5)
+        - punten_sys: number (scoring system: 1xxxx=WRV with optional extras, 2xxxx=10-point, 3xxxx=Belgian)
+        - moy_form: number (moyenne formula: 1=x15, 2=x20, 3=x25, 4=x30, 5=x40, 6=x50, 7=x60)
+        - min_car: number (minimum caramboles, 0=none)
+        - max_beurten: number (maximum turns, 0=unlimited, 10-60 step 5)
+        - vast_beurten: number (fixed turns: 0=no, 1=yes)
+        - sorteren: number (name sort: 1=first name first, 2=last name first)
+      </collection>
+
+      <collection name="members">
+        Document fields (mapped from bj_spelers_algemeen):
+        - spa_nummer: number (member number within org)
+        - spa_vnaam: string (first name / voornaam)
+        - spa_tv: string (prefix / tussenvoegsel, e.g., "van", "de")
+        - spa_anaam: string (last name / achternaam)
+        - spa_org: number (organization number)
+        - spa_moy_lib: number (decimal, moyenne Libre)
+        - spa_moy_band: number (decimal, moyenne Bandstoten)
+        - spa_moy_3bkl: number (decimal, moyenne Driebanden klein)
+        - spa_moy_3bgr: number (decimal, moyenne Driebanden groot)
+        - spa_moy_kad: number (decimal, moyenne Kader)
+      </collection>
+
+      <collection name="competition_players">
+        Document fields (mapped from bj_spelers_comp):
+        - spc_nummer: number (player/member number)
+        - spc_org: number (organization number)
+        - spc_competitie: number (competition number)
+        - spc_moyenne_1 through spc_moyenne_5: number (decimal, moyenne per period)
+        - spc_car_1 through spc_car_5: number (caramboles target per period)
+      </collection>
+
+      <collection name="matches">
+        Document fields (mapped from bj_partijen):
+        - org_nummer: number
+        - comp_nr: number
+        - nummer_A: number (player A number)
+        - naam_A: string (player A name)
+        - cartem_A: number (player A target caramboles)
+        - tafel: string (table assignment binary string, e.g., "110000000000")
+        - nummer_B: number (player B number)
+        - naam_B: string (player B name)
+        - cartem_B: number (player B target caramboles)
+        - periode: number
+        - uitslag_code: string (match code, format: "period_playerA_playerB")
+        - gespeeld: number (0=not played, 1=played)
+      </collection>
+
+      <collection name="results">
+        Document fields (mapped from bj_uitslagen):
+        - org_nummer: number
+        - comp_nr: number
+        - uitslag_code: string (match code)
+        - periode: number
+        - speeldatum: timestamp (play date)
+        - sp_1_nr: number (player 1 number)
+        - sp_1_cartem: number (player 1 target caramboles)
+        - sp_1_cargem: number (player 1 caramboles made)
+        - sp_1_hs: number (player 1 highest series)
+        - sp_1_punt: number (player 1 points)
+        - brt: number (turns/beurten)
+        - sp_2_nr: number (player 2 number)
+        - sp_2_cartem: number (player 2 target caramboles)
+        - sp_2_cargem: number (player 2 caramboles made)
+        - sp_2_hs: number (player 2 highest series)
+        - sp_2_punt: number (player 2 points)
+        - gespeeld: number (0=not played, 1=played)
+      </collection>
+
+      <collection name="tables">
+        Document fields (mapped from bj_tafel):
+        - org_nummer: number
+        - comp_nr: number
+        - u_code: string (match code)
+        - tafel_nr: number (table number)
+        - status: number (0=waiting, 1=started, 2=result)
+      </collection>
+
+      <collection name="device_config">
+        Document fields (mapped from bj_bediening):
+        - org_nummer: number
+        - tafel_nr: number (table number)
+        - soort: number (1=mouse, 2=tablet)
+      </collection>
+
+      <collection name="score_helpers">
+        Document fields (mapped from bj_uitslag_hulp):
+        - org_nummer: number
+        - comp_nr: number
+        - uitslag_code: string
+        - car_A_tem: number
+        - car_A_gem: number
+        - hs_A: number
+        - brt: number
+        - car_B_tem: number
+        - car_B_gem: number
+        - hs_B: number
+        - turn: number
+        - alert: number
+      </collection>
+
+      <collection name="score_helpers_tablet">
+        Document fields (mapped from bj_uitslag_hulp_tablet):
+        Same as score_helpers plus:
+        - tafel_nr: number
+        - serie_A: number
+        - serie_B: number
+      </collection>
+
+      <collection name="news_reactions">
+        Document fields (mapped from specialsoftware_reacties):
+        - nummer: number (organization number)
+        - tijd: timestamp
+        - naam: string (commenter name)
+        - tekst: string (comment text)
+      </collection>
+    </firestore_collections>
+  </database_schema>
+
+  <api_endpoints_summary>
+    <authentication>
+      - POST /api/auth/login-code (validate legacy login code)
+      - POST /api/auth/login (Firebase email/password login)
+      - POST /api/auth/register (new user registration)
+      - POST /api/auth/verify (email verification)
+      - POST /api/auth/logout
+      - GET /api/auth/session (check current session)
+    </authentication>
+
+    <organizations>
+      - GET /api/organizations/:orgNr (get organization details)
+      - PUT /api/organizations/:orgNr (update organization)
+      - DELETE /api/organizations/:orgNr (delete account)
+      - POST /api/organizations/:orgNr/logo (upload logo)
+    </organizations>
+
+    <members>
+      - GET /api/organizations/:orgNr/members (list members)
+      - POST /api/organizations/:orgNr/members (create member)
+      - GET /api/organizations/:orgNr/members/:memberNr (get member)
+      - PUT /api/organizations/:orgNr/members/:memberNr (update member)
+      - DELETE /api/organizations/:orgNr/members/:memberNr (delete member)
+    </members>
+
+    <competitions>
+      - GET /api/organizations/:orgNr/competitions (list competitions)
+      - POST /api/organizations/:orgNr/competitions (create competition)
+      - GET /api/organizations/:orgNr/competitions/:compNr (get competition)
+      - PUT /api/organizations/:orgNr/competitions/:compNr (update competition)
+      - DELETE /api/organizations/:orgNr/competitions/:compNr (delete competition)
+    </competitions>
+
+    <periods>
+      - POST /api/organizations/:orgNr/competitions/:compNr/periods (create period)
+      - DELETE /api/organizations/:orgNr/competitions/:compNr/periods/:periodNr (delete period)
+    </periods>
+
+    <competition_players>
+      - GET /api/organizations/:orgNr/competitions/:compNr/players (list players)
+      - POST /api/organizations/:orgNr/competitions/:compNr/players (add player)
+      - DELETE /api/organizations/:orgNr/competitions/:compNr/players/:playerNr (remove player)
+    </competition_players>
+
+    <matches>
+      - GET /api/organizations/:orgNr/competitions/:compNr/matches (list matches)
+      - POST /api/organizations/:orgNr/competitions/:compNr/matches (create match)
+      - DELETE /api/organizations/:orgNr/competitions/:compNr/matches/:matchId (delete match)
+      - POST /api/organizations/:orgNr/competitions/:compNr/matches/schedule (auto-schedule Round Robin)
+    </matches>
+
+    <results>
+      - GET /api/organizations/:orgNr/competitions/:compNr/results (list results)
+      - POST /api/organizations/:orgNr/competitions/:compNr/results (enter result)
+      - PUT /api/organizations/:orgNr/competitions/:compNr/results/:resultId (modify result)
+      - DELETE /api/organizations/:orgNr/competitions/:compNr/results/:resultId (delete result)
+    </results>
+
+    <standings>
+      - GET /api/organizations/:orgNr/competitions/:compNr/standings (get standings)
+      - GET /api/organizations/:orgNr/competitions/:compNr/standings/:period (standings per period)
+    </standings>
+
+    <scoreboards>
+      - GET /api/organizations/:orgNr/competitions/:compNr/scoreboards (get scoreboard data)
+      - PUT /api/organizations/:orgNr/competitions/:compNr/scoreboards/:tableNr (update scoreboard status)
+      - GET /api/organizations/:orgNr/competitions/:compNr/scoreboards/:tableNr/live (live score data)
+      - PUT /api/organizations/:orgNr/scoreboards/device/:tableNr (configure device type)
+    </scoreboards>
+
+    <advertisements>
+      - GET /api/organizations/:orgNr/advertisements (list ads)
+      - POST /api/organizations/:orgNr/advertisements (upload ad)
+      - DELETE /api/organizations/:orgNr/advertisements/:adId (delete ad)
+    </advertisements>
+
+    <news>
+      - GET /api/news (list news/reactions)
+      - POST /api/news (create news item)
+      - PUT /api/news/:id (edit reaction)
+      - DELETE /api/news/:id (delete reaction)
+    </news>
+
+    <health>
+      - GET /api/health (server + Firestore health check)
+    </health>
+  </api_endpoints_summary>
+
+  <ui_layout>
+    <main_structure>
+      Sidebar navigation (collapsible on mobile) with main content area. The sidebar contains links to all major sections. On mobile, the sidebar becomes a hamburger menu.
+
+      Main sections in navigation:
+      1. Dashboard (home/overview)
+      2. Competities (Competitions) - with sub-items
+      3. Ledenbeheer (Member Management)
+      4. Scoreborden (Scoreboards)
+      5. Instellingen (Settings/Account)
+      6. Help
+      7. Contact
+
+      Header: Organization logo + name, active competition indicator, theme toggle, logout button.
+      Footer: Copyright notice, version info.
+    </main_structure>
+
+    <pages>
+      - /inloggen - Login page (dual auth choice)
+      - /registreren - Registration page
+      - /dashboard - Dashboard with news
+      - /competities - Competition list
+      - /competities/nieuw - Create competition
+      - /competities/:id - Competition detail/management
+      - /competities/:id/spelers - Players in competition
+      - /competities/:id/planning - Match scheduling
+      - /competities/:id/matrix - Match matrix
+      - /competities/:id/uitslagen - Results entry
+      - /competities/:id/stand - Standings
+      - /leden - Member overview
+      - /leden/nieuw - Create member
+      - /leden/:id - Edit member
+      - /scoreborden - Scoreboard overview
+      - /scoreborden/:tafelNr - Scoreboard display (full-screen)
+      - /instellingen - Organization settings
+      - /instellingen/account - Account management
+      - /instellingen/tafels - Table/device configuration
+      - /instellingen/advertenties - Advertisement management
+      - /help - Help index
+      - /help/:topic - Help topic page
+      - /contact - Contact form
+    </pages>
+  </ui_layout>
+
+  <design_system>
+    <themes>
+      Dual theme support (light and dark). User can toggle between themes. Preference is persisted.
+
+      Light theme: Clean white backgrounds, subtle gray borders, readable contrast
+      Dark theme: Dark gray/slate backgrounds, lighter text, reduced eye strain
+
+      Both themes should use consistent accent colors for interactive elements, success/error states, and billiard-themed accents (green felt tones as subtle accent).
+    </themes>
+    <color_palette>
+      No specific color preferences from the user. Use a professional, clean palette appropriate for a sports/competition management tool. Subtle billiard green (#2D5016 or similar) as accent color.
+    </color_palette>
+    <typography>
+      System font stack for performance. Clear hierarchy with distinct heading sizes. Tabular/monospace numbers for scores and statistics to ensure alignment.
+    </typography>
+    <components>
+      Modern card-based layout with subtle shadows and rounded corners. Clear form layouts with proper labels. Data tables with sorting capabilities. Modal dialogs for confirmations. Toast notifications for feedback.
+    </components>
+  </design_system>
+
+  <billiard_domain_logic>
+    <disciplines>
+      1 = Libre
+      2 = Bandstoten
+      3 = Driebanden klein
+      4 = Driebanden groot
+      5 = Kader
+      Each member has a moyenne (average) per discipline stored separately.
+    </disciplines>
+
+    <moyenne_formula>
+      Caramboles to make = round(moyenne x formula_multiplier)
+      Formula multipliers: 1=x15, 2=x20, 3=x25, 4=x30, 5=x40, 6=x50, 7=x60
+      If calculated caramboles less than min_car setting, use min_car instead.
+    </moyenne_formula>
+
+    <scoring_systems>
+      <wrv_system>
+        Standard WRV (punten_sys starting with 1):
+        - Win (reached target, opponent didn't): 2 points
+        - Loss (opponent reached target, you didn't): 0 points
+        - Draw (both reached target OR same percentage): 1 point each
+        - Max turns reached (neither finished): compare by percentage (caramboles_made / target * 100)
+
+        Extended WRV with bonus points (encoded in punten_sys digits):
+        - Digit 2 = bonus enabled (1=yes)
+        - Digit 4 = bonus for draw above moyenne (1=yes)
+        - Digit 5 = bonus for loss above moyenne (1=yes)
+        - Winner above moyenne: +1 point (2 becomes 3)
+        - Draw above moyenne: +1 point (1 becomes 2) if enabled
+        - Loser above moyenne: +1 point (0 becomes 1) if enabled
+
+        Fixed turns mode (vast_beurten=1):
+        Always calculate by percentage, even if a player reaches target.
+      </wrv_system>
+
+      <ten_point_system>
+        punten_sys starting with 2:
+        Points = floor(caramboles_made / target_caramboles * 10)
+        Maximum 10 points per match.
+      </ten_point_system>
+
+      <belgian_system>
+        punten_sys starting with 3:
+        Same as 10-point but:
+        - If only one player reaches 10 points (target): that player gets 12
+        - If both players reach 10: both get 11
+      </belgian_system>
+    </scoring_systems>
+
+    <round_robin_scheduling>
+      Uses the standard Round Robin tournament algorithm:
+      - Even number of players: standard rotation with home/away optimization
+      - Odd number of players: adds ghost player, opponent of ghost has bye (rest round)
+      - Team 1 stays fixed, others rotate clockwise
+      - Home/away alternation: odd rounds team 1 home, even rounds team 1 away
+      - For remaining pairs: even pair number = team 1 home, odd = team 1 away
+
+      The existing PHP implementation in fun_even() and fun_oneven() in Functies_biljarten.php and Functies_toernooi.php serves as the reference implementation.
+    </round_robin_scheduling>
+
+    <match_codes>
+      Format: "period_playerA_playerB" where player numbers are zero-padded to 3 digits.
+      Example: "1_007_012" means period 1, player 7 vs player 12.
+      Inverted code swaps players: "1_012_007"
+      Used to uniquely identify matches and prevent duplicates.
+    </match_codes>
+
+    <table_assignment>
+      Tables encoded as binary string of length 12.
+      Example: "110000000000" = tables 1 and 2 assigned.
+      Each position represents a table (1=assigned, 0=not assigned).
+      Organizations can have 1-12 tables.
+    </table_assignment>
+
+    <standings_calculation>
+      Sort order for standings:
+      1. Points (descending)
+      2. Percentage of caramboles made vs target (descending)
+      3. Moyenne / average (descending)
+      4. Highest series (descending)
+
+      Displayed columns: Rank, Name, Matches Played, Caramboles Made, Caramboles Target, Percentage, Turns, Moyenne, Highest Series, Points
+    </standings_calculation>
+
+    <periods>
+      Competitions can have up to 5 periods (speelrondes).
+      Each period has its own:
+      - Player carambole targets (recalculated from updated moyenne)
+      - Match schedule
+      - Results
+      - Standings
+      When a new period starts, player moyennes and carambole targets are recalculated.
+    </periods>
+  </billiard_domain_logic>
+
+  <implementation_steps>
+    <step number="1">
+      <title>Project Setup and Infrastructure</title>
+      <tasks>
+        - Initialize Next.js 15.5.9 project with TypeScript and Tailwind CSS
+        - Set up Firebase/Firestore connection and configuration
+        - Set up Firebase Auth
+        - Create Firestore collections structure
+        - Implement health check endpoint
+        - Set up environment variables
+        - Create init.sh script
+      </tasks>
+    </step>
+
+    <step number="2">
+      <title>Authentication System</title>
+      <tasks>
+        - Implement dual login page (code + email/password)
+        - Legacy login code validation
+        - Firebase Auth email/password integration
+        - Registration flow with code generation
+        - Session management
+        - Protected route middleware
+        - Logout functionality
+      </tasks>
+    </step>
+
+    <step number="3">
+      <title>Organization and Member Management</title>
+      <tasks>
+        - Organization profile CRUD
+        - Logo upload
+        - Member CRUD with all fields
+        - Moyenne per discipline management
+        - Member search and filtering
+        - Name display preference
+      </tasks>
+    </step>
+
+    <step number="4">
+      <title>Competition Management</title>
+      <tasks>
+        - Competition CRUD with all configuration options
+        - Period management
+        - Player-competition assignment
+        - Carambole calculation from moyenne
+        - Competition selection/switching
+      </tasks>
+    </step>
+
+    <step number="5">
+      <title>Match Scheduling and Results</title>
+      <tasks>
+        - Match creation and pairing
+        - Round Robin algorithm implementation
+        - Table assignment
+        - Match matrix view
+        - Score entry with automatic point calculation
+        - All three scoring systems
+        - Result modification and deletion
+      </tasks>
+    </step>
+
+    <step number="6">
+      <title>Standings and Scoreboards</title>
+      <tasks>
+        - Standings calculation engine
+        - Standings display with proper sorting
+        - Scoreboard display pages
+        - Live score updates
+        - Device configuration
+        - Advertisement/slideshow management
+      </tasks>
+    </step>
+
+    <step number="7">
+      <title>Dashboard, Help, and Polish</title>
+      <tasks>
+        - Dashboard with news and comments
+        - Help system with content
+        - Contact form
+        - Theme toggle (light/dark)
+        - Responsive design refinement
+        - Error handling and empty states
+        - Performance optimization
+      </tasks>
+    </step>
+  </implementation_steps>
+
+  <success_criteria>
+    <functionality>
+      Full feature parity with the existing PHP application. Every function available in the current ClubMatch should work identically in the Next.js version. The billiard domain logic (scoring systems, moyenne calculations, Round Robin scheduling) must produce identical results to the PHP implementation.
+    </functionality>
+    <user_experience>
+      Improved UX/design compared to the current PHP version. Modern, clean interface with card-based layouts, smooth interactions, and clear navigation. The app should feel professional and polished.
+    </user_experience>
+    <technical_quality>
+      - All data persists in Firestore (no mock data)
+      - Data isolation between organizations enforced
+      - Dual authentication working correctly
+      - Responsive across mobile, tablet, and desktop
+      - Proper error handling with Dutch error messages
+      - Loading states for all async operations
+    </technical_quality>
+    <design_polish>
+      - Dual theme (light/dark) working and persisted
+      - Consistent design language throughout
+      - Proper typography with tabular numbers for scores
+      - Professional appearance suitable for club administrators
+      - Billiard-themed subtle accents
+    </design_polish>
+  </success_criteria>
+
+  <source_reference>
+    The existing PHP application source code is located in /PHPcode/ within this project directory. Key reference files:
+    - /PHPcode/ClubMatch/ - All ClubMatch PHP pages
+    - /PHPcode/ClubMatch/PHP/Functies_biljarten.php - Core business logic functions
+    - /PHPcode/Tabelstructuur/SQLdataclubmatch.sql - Original database schema
+    - /PHPcode/Competitieborden/ - Scoreboard pages
+    - /PHPcode/Dashboard/ - Dashboard pages
+    - /PHPcode/data/ - Database connection configuration
+
+    The coding agent should reference these files to ensure feature parity and correct business logic implementation, especially for:
+    - Point calculation (fun_punten)
+    - Carambole calculation (fun_car)
+    - Round Robin scheduling (fun_even, fun_oneven)
+    - Name formatting (fun_spelersnaam_competitie)
+    - Match code generation (fun_maakcode, fun_invertcode)
+  </source_reference>
+</project_specification>

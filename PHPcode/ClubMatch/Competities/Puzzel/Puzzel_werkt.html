@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Schuifpuzzel</title>
+<style>
+  #puzzel {
+    display: grid;
+    grid-template-columns: repeat(3, 200px);
+    grid-template-rows: repeat(3, 200px);
+    gap: 2px;
+    width: 606px; /* 3*200 + 2*2px */
+    border: 2px solid #333;
+    margin: 20px auto;
+  }
+  .tile {
+    width: 200px;
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+  }
+  .empty {
+    background: white;
+    cursor: default;
+  }
+  .controls {
+    text-align: center;
+  }
+  button {
+    margin: 10px 5px;
+    padding: 8px 16px;
+    font-size: 16px;
+  }
+  /* Overlay */
+  #overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+  }
+  #overlayContent {
+    background: white;
+    padding: 20px 40px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="puzzel"></div>
+<div class="controls">
+  <button onClick="shuffle()">Shuffle</button>
+  <button onClick="window.close()">Sluiten</button>
+</div>
+
+<div id="overlay">
+  <div id="overlayContent">
+    <p>🎉 Gefeliciteerd! Je hebt de puzzel opgelost 🎉</p>
+    <button onClick="restart()">Opnieuw spelen</button>
+  </div>
+</div>
+
+<script>
+const puzzel = document.getElementById("puzzel");
+const overlay = document.getElementById("overlay");
+let emptyPos = { row: 2, col: 2 };
+let tiles = []; 
+
+const SOLVED = [
+  "r0c0","r0c1","r0c2",
+  "r1c0","r1c1","r1c2",
+  "r2c0","r2c1",
+  "empty"
+];
+
+function init() {
+  tiles = [...SOLVED];
+  render();
+}
+
+function render() {
+  puzzel.innerHTML = "";
+  tiles.forEach((id, i) => {
+    const div = document.createElement("div");
+    div.classList.add("tile");
+    if (id === "empty") {
+      div.classList.add("empty");
+      emptyPos = { row: Math.floor(i/3), col: i%3 };
+    } else {
+      div.id = id;
+      div.style.backgroundImage = `url(${id}.jpg)`;
+      div.addEventListener("click", () => tryMove(i));
+    }
+    puzzel.appendChild(div);
+  });
+}
+
+function tryMove(i) {
+  const row = Math.floor(i/3);
+  const col = i % 3;
+  const isNeighbor =
+    (row === emptyPos.row && Math.abs(col - emptyPos.col) === 1) ||
+    (col === emptyPos.col && Math.abs(row - emptyPos.row) === 1);
+
+  if (isNeighbor) {
+    const emptyIndex = emptyPos.row*3 + emptyPos.col;
+    [tiles[i], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[i]];
+    render();
+    checkWin();
+  }
+}
+
+function shuffle() {
+  do {
+    tiles = tiles
+      .map(v => ({v, sort: Math.random()}))
+      .sort((a,b) => a.sort-b.sort)
+      .map(({v}) => v);
+  } while (!isSolvable(tiles) || arraysEqual(tiles, SOLVED));
+  render();
+}
+
+function isSolvable(arr) {
+  const flat = arr.filter(x => x !== "empty");
+  let inversions = 0;
+  for (let i=0; i<flat.length; i++) {
+    for (let j=i+1; j<flat.length; j++) {
+      if (flat[i] > flat[j]) inversions++;
+    }
+  }
+  return inversions % 2 === 0;
+}
+
+function arraysEqual(a, b) {
+  return a.every((v,i) => v === b[i]);
+}
+
+function checkWin() {
+  if (arraysEqual(tiles, SOLVED)) {
+    setTimeout(() => {
+      overlay.style.visibility = "visible";
+    }, 100);
+  }
+}
+
+function restart() {
+  overlay.style.visibility = "hidden";
+  shuffle();
+}
+
+init();
+shuffle();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Sliding Puzzle</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+  #puzzel {
+    display: grid;
+    grid-template-columns: repeat(3, 200px);
+    grid-template-rows: repeat(3, 200px);
+    gap: 2px;
+    margin: 0 auto;
+    width: max-content;
+  }
+  .tile {
+    width: 200px;
+    height: 200px;
+    cursor: pointer;
+  }
+  .empty {
+    background: #eee;
+    cursor: default;
+  }
+  button {
+    margin: 10px 5px;
+    padding: 8px 16px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    background: linear-gradient(#fff, #ddd);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover {
+    background: linear-gradient(#f0f0f0, #ccc);
+  }
+  #message {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: green;
+    margin-top: 10px;
+    min-height: 24px; /* zodat plek blijft */
+    opacity: 0;
+    transition: opacity 1s ease-in; /* fade-in */
+  }
+  #message.show {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+<div id="puzzel"></div>
+<button onClick="shuffle()">Shuffle</button>
+<button onClick="closeGame()">Sluiten</button>
+<div id="message"></div>
+
+<script>
+const SIZE = 3;
+const SOLVED = ["r0c0","r0c1","r0c2","r1c0","r1c1","r1c2","r2c0","r2c1","empty"];
+let tiles = [...SOLVED];
+
+function render() {
+  const puzzel = document.getElementById("puzzel");
+  puzzel.innerHTML = "";
+  tiles.forEach((tile, i) => {
+    const div = document.createElement("div");
+    div.className = "tile " + tile;
+    if (tile === "empty") {
+      div.classList.add("empty");
+    } else {
+      div.style.backgroundImage = `url(${tile}.jpg)`;
+      div.style.backgroundSize = "cover";
+      div.onclick = () => move(i);
+    }
+    puzzel.appendChild(div);
+  });
+}
+
+function move(i) {
+  const emptyIndex = tiles.indexOf("empty");
+  const row = Math.floor(i / SIZE);
+  const col = i % SIZE;
+  const emptyRow = Math.floor(emptyIndex / SIZE);
+  const emptyCol = emptyIndex % SIZE;
+  if ((Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+      (Math.abs(col - emptyCol) === 1 && row === emptyRow)) {
+    [tiles[i], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[i]];
+    render();
+    checkWin();
+  }
+}
+
+function shuffle() {
+  do {
+    tiles = tiles
+      .map(v => ({v, sort: Math.random()}))
+      .sort((a,b) => a.sort-b.sort)
+      .map(({v}) => v);
+  } while (!isSolvable(tiles) || arraysEqual(tiles, SOLVED));
+  render();
+  const msg = document.getElementById("message");
+  msg.textContent = "";
+  msg.classList.remove("show");
+}
+
+function checkWin() {
+  if (arraysEqual(tiles, SOLVED)) {
+    const msg = document.getElementById("message");
+    msg.textContent = "Gefeliciteerd! 🎉";
+    msg.classList.add("show");
+  }
+}
+
+function arraysEqual(a, b) {
+  return a.every((val, i) => val === b[i]);
+}
+
+function isSolvable(arr) {
+  const inv = arr
+    .filter(x => x !== "empty")
+    .map(x => SOLVED.indexOf(x));
+  let inversions = 0;
+  for (let i = 0; i < inv.length; i++) {
+    for (let j = i+1; j < inv.length; j++) {
+      if (inv[i] > inv[j]) inversions++;
+    }
+  }
+  return inversions % 2 === 0;
+}
+
+function closeGame() {
+  window.close();
+}
+
+// Init
+shuffle();
+</script>
+
+</body>
+</html>

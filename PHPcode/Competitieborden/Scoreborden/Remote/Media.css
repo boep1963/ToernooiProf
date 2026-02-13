@@ -1,0 +1,700 @@
+.afbeelding-button {
+  width: 60px;
+  height: 60px;
+  background: none; /* Geen standaard knopkleur */
+  border: none; /* Geen rand */
+  padding: 0; /* Geen extra ruimte */
+  cursor: pointer;
+}
+
+.afbeelding-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Smartphone */
+@media only screen and (max-width: 767px) {
+  body {
+    background-color: #000;
+    width: 95vw;
+    max-width: 700px;
+    margin: auto;
+    font-family: Verdana, Geneva, sans-serif;
+    color: #fff;
+    font-size: 0.9em;
+  }
+
+  h1 {
+    font-size: 16px;
+  }
+
+  h2 {
+    font-size: 14px;
+  }
+
+  .afbeelding-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .cancel-button {
+    width: 100px;
+    height: 30px;
+    font-size: 12px;
+    background-color: #666;
+    color: #fff;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .wissel-button {
+    width: 100px;
+    height: 30px;
+    font-size: 12px;
+    background-color: #ffd700;
+    color: #000;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .tel-button {
+    width: 60px;
+    height: 60px;
+    background-color: #000;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .invoer-button {
+    width: 60px;
+    height: 80px;
+    background-color: #000;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    border-color: #fff;
+  }
+
+  #ennog5A {
+    width: 50px;
+    font-size: 24px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #ennog5B {
+    width: 50px;
+    font-size: 24px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #car_A {
+    width: 80px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #car_B {
+    width: 80px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #brt {
+    width: 80px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #serieA {
+    width: 50px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #serieB {
+    width: 50px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  img.slot-afbeelding {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+
+  img.logo-afbeelding {
+    width: 116px;
+    height: 58px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+}
+
+/* iPad 30% meer dan smartphone */
+@media only screen and (min-width: 768px) and (max-width: 1024px) {
+  body {
+    background-color: #000;
+    width: 95vw;
+    max-width: 1000px;
+    margin-top: 70px;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: Verdana, Geneva, sans-serif;
+    color: #fff;
+    font-size: 0.9em;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  .afbeelding-button {
+    width: 110px;
+    height: 110px;
+  }
+
+  .cancel-button {
+    width: 150px;
+    height: 45px;
+    font-size: 18px;
+    background-color: #666;
+    color: #fff;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .wissel-button {
+    width: 150px;
+    height: 45px;
+    font-size: 18px;
+    background-color: #ffd700;
+    color: #000;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .tel-button {
+    width: 110px;
+    height: 100px;
+    background-color: #000;
+    color: #fff;
+    font-size: 36px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .invoer-button {
+    width: 110px;
+    height: 130px;
+    background-color: #000;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    border-color: #fff;
+  }
+
+  #ennog5A {
+    width: 65px;
+    font-size: 30px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #ennog5B {
+    width: 65px;
+    font-size: 30px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #car_A {
+    width: 100px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #car_B {
+    width: 100px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #brt {
+    width: 100px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #serieA {
+    width: 65px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #serieB {
+    width: 65px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  img.slot-afbeelding {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+
+  img.logo-afbeelding {
+    width: 150px;
+    height: 75px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+}
+
+/* Styling voor grotere tablets / kleine laptops 15% extra */
+@media only screen and (min-width: 1025px) and (max-width: 1279px) {
+  body {
+    background-color: #fff;
+    width: 95vw;
+    max-width: 1150px;
+    margin: auto;
+    font-family: Verdana, Geneva, sans-serif;
+    color: #fff;
+    font-size: 0.9em;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .afbeelding-button {
+    width: 110px;
+    height: 110px;
+  }
+
+  .cancel-button {
+    width: 180px;
+    height: 55px;
+    font-size: 24px;
+    background-color: #666;
+    color: #fff;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .wissel-button {
+    width: 180px;
+    height: 55px;
+    font-size: 24px;
+    background-color: #ffd700;
+    color: #000;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .tel-button {
+    width: 110px;
+    height: 110px;
+    background-color: #000;
+    color: #fff;
+    font-size: 44px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .invoer-button {
+    width: 110px;
+    height: 130px;
+    background-color: #000;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    border-color: #fff;
+  }
+
+  #ennog5A {
+    width: 75px;
+    font-size: 35px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #ennog5B {
+    width: 75px;
+    font-size: 35px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #car_A {
+    width: 115px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #car_B {
+    width: 115px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #brt {
+    width: 115px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 46px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #serieA {
+    width: 75px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #serieB {
+    width: 75px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  img.slot-afbeelding {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+
+  img.logo-afbeelding {
+    width: 190px;
+    height: 85px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+}
+
+/* Styling voor laptops / desktops plus 10%*/
+@media only screen and (min-width: 1280px) {
+  body {
+    background-color: #000;
+    width: 95vw;
+    max-width: 1200px;
+    margin: auto;
+    font-family: Verdana, Geneva, sans-serif;
+    color: #fff;
+    font-size: 0.9em;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  .afbeelding-button {
+    width: 120px;
+    height: 120px;
+  }
+
+  .cancel-button {
+    width: 200px;
+    height: 70px;
+    font-size: 26px;
+    background-color: #666;
+    color: #fff;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .wissel-button {
+    width: 200px;
+    height: 70px;
+    font-size: 26px;
+    background-color: #ffd700;
+    color: #000;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .tel-button {
+    width: 120px;
+    height: 120px;
+    background-color: #000;
+    color: #fff;
+    font-size: 48px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .invoer-button {
+    width: 120px;
+    height: 150px;
+    background-color: #000;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    border-color: #fff;
+  }
+
+  #ennog5A {
+    width: 85px;
+    font-size: 40px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #ennog5B {
+    width: 85px;
+    font-size: 40px;
+    font-weight: bold;
+    background-color: #ffd700;
+    color: #f00;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #car_A {
+    width: 125px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 50px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #car_B {
+    width: 125px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 50px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #brt {
+    width: 125px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 50px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #f00;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 30px;
+  }
+
+  #serieA {
+    width: 85px;
+    font-size: 40px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  #serieB {
+    width: 85px;
+    font-size: 40px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    border-color: #fff;
+    border: 2px solid white;
+    border-radius: 20px;
+  }
+
+  img.slot-afbeelding {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+
+  img.logo-afbeelding {
+    width: 200px;
+    height: 100px;
+    object-fit: contain;
+    max-width: 100%;
+  }
+}

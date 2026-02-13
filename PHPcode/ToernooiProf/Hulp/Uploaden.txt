@@ -1,0 +1,32 @@
+<form action="upload.php" method="post" enctype="multipart/form-data">
+    <table width="850" border="0">
+        <tr>
+            <td height="50" class="grootwit">
+                Selecteer uw logo:
+                <input type="file" name="fileToUpload" id="fileToUpload" onchange="toggleUploadButton()">
+            </td>
+            <td align="center">
+                <input name="submit" type="submit" id="uploadButton" class="submit-button" 
+                    value="Upload eigen logo" 
+                    style="width:190px; height:40px; background-color:#000; color:#FFF; font-size:16px; display:none;"
+                    title="Upload uw eigen logo" 
+                    onMouseOver="mouseInBut(event)" onMouseOut="mouseOutBut(event)">
+                <input type="hidden" name="user_code" value="<?php print("$Code");?>">
+            </td>
+        </tr>
+    </table>
+</form>
+
+<script>
+    function toggleUploadButton() {
+        const fileInput = document.getElementById('fileToUpload');
+        const uploadButton = document.getElementById('uploadButton');
+        
+        // Als er een bestand is gekozen, toon de knop
+        if (fileInput.files.length > 0) {
+            uploadButton.style.display = 'block';
+        } else {
+            uploadButton.style.display = 'none';
+        }
+    }
+</script>
