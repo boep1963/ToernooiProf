@@ -1,0 +1,161 @@
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
+
+interface CompetitionData {
+  id: string;
+  comp_nr: number;
+  comp_naam: string;
+  comp_datum: string;
+  discipline: number;
+  punten_sys: number;
+  moy_form: number;
+  min_car: number;
+  max_beurten: number;
+  vast_beurten: number;
+  sorteren: number;
+}
+
+const PUNTEN_SYSTEMEN: Record<number, string> = {
+  1: 'WRV 2-1-0',
+  2: '10-punten',
+  3: 'Belgisch (12-punten)',
+};
+
+export default function CompetitieDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { orgNummer } = useAuth();
+  const compNr = parseInt(params.id as string, 10);
+
+  const [competition, setCompetition] = useState<CompetitionData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchCompetition = useCallback(async () => {
+    if (!orgNummer || isNaN(compNr)) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCompetition(data);
+      } else {
+        setError('Competitie niet gevonden.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgNummer, compNr]);
+
+  useEffect(() => {
+    fetchCompetition();
+  }, [fetchCompetition]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+        <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-slate-500 dark:text-slate-400">Competitie laden...</p>
+      </div>
+    );
+  }
+
+  if (error || !competition) {
+    return (
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+        <p className="text-slate-600 dark:text-slate-400">{error || 'Competitie niet gevonden.'}</p>
+        <button
+          onClick={() => router.push('/competities')}
+          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        >
+          Terug naar competities
+        </button>
+      </div>
+    );
+  }
+
+  const multiplier = MOYENNE_MULTIPLIERS[competition.moy_form] || 25;
+
+  const navItems = [
+    { label: 'Spelers', href: `/competities/${compNr}/spelers`, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', desc: 'Beheer spelers in deze competitie' },
+    { label: 'Planning', href: `/competities/${compNr}/planning`, icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', desc: 'Wedstrijdplanning en schema' },
+    { label: 'Uitslagen', href: `/competities/${compNr}/uitslagen`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', desc: 'Bekijk en voer uitslagen in' },
+    { label: 'Stand', href: `/competities/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Klassement en stand' },
+  ];
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <button
+            type="button"
+            onClick={() => router.push('/competities')}
+            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+            aria-label="Terug naar competities"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {competition.comp_naam}
+          </h1>
+        </div>
+      </div>
+
+      {/* Competition Info Card */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Datum</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.comp_datum}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Discipline</p>
+            <p className="text-sm text-slate-900 dark:text-white">{DISCIPLINES[competition.discipline]}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Puntensysteem</p>
+            <p className="text-sm text-slate-900 dark:text-white">{PUNTEN_SYSTEMEN[competition.punten_sys] || '-'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Formule</p>
+            <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {navItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 hover:border-green-300 dark:hover:border-green-700 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition-colors">
+                <svg className="w-5 h-5 text-green-700 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
+                  {item.label}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
