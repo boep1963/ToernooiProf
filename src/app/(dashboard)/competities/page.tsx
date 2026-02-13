@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useCompetition } from '@/context/CompetitionContext';
 import { DISCIPLINES } from '@/types';
 
 interface CompetitionItem {
@@ -22,6 +23,7 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 
 export default function CompetitiesPage() {
   const { orgNummer } = useAuth();
+  const { activeCompetition } = useCompetition();
   const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,6 +79,32 @@ export default function CompetitiesPage() {
         </div>
       )}
 
+      {/* Active competition banner */}
+      {activeCompetition && !isLoading && competitions.length > 0 && (
+        <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-green-700 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-green-800 dark:text-green-300 uppercase tracking-wider">Laatst bekeken</p>
+              <p className="text-sm font-medium text-green-900 dark:text-green-200">{activeCompetition.compNaam}</p>
+            </div>
+          </div>
+          <Link
+            href={`/competities/${activeCompetition.compNr}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Doorgaan
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -115,8 +143,10 @@ export default function CompetitiesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {competitions.map((comp) => (
-                <tr key={comp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+              {competitions.map((comp) => {
+                const isActive = activeCompetition?.compNr === comp.comp_nr;
+                return (
+                <tr key={comp.id} className={`transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10 border-l-2 border-l-green-700 dark:border-l-green-400' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}>
                   <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{comp.comp_nr}</td>
                   <td className="px-4 py-3">
                     <Link href={`/competities/${comp.comp_nr}`} className="text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
@@ -127,7 +157,8 @@ export default function CompetitiesPage() {
                   <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
                   <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

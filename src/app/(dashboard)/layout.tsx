@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CompetitionProvider } from '@/context/CompetitionContext';
 import ThemeToggle from '@/components/ThemeToggle';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
@@ -90,7 +91,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <AuthenticatedLayout>{children}</AuthenticatedLayout>
+      <CompetitionProvider>
+        <AuthenticatedLayout>{children}</AuthenticatedLayout>
+      </CompetitionProvider>
     </AuthProvider>
   );
 }

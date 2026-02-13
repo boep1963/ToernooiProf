@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -68,6 +68,12 @@ interface AvailableMatch {
   gespeeld: number;
 }
 
+interface SlideshowImage {
+  id: string;
+  volg_nr: number;
+  image_data: string;
+}
+
 export default function ScoreboardPage() {
   const params = useParams();
   const tafelNr = params?.tafelNr as string;
@@ -87,6 +93,11 @@ export default function ScoreboardPage() {
   const [showMatchSelector, setShowMatchSelector] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [starting, setStarting] = useState(false);
+
+  // Slideshow state
+  const [slideshowImages, setSlideshowImages] = useState<SlideshowImage[]>([]);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const slideshowTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || !tafelNr) return;
@@ -139,6 +150,46 @@ export default function ScoreboardPage() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Slideshow: fetch advertisement images
+  useEffect(() => {
+    if (!orgNummer) return;
+    const fetchSlideshow = async () => {
+      try {
+        const res = await fetch(`/api/organizations/${orgNummer}/advertisements/images`);
+        if (res.ok) {
+          const images = await res.json();
+          setSlideshowImages(images);
+        }
+      } catch (err) {
+        console.error('Error loading slideshow images:', err);
+      }
+    };
+    fetchSlideshow();
+    // Refresh slideshow images every 5 minutes
+    const refreshInterval = setInterval(fetchSlideshow, 5 * 60 * 1000);
+    return () => clearInterval(refreshInterval);
+  }, [orgNummer]);
+
+  // Slideshow: auto-rotate every 8 seconds
+  useEffect(() => {
+    if (slideshowImages.length <= 1) {
+      if (slideshowTimerRef.current) {
+        clearInterval(slideshowTimerRef.current);
+        slideshowTimerRef.current = null;
+      }
+      return;
+    }
+    slideshowTimerRef.current = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % slideshowImages.length);
+    }, 8000);
+    return () => {
+      if (slideshowTimerRef.current) {
+        clearInterval(slideshowTimerRef.current);
+        slideshowTimerRef.current = null;
+      }
+    };
+  }, [slideshowImages.length]);
 
   // Tablet score input handlers
   const handleSerieIncrement = useCallback((player: 'A' | 'B') => {
@@ -381,7 +432,7 @@ export default function ScoreboardPage() {
           <div className="flex items-center justify-between max-w-[1200px] mx-auto">
             {/* Player A name */}
             <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate flex-1 text-left ${turn === 1 ? 'text-white' : 'text-gray-400'}`}>
-              {hasMatch ? match.naam_A : 'Speler A'}
+              {hasMatch && match ? match.naam_A : 'Speler A'}
             </h2>
             {/* Center info */}
             <div className="text-center px-4 flex-shrink-0">
@@ -390,79 +441,122 @@ export default function ScoreboardPage() {
             </div>
             {/* Player B name */}
             <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate flex-1 text-right ${turn === 2 ? 'text-white' : 'text-gray-400'}`}>
-              {hasMatch ? match.naam_B : 'Speler B'}
+              {hasMatch && match ? match.naam_B : 'Speler B'}
             </h2>
           </div>
         </div>
 
         {!hasMatch ? (
-          /* Waiting state - tablet */
-          <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
-            <div className="text-center px-4 max-w-2xl w-full">
-              {showMatchSelector ? (
-                <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
-                  <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
-                  {availableMatches.length === 0 ? (
-                    <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
-                  ) : (
-                    <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                      {availableMatches.map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => handleAssignMatch(m)}
-                          disabled={assigning}
-                          className="w-full text-left bg-[#003300] hover:bg-green-800/50 active:bg-green-700/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50 touch-manipulation min-h-[48px]"
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-white font-semibold">
-                                {m.naam_A} vs {m.naam_B}
-                              </p>
-                              <p className="text-green-400 text-sm">
-                                {m.comp_naam} | {m.uitslag_code}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-green-300 text-sm tabular-nums">
-                                {m.cartem_A} - {m.cartem_B}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setShowMatchSelector(false)}
-                    className="mt-4 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-3 rounded-xl transition-colors touch-manipulation min-h-[48px]"
+          /* Waiting state - tablet: with slideshow */
+          <div className="relative" style={{ minHeight: 'calc(100vh - 70px)' }}>
+            {/* Slideshow background - tablet */}
+            {slideshowImages.length > 0 && !showMatchSelector && (
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                {slideshowImages.map((slide, index) => (
+                  <div
+                    key={slide.id}
+                    className="absolute inset-0 flex items-center justify-center transition-opacity duration-1000"
+                    style={{ opacity: index === currentSlideIndex ? 1 : 0 }}
                   >
-                    Annuleren
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <img
+                      src={slide.image_data}
+                      alt={`Advertentie ${slide.volg_nr}`}
+                      className="max-w-full max-h-full object-contain"
+                    />
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
-                  <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
-                  <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
-                  <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
-                    <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
-                    <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
+                ))}
+                {slideshowImages.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-10">
+                    {slideshowImages.map((_, index) => (
+                      <span
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          index === currentSlideIndex ? 'bg-green-400 scale-125' : 'bg-white/40'
+                        }`}
+                      />
+                    ))}
                   </div>
-                  <div className="mt-6">
+                )}
+              </div>
+            )}
+
+            <div className="relative z-10 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
+              <div className="text-center px-4 max-w-2xl w-full">
+                {showMatchSelector ? (
+                  <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
+                    <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
+                    {availableMatches.length === 0 ? (
+                      <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                        {availableMatches.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => handleAssignMatch(m)}
+                            disabled={assigning}
+                            className="w-full text-left bg-[#003300] hover:bg-green-800/50 active:bg-green-700/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50 touch-manipulation min-h-[48px]"
+                          >
+                            <div className="flex items-center justify-between gap-4">
+                              <div>
+                                <p className="text-white font-semibold">
+                                  {m.naam_A} vs {m.naam_B}
+                                </p>
+                                <p className="text-green-400 text-sm">
+                                  {m.comp_naam} | {m.uitslag_code}
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-green-300 text-sm tabular-nums">
+                                  {m.cartem_A} - {m.cartem_B}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowMatchSelector(false)}
+                      className="mt-4 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-3 rounded-xl transition-colors touch-manipulation min-h-[48px]"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                ) : slideshowImages.length === 0 ? (
+                  <>
+                    <div className="mb-6">
+                      <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
+                    <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
+                    <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
+                    <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
+                      <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+                      <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
+                    </div>
+                    <div className="mt-6">
+                      <button
+                        onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
+                        className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
+                      >
+                        Wedstrijd toewijzen
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Slideshow active - minimal overlay */
+                  <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-20">
                     <button
                       onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
-                      className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
+                      className="bg-green-700/90 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-base font-semibold transition-colors shadow-lg backdrop-blur-sm touch-manipulation min-h-[48px]"
                     >
                       Wedstrijd toewijzen
                     </button>
                   </div>
-                </>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -507,7 +601,7 @@ export default function ScoreboardPage() {
                   </span>
                 </div>
                 <p className="text-green-400 text-xs sm:text-sm mt-1">
-                  Te maken: {match.cartem_A}
+                  Te maken: {match?.cartem_A}
                 </p>
               </div>
 
@@ -538,7 +632,7 @@ export default function ScoreboardPage() {
                   </span>
                 </div>
                 <p className="text-green-400 text-xs sm:text-sm mt-1">
-                  Te maken: {match.cartem_B}
+                  Te maken: {match?.cartem_B}
                 </p>
               </div>
             </div>
@@ -568,7 +662,7 @@ export default function ScoreboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={turn === 1 ? "M10 19l-7-7m0 0l7-7m-7 7h18" : "M14 5l7 7m0 0l-7 7m7-7H3"} />
                   </svg>
                   <span className="text-xs sm:text-sm font-bold truncate max-w-[100px]">
-                    {turn === 1 ? match.naam_A : match.naam_B}
+                    {turn === 1 ? match?.naam_A : match?.naam_B}
                   </span>
                 </div>
                 <p className="text-green-500 text-[10px] sm:text-xs">aan de beurt</p>
@@ -828,6 +922,10 @@ export default function ScoreboardPage() {
       <div className="bg-[#002200] border-b-2 border-green-600 px-6 py-3">
         <div className="flex items-center justify-between max-w-[1860px] mx-auto">
           <div className="flex items-center gap-4">
+            {/* Organization logo placeholder */}
+            <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center text-green-400 font-bold text-lg flex-shrink-0 border border-green-600">
+              {data.org_naam?.charAt(0) || 'C'}
+            </div>
             <h1 className="text-2xl md:text-3xl font-bold text-green-400">
               Tafel {tafelNr}
             </h1>
@@ -838,7 +936,7 @@ export default function ScoreboardPage() {
             )}
           </div>
           <div className="text-right">
-            <p className="text-green-300 text-sm">{data.org_naam}</p>
+            <p className="text-green-300 text-sm font-semibold">{data.org_naam}</p>
             <p className="text-green-500 text-xs">
               🖱️ Muis modus
             </p>
@@ -848,78 +946,127 @@ export default function ScoreboardPage() {
 
       {/* Main scoreboard area */}
       {!hasMatch ? (
-        /* Waiting state - no match assigned or match assigned but not started */
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
-          <div className="text-center px-4 max-w-2xl w-full">
-            {/* Match selector */}
-            {showMatchSelector ? (
-              <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
-                <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
-                {availableMatches.length === 0 ? (
-                  <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
-                ) : (
-                  <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {availableMatches.map((match) => (
-                      <button
-                        key={match.id}
-                        onClick={() => handleAssignMatch(match)}
-                        disabled={assigning}
-                        className="w-full text-left bg-[#003300] hover:bg-green-800/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-white font-semibold">
-                              {match.naam_A} vs {match.naam_B}
-                            </p>
-                            <p className="text-green-400 text-sm">
-                              {match.comp_naam} | {match.uitslag_code}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-green-300 text-sm tabular-nums">
-                              {match.cartem_A} - {match.cartem_B}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <button
-                  onClick={() => setShowMatchSelector(false)}
-                  className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl transition-colors"
+        /* Waiting state - no match assigned: show slideshow + controls */
+        <div className="relative" style={{ minHeight: 'calc(100vh - 70px)' }}>
+          {/* Slideshow background */}
+          {slideshowImages.length > 0 && !showMatchSelector && (
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+              {slideshowImages.map((slide, index) => (
+                <div
+                  key={slide.id}
+                  className="absolute inset-0 flex items-center justify-center transition-opacity duration-1000"
+                  style={{ opacity: index === currentSlideIndex ? 1 : 0 }}
                 >
-                  Annuleren
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="mb-8">
-                  <svg className="w-24 h-24 md:w-32 md:h-32 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <img
+                    src={slide.image_data}
+                    alt={`Advertentie ${slide.volg_nr}`}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ maxWidth: '1900px', maxHeight: '950px' }}
+                  />
                 </div>
-                <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">Wachten op partij</h2>
-                <p className="text-xl md:text-2xl text-green-400 mb-2">Tafel {tafelNr}</p>
-                <p className="text-green-500 text-lg">
-                  Selecteer een wedstrijd om het scorebord te starten
-                </p>
-                {/* Match status indicator */}
-                <div className="mt-8 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-8 py-4">
-                  <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
-                  <span className="text-yellow-400 text-xl font-medium">Wachtend</span>
+              ))}
+              {/* Slide indicator dots */}
+              {slideshowImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-10">
+                  {slideshowImages.map((_, index) => (
+                    <span
+                      key={index}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                        index === currentSlideIndex
+                          ? 'bg-green-400 scale-125'
+                          : 'bg-white/40'
+                      }`}
+                    />
+                  ))}
                 </div>
-                {/* Assign match button */}
-                <div className="mt-8">
+              )}
+            </div>
+          )}
+
+          {/* Overlay content */}
+          <div className={`relative z-10 flex items-center justify-center ${slideshowImages.length > 0 && !showMatchSelector ? '' : ''}`} style={{ minHeight: 'calc(100vh - 70px)' }}>
+            <div className="text-center px-4 max-w-2xl w-full">
+              {/* Match selector */}
+              {showMatchSelector ? (
+                <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
+                  <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
+                  {availableMatches.length === 0 ? (
+                    <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                      {availableMatches.map((match) => (
+                        <button
+                          key={match.id}
+                          onClick={() => handleAssignMatch(match)}
+                          disabled={assigning}
+                          className="w-full text-left bg-[#003300] hover:bg-green-800/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-white font-semibold">
+                                {match?.naam_A} vs {match?.naam_B}
+                              </p>
+                              <p className="text-green-400 text-sm">
+                                {match.comp_naam} | {match.uitslag_code}
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-green-300 text-sm tabular-nums">
+                                {match.cartem_A} - {match.cartem_B}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowMatchSelector(false)}
+                    className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                </div>
+              ) : slideshowImages.length === 0 ? (
+                /* No slideshow - show traditional waiting screen */
+                <>
+                  <div className="mb-8">
+                    <svg className="w-24 h-24 md:w-32 md:h-32 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">Wachten op partij</h2>
+                  <p className="text-xl md:text-2xl text-green-400 mb-2">Tafel {tafelNr}</p>
+                  <p className="text-green-500 text-lg">
+                    Selecteer een wedstrijd om het scorebord te starten
+                  </p>
+                  {/* Match status indicator */}
+                  <div className="mt-8 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-8 py-4">
+                    <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+                    <span className="text-yellow-400 text-xl font-medium">Wachtend</span>
+                  </div>
+                  {/* Assign match button */}
+                  <div className="mt-8">
+                    <button
+                      onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
+                      className="bg-green-700 hover:bg-green-600 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg"
+                    >
+                      Wedstrijd toewijzen
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* Slideshow is playing - show minimal overlay with controls */
+                <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-20">
                   <button
                     onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
-                    className="bg-green-700 hover:bg-green-600 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg"
+                    className="bg-green-700/90 hover:bg-green-600 text-white px-6 py-3 rounded-xl text-base font-semibold transition-colors shadow-lg backdrop-blur-sm"
                   >
                     Wedstrijd toewijzen
                   </button>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       ) : (
@@ -959,18 +1106,18 @@ export default function ScoreboardPage() {
           <div className="grid grid-cols-2 gap-4 mb-4 md:mb-6">
             <div className={`text-left px-4 md:px-6 py-3 md:py-4 rounded-lg transition-opacity duration-300 ${turn === 1 ? 'opacity-100' : 'opacity-50'}`}>
               <h2 className={`text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold truncate ${turn === 1 ? 'text-white' : 'text-gray-400'}`}>
-                {match.naam_A}
+                {match?.naam_A}
               </h2>
               <p className="text-green-400 text-base md:text-lg mt-1">
-                Te maken: {match.cartem_A}
+                Te maken: {match?.cartem_A}
               </p>
             </div>
             <div className={`text-right px-4 md:px-6 py-3 md:py-4 rounded-lg transition-opacity duration-300 ${turn === 2 ? 'opacity-100' : 'opacity-50'}`}>
               <h2 className={`text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold truncate ${turn === 2 ? 'text-white' : 'text-gray-400'}`}>
-                {match.naam_B}
+                {match?.naam_B}
               </h2>
               <p className="text-green-400 text-base md:text-lg mt-1">
-                Te maken: {match.cartem_B}
+                Te maken: {match?.cartem_B}
               </p>
             </div>
           </div>
@@ -1035,7 +1182,7 @@ export default function ScoreboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={turn === 1 ? "M10 19l-7-7m0 0l7-7m-7 7h18" : "M14 5l7 7m0 0l-7 7m7-7H3"} />
                   </svg>
                   <span className="text-sm md:text-lg font-bold">
-                    {turn === 1 ? match.naam_A : match.naam_B}
+                    {turn === 1 ? match?.naam_A : match?.naam_B}
                   </span>
                 </div>
                 <p className="text-green-500 text-xs md:text-sm mt-1">aan de beurt</p>
