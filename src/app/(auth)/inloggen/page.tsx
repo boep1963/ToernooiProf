@@ -89,7 +89,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setLoginMethod('code'); setError(''); }}
-              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex-1 pb-3 pt-2 min-h-[44px] text-sm font-medium border-b-2 transition-colors ${
                 loginMethod === 'code'
                   ? 'border-green-700 text-green-700 dark:text-green-400 dark:border-green-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -100,7 +100,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setLoginMethod('email'); setError(''); }}
-              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex-1 pb-3 pt-2 min-h-[44px] text-sm font-medium border-b-2 transition-colors ${
                 loginMethod === 'email'
                   ? 'border-green-700 text-green-700 dark:text-green-400 dark:border-green-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -183,7 +183,7 @@ export default function LoginPage() {
           )}
 
           <div className="mt-6 text-center">
-            <a href="/registreren" className="text-sm text-green-700 dark:text-green-400 hover:underline">
+            <a href="/registreren" className="text-sm text-green-700 dark:text-green-400 hover:underline inline-flex items-center min-h-[44px]">
               Nog geen account? Registreer hier
             </a>
           </div>
