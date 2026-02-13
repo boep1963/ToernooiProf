@@ -142,3 +142,45 @@ NEXT STEPS:
 - Competition detail pages
 - Match scheduling
 - Score entry
+
+=== Session 5 - 2026-02-13 ===
+Agent: Theme Features (#60, #61)
+
+COMPLETED:
+- Feature #60: Light theme renders correctly ✅
+  - Toggled to light theme via ThemeToggle button
+  - White/light background (gray-50) applied across all areas
+  - Dark text on light backgrounds with good contrast (slate-900 headings, slate-600 body)
+  - Cards have subtle shadows and borders (shadow-sm + border-slate-200)
+  - All navigation elements visible (sidebar with active green state)
+  - Form elements properly styled (inputs with borders, placeholders, green buttons)
+  - Verified on login page (/inloggen) and dashboard (/dashboard)
+
+- Feature #61: Dark theme renders correctly ✅
+  - Toggled to dark theme via ThemeToggle button (moon/sun icons)
+  - Dark gray/slate background (slate-900 main, slate-800 cards)
+  - Light text for readability (white headings, slate-400 secondary text)
+  - Cards and borders adjusted for dark mode (slate-700 borders)
+  - All navigation visible in dark mode (light text, green active state)
+  - No text becomes invisible - all elements maintain proper contrast
+  - Verified on login page and dashboard with sidebar
+
+THEME SYSTEM ARCHITECTURE:
+- Tailwind CSS v4 with class-based dark mode: @custom-variant dark (&:is(.dark *))
+- ThemeContext provides theme state and toggle function
+- ThemeProvider wraps app in root layout (src/app/layout.tsx)
+- Theme persists in localStorage as 'clubmatch-theme'
+- 'dark' class toggled on <html> element
+- ThemeToggle component shows moon (light→dark) / sun (dark→light) icons
+- Toggle available on login page (top-right), dashboard header, and sidebar footer
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 12/148 features passing (8.1%)
+
+NEXT STEPS:
+- Member management UI (list, create, edit, delete)
+- Competition detail pages
+- Match scheduling
+- Score entry
+- Responsive layout features
