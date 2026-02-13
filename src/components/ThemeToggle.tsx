@@ -14,7 +14,7 @@ export default function ThemeToggle({ className = '' }: ThemeToggleProps) {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`p-2 rounded-lg transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 ${className}`}
+      className={`p-2 rounded-lg transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 min-w-[44px] min-h-[44px] flex items-center justify-center ${className}`}
       aria-label={theme === 'light' ? 'Schakel naar donker thema' : 'Schakel naar licht thema'}
       title={theme === 'light' ? 'Donker thema' : 'Licht thema'}
     >

@@ -1,18 +1,137 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { DISCIPLINES } from '@/types';
+
+interface CompetitionItem {
+  id: string;
+  comp_nr: number;
+  comp_naam: string;
+  comp_datum: string;
+  discipline: number;
+  punten_sys: number;
+}
+
+const PUNTEN_SYSTEMEN: Record<number, string> = {
+  1: 'WRV 2-1-0',
+  2: '10-punten',
+  3: 'Belgisch',
+};
 
 export default function CompetitiesPage() {
+  const { orgNummer } = useAuth();
+  const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchCompetitions = useCallback(async () => {
+    if (!orgNummer) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions`);
+      if (res.ok) {
+        const data = await res.json();
+        setCompetitions(data);
+      } else {
+        setError('Fout bij ophalen competities.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgNummer]);
+
+  useEffect(() => {
+    fetchCompetitions();
+  }, [fetchCompetitions]);
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-        Competities
-      </h1>
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-        <p className="text-slate-600 dark:text-slate-400">
-          Beheer uw biljartcompetities. Maak nieuwe competities aan, bekijk de stand en plan wedstrijden.
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Competities
+          </h1>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">
+            Beheer uw biljartcompetities
+          </p>
+        </div>
+        <Link
+          href="/competities/nieuw"
+          className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nieuwe competitie
+        </Link>
       </div>
+
+      {error && (
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
+          {error}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500 dark:text-slate-400">Competities laden...</p>
+        </div>
+      ) : competitions.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 mb-3">
+            Er zijn nog geen competities aangemaakt.
+          </p>
+          <Link
+            href="/competities/nieuw"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Eerste competitie aanmaken
+          </Link>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nr</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Puntensysteem</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              {competitions.map((comp) => (
+                <tr key={comp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{comp.comp_nr}</td>
+                  <td className="px-4 py-3">
+                    <Link href={`/competities/${comp.comp_nr}`} className="text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
+                      {comp.comp_naam}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{comp.comp_datum}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
