@@ -42,6 +42,9 @@ features.db
 firebase-debug.log
 .firebase/
 
+# Local database
+.data/
+
 # vercel
 .vercel
 
