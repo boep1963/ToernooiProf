@@ -35,6 +35,10 @@ interface ScoreboardData {
     turn: number;
     alert: number;
   } | null;
+  score_tablet?: {
+    serie_A: number;
+    serie_B: number;
+  } | null;
   competition: {
     comp_naam: string;
     discipline: number;
@@ -61,6 +65,11 @@ export default function ScoreboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Tablet-specific state for current series input
+  const [serieA, setSerieA] = useState(0);
+  const [serieB, setSerieB] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
   const fetchData = useCallback(async () => {
     if (!orgNummer || !tafelNr) return;
 
@@ -69,6 +78,11 @@ export default function ScoreboardPage() {
       if (!res.ok) throw new Error('Fout bij ophalen data');
       const result = await res.json();
       setData(result);
+      // Sync tablet series from server data
+      if (result.score_tablet) {
+        setSerieA(result.score_tablet.serie_A || 0);
+        setSerieB(result.score_tablet.serie_B || 0);
+      }
       setError(null);
     } catch (err) {
       console.error('Error fetching scoreboard:', err);
@@ -107,6 +121,71 @@ export default function ScoreboardPage() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  // Tablet score input handlers
+  const handleSerieIncrement = useCallback((player: 'A' | 'B') => {
+    if (!data?.match) return;
+    const match = data.match;
+    const score = data.score;
+
+    if (player === 'A') {
+      const currentTotal = (score?.car_A_gem || 0) + serieA + 1;
+      if (currentTotal <= match.cartem_A) {
+        setSerieA(prev => prev + 1);
+      }
+    } else {
+      const currentTotal = (score?.car_B_gem || 0) + serieB + 1;
+      if (currentTotal <= match.cartem_B) {
+        setSerieB(prev => prev + 1);
+      }
+    }
+  }, [data, serieA, serieB]);
+
+  const handleSerieDecrement = useCallback((player: 'A' | 'B') => {
+    if (player === 'A') {
+      setSerieA(prev => Math.max(0, prev - 1));
+    } else {
+      setSerieB(prev => Math.max(0, prev - 1));
+    }
+  }, []);
+
+  const handleSubmitScore = useCallback(async () => {
+    if (!orgNummer || !tafelNr || !data?.match || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const turn = data.score?.turn || 1;
+      const serie = turn === 1 ? serieA : serieB;
+
+      const res = await fetch(`/api/organizations/${orgNummer}/scoreboards/${tafelNr}/tablet-input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player: turn === 1 ? 'A' : 'B',
+          serie: serie,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Fout bij invoer');
+
+      // Reset current series and refresh data
+      if (turn === 1) setSerieA(0);
+      else setSerieB(0);
+
+      await fetchData();
+    } catch (err) {
+      console.error('Error submitting score:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [orgNummer, tafelNr, data, serieA, serieB, submitting, fetchData]);
+
+  const handleResetSerie = useCallback(() => {
+    if (!data?.score) return;
+    const turn = data.score.turn || 1;
+    if (turn === 1) setSerieA(0);
+    else setSerieB(0);
+  }, [data]);
 
   if (loading) {
     return (
@@ -150,9 +229,380 @@ export default function ScoreboardPage() {
   const maxBeurten = competition?.max_beurten || 0;
   const isLastTurn = maxBeurten > 0 && beurten >= maxBeurten - 1;
 
+  // "En nog" threshold: 3 for Driebanden, 5 for others
+  const discipline = competition?.discipline || 1;
+  const enNogThreshold = (discipline === 3 || discipline === 4) ? 3 : 5;
+
+  // Render tablet layout
+  if (isTablet) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-[#003300] text-white font-sans overflow-auto scoreboard-tablet">
+        {/* Fullscreen toggle button */}
+        <button
+          onClick={toggleFullscreen}
+          className="fixed top-3 right-3 z-[110] bg-green-700 hover:bg-green-600 active:bg-green-500 text-white p-4 rounded-xl transition-colors shadow-lg min-w-[48px] min-h-[48px]"
+          title={isFullscreen ? 'Verlaat volledig scherm' : 'Volledig scherm'}
+        >
+          {isFullscreen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+            </svg>
+          )}
+        </button>
+
+        {/* Tablet Header - player names */}
+        <div className="bg-[#002200] border-b-2 border-green-600 px-4 py-3">
+          <div className="flex items-center justify-between max-w-[1200px] mx-auto">
+            {/* Player A name */}
+            <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate flex-1 text-left ${turn === 1 ? 'text-white' : 'text-gray-400'}`}>
+              {hasMatch ? match.naam_A : 'Speler A'}
+            </h2>
+            {/* Center info */}
+            <div className="text-center px-4 flex-shrink-0">
+              <p className="text-green-400 text-sm font-semibold">Tafel {tafelNr}</p>
+              <p className="text-green-600 text-xs">{data.org_naam}</p>
+            </div>
+            {/* Player B name */}
+            <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate flex-1 text-right ${turn === 2 ? 'text-white' : 'text-gray-400'}`}>
+              {hasMatch ? match.naam_B : 'Speler B'}
+            </h2>
+          </div>
+        </div>
+
+        {!hasMatch ? (
+          /* Waiting state */
+          <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
+            <div className="text-center px-4">
+              <div className="mb-6">
+                <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
+              <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
+              <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
+              <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
+                <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+                <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Tablet active match layout */
+          <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-3 sm:py-4">
+            {/* Score boxes row */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-start mb-3 sm:mb-4">
+              {/* Player A score */}
+              <div className="flex flex-col items-center">
+                <div className="bg-red-600 rounded-2xl w-full aspect-[4/3] flex items-center justify-center shadow-2xl border-2 border-white/20 max-w-[300px]">
+                  <span className="text-5xl sm:text-6xl md:text-[7rem] font-bold leading-none tabular-nums">
+                    {score?.car_A_gem || 0}
+                  </span>
+                </div>
+                <p className="text-green-400 text-xs sm:text-sm mt-1">
+                  Te maken: {match.cartem_A}
+                </p>
+              </div>
+
+              {/* Center - turns counter */}
+              <div className="flex flex-col items-center gap-2 px-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <span className={`w-3 h-3 rounded-full ${data.status === 1 ? 'bg-green-400 animate-pulse' : data.status === 2 ? 'bg-blue-400' : 'bg-yellow-400'}`} />
+                  <span className={`text-xs ${data.status === 1 ? 'text-green-400' : data.status === 2 ? 'text-blue-400' : 'text-yellow-400'}`}>
+                    {data.status === 1 ? 'Bezig' : data.status === 2 ? 'Afgelopen' : 'Wachtend'}
+                  </span>
+                </div>
+                <p className="text-green-300 text-xs">Beurten</p>
+                <div className="bg-red-600 rounded-2xl w-24 h-20 sm:w-32 sm:h-24 md:w-40 md:h-32 flex items-center justify-center shadow-2xl border-2 border-white/20">
+                  <span className="text-4xl sm:text-5xl md:text-7xl font-bold tabular-nums">
+                    {beurten}
+                  </span>
+                </div>
+                {maxBeurten > 0 && (
+                  <p className="text-green-500 text-xs">Max {maxBeurten}</p>
+                )}
+              </div>
+
+              {/* Player B score */}
+              <div className="flex flex-col items-center">
+                <div className="bg-red-600 rounded-2xl w-full aspect-[4/3] flex items-center justify-center shadow-2xl border-2 border-white/20 max-w-[300px]">
+                  <span className="text-5xl sm:text-6xl md:text-[7rem] font-bold leading-none tabular-nums">
+                    {score?.car_B_gem || 0}
+                  </span>
+                </div>
+                <p className="text-green-400 text-xs sm:text-sm mt-1">
+                  Te maken: {match.cartem_B}
+                </p>
+              </div>
+            </div>
+
+            {/* "En nog" indicators and Highest Series row */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-start mb-3 sm:mb-4">
+              {/* Player A - En nog + HS */}
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
+                {restA <= enNogThreshold && restA > 0 ? (
+                  <div className="bg-yellow-500 text-red-700 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex flex-col items-center justify-center border-3 border-white shadow-lg flex-shrink-0">
+                    <span className="text-[9px] sm:text-xs font-bold leading-none">En nog</span>
+                    <span className="text-2xl sm:text-3xl font-bold leading-none">{restA}</span>
+                  </div>
+                ) : <div className="w-16 sm:w-20" />}
+                <div className="text-center">
+                  <p className="text-green-300 text-xs font-bold">HS</p>
+                  <div className="bg-[#002200] border-2 border-green-600 rounded-lg w-16 h-12 sm:w-20 sm:h-16 flex items-center justify-center">
+                    <span className="text-xl sm:text-2xl font-bold tabular-nums">{score?.hs_A || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Center - turn indicator */}
+              <div className="text-center">
+                <div className="flex items-center gap-2 justify-center text-green-400">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={turn === 1 ? "M10 19l-7-7m0 0l7-7m-7 7h18" : "M14 5l7 7m0 0l-7 7m7-7H3"} />
+                  </svg>
+                  <span className="text-xs sm:text-sm font-bold truncate max-w-[100px]">
+                    {turn === 1 ? match.naam_A : match.naam_B}
+                  </span>
+                </div>
+                <p className="text-green-500 text-[10px] sm:text-xs">aan de beurt</p>
+              </div>
+
+              {/* Player B - En nog + HS */}
+              <div className="flex items-center justify-center gap-3 sm:gap-4">
+                <div className="text-center">
+                  <p className="text-green-300 text-xs font-bold">HS</p>
+                  <div className="bg-[#002200] border-2 border-green-600 rounded-lg w-16 h-12 sm:w-20 sm:h-16 flex items-center justify-center">
+                    <span className="text-xl sm:text-2xl font-bold tabular-nums">{score?.hs_B || 0}</span>
+                  </div>
+                </div>
+                {restB <= enNogThreshold && restB > 0 ? (
+                  <div className="bg-yellow-500 text-red-700 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex flex-col items-center justify-center border-3 border-white shadow-lg flex-shrink-0">
+                    <span className="text-[9px] sm:text-xs font-bold leading-none">En nog</span>
+                    <span className="text-2xl sm:text-3xl font-bold leading-none">{restB}</span>
+                  </div>
+                ) : <div className="w-16 sm:w-20" />}
+              </div>
+            </div>
+
+            {/* Current series display */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-center mb-3 sm:mb-4">
+              {/* Player A current series */}
+              <div className="text-center">
+                <p className="text-green-300 text-xs sm:text-sm font-bold mb-1">Huidige serie</p>
+                <div className="bg-black border-2 border-white rounded-xl w-20 h-16 sm:w-28 sm:h-20 md:w-32 md:h-24 flex items-center justify-center mx-auto">
+                  <span className="text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums">
+                    {turn === 1 ? serieA : 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Center spacer */}
+              <div className="w-24 sm:w-32 md:w-40" />
+
+              {/* Player B current series */}
+              <div className="text-center">
+                <p className="text-green-300 text-xs sm:text-sm font-bold mb-1">Huidige serie</p>
+                <div className="bg-black border-2 border-white rounded-xl w-20 h-16 sm:w-28 sm:h-20 md:w-32 md:h-24 flex items-center justify-center mx-auto">
+                  <span className="text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums">
+                    {turn === 2 ? serieB : 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tablet control buttons */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-start">
+              {/* Player A controls */}
+              <div className={`flex flex-col items-center gap-3 sm:gap-4 ${turn !== 1 ? 'opacity-30 pointer-events-none' : ''}`}>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  {/* Decrement button */}
+                  <button
+                    onClick={() => handleSerieDecrement('A')}
+                    disabled={turn !== 1 || serieA <= 0}
+                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
+                    aria-label="Min 1 voor speler A"
+                  >
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">- 1</span>
+                  </button>
+
+                  {/* Submit/Invoer button */}
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={turn !== 1 || submitting}
+                    className="bg-green-700 hover:bg-green-600 active:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white border-2 border-green-400 rounded-xl min-w-[80px] min-h-[80px] sm:min-w-[110px] sm:min-h-[110px] md:min-w-[120px] md:min-h-[130px] flex flex-col items-center justify-center transition-colors shadow-lg touch-manipulation select-none"
+                    aria-label="Invoer score speler A"
+                  >
+                    {submitting ? (
+                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <svg className="w-8 h-8 sm:w-10 sm:h-10 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm sm:text-base md:text-lg font-bold">Invoer</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Increment button */}
+                  <button
+                    onClick={() => handleSerieIncrement('A')}
+                    disabled={turn !== 1}
+                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
+                    aria-label="Plus 1 voor speler A"
+                  >
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">+ 1</span>
+                  </button>
+                </div>
+
+                {/* Klaar and Herstel row */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={turn !== 1 || submitting}
+                    className="bg-green-800 hover:bg-green-700 active:bg-green-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-green-500"
+                    aria-label="Beurt bevestigen speler A"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm sm:text-base font-semibold">Klaar</span>
+                  </button>
+                  <button
+                    onClick={handleResetSerie}
+                    disabled={turn !== 1}
+                    className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-gray-500"
+                    aria-label="Serie herstellen speler A"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span className="text-sm sm:text-base font-semibold">Herstel</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Center - last turn warning */}
+              <div className="flex flex-col items-center justify-center w-24 sm:w-32 md:w-40 pt-4">
+                {isLastTurn && (
+                  <div className="bg-red-600 rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-center animate-pulse">
+                    <p className="text-yellow-400 text-xs sm:text-sm md:text-base font-bold leading-tight">LAATSTE</p>
+                    <p className="text-yellow-400 text-xs sm:text-sm md:text-base font-bold leading-tight">BEURT!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Player B controls */}
+              <div className={`flex flex-col items-center gap-3 sm:gap-4 ${turn !== 2 ? 'opacity-30 pointer-events-none' : ''}`}>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  {/* Decrement button */}
+                  <button
+                    onClick={() => handleSerieDecrement('B')}
+                    disabled={turn !== 2 || serieB <= 0}
+                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
+                    aria-label="Min 1 voor speler B"
+                  >
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">- 1</span>
+                  </button>
+
+                  {/* Submit/Invoer button */}
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={turn !== 2 || submitting}
+                    className="bg-green-700 hover:bg-green-600 active:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white border-2 border-green-400 rounded-xl min-w-[80px] min-h-[80px] sm:min-w-[110px] sm:min-h-[110px] md:min-w-[120px] md:min-h-[130px] flex flex-col items-center justify-center transition-colors shadow-lg touch-manipulation select-none"
+                    aria-label="Invoer score speler B"
+                  >
+                    {submitting ? (
+                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <svg className="w-8 h-8 sm:w-10 sm:h-10 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm sm:text-base md:text-lg font-bold">Invoer</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Increment button */}
+                  <button
+                    onClick={() => handleSerieIncrement('B')}
+                    disabled={turn !== 2}
+                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
+                    aria-label="Plus 1 voor speler B"
+                  >
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">+ 1</span>
+                  </button>
+                </div>
+
+                {/* Klaar and Herstel row */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={turn !== 2 || submitting}
+                    className="bg-green-800 hover:bg-green-700 active:bg-green-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-green-500"
+                    aria-label="Beurt bevestigen speler B"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm sm:text-base font-semibold">Klaar</span>
+                  </button>
+                  <button
+                    onClick={handleResetSerie}
+                    disabled={turn !== 2}
+                    className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-gray-500"
+                    aria-label="Serie herstellen speler B"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span className="text-sm sm:text-base font-semibold">Herstel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Last turn warning banner */}
+            {isLastTurn && (
+              <div className="mt-4 bg-red-700/80 border-2 border-yellow-400 rounded-xl p-3 text-center animate-pulse">
+                <p className="text-yellow-400 text-lg sm:text-xl md:text-2xl font-bold">LAATSTE BEURT!</p>
+              </div>
+            )}
+
+            {/* Max turns info */}
+            {!isLastTurn && maxBeurten > 0 && (
+              <div className="mt-3 text-center">
+                <p className="text-green-500 text-sm">Max {maxBeurten} beurten</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Back to overview link - tablet sized */}
+        <div className="fixed bottom-3 left-3 z-[110]">
+          <a
+            href="/scoreborden"
+            className="bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 text-white px-5 py-3 rounded-xl text-sm transition-colors inline-flex items-center gap-2 backdrop-blur-sm min-h-[48px] touch-manipulation"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Terug
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Mouse/display-only layout (original)
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-[#003300] text-white font-sans overflow-auto ${isTablet ? 'scoreboard-tablet' : 'scoreboard-mouse'}`}
+      className={`fixed inset-0 z-[100] bg-[#003300] text-white font-sans overflow-auto scoreboard-mouse`}
     >
       {/* Fullscreen toggle button */}
       <button
@@ -187,7 +637,7 @@ export default function ScoreboardPage() {
           <div className="text-right">
             <p className="text-green-300 text-sm">{data.org_naam}</p>
             <p className="text-green-500 text-xs">
-              {isTablet ? '📱 Tablet modus' : '🖱️ Muis modus'}
+              🖱️ Muis modus
             </p>
           </div>
         </div>
@@ -216,7 +666,7 @@ export default function ScoreboardPage() {
           </div>
         </div>
       ) : (
-        /* Active match scoreboard */
+        /* Active match scoreboard - mouse mode */
         <div className="max-w-[1860px] mx-auto px-4 md:px-6 py-4 md:py-6">
           {/* Player names row */}
           <div className="grid grid-cols-2 gap-4 mb-4 md:mb-6">
@@ -255,7 +705,7 @@ export default function ScoreboardPage() {
                 </div>
               </div>
               {/* Rest indicator */}
-              {restA <= 5 && restA > 0 && (
+              {restA <= enNogThreshold && restA > 0 && (
                 <div className="mt-3 bg-yellow-500 text-red-700 rounded-full w-28 h-28 md:w-32 md:h-32 flex flex-col items-center justify-center border-4 border-white shadow-lg">
                   <span className="text-xs md:text-sm font-bold">En nog:</span>
                   <span className="text-4xl md:text-5xl font-bold">{restA}</span>
@@ -320,7 +770,7 @@ export default function ScoreboardPage() {
                 </div>
               </div>
               {/* Rest indicator */}
-              {restB <= 5 && restB > 0 && (
+              {restB <= enNogThreshold && restB > 0 && (
                 <div className="mt-3 bg-yellow-500 text-red-700 rounded-full w-28 h-28 md:w-32 md:h-32 flex flex-col items-center justify-center border-4 border-white shadow-lg">
                   <span className="text-xs md:text-sm font-bold">En nog:</span>
                   <span className="text-4xl md:text-5xl font-bold">{restB}</span>
