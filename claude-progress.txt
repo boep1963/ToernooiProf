@@ -1,0 +1,55 @@
+============================================
+ClubMatch - Development Progress Notes
+============================================
+
+=== Session 2 - 2026-02-13 ===
+Agent: Infrastructure Features (#1, #2, #3)
+
+COMPLETED:
+- Feature #1: Firestore connection established ✅
+  - Created persistent database layer (src/lib/db.ts) with dual backend:
+    - Local JSON-file storage for development (no Firebase credentials needed)
+    - Firestore adapter for production (when FIREBASE_SERVICE_ACCOUNT_KEY is set)
+  - Health endpoint (GET /api/health) returns database status, collections, and type
+  - All 11 collections initialized on first health check
+
+- Feature #2: Firestore collections and document structure ✅
+  - All 11 required collections verified with correct document structure:
+    organizations (15 fields), competitions (12), members (10),
+    competition_players (13), matches (12), results (17), tables (5),
+    device_config (3), score_helpers (12), score_helpers_tablet (15),
+    news_reactions (4)
+  - Created /api/verify-collections endpoint for automated verification
+  - All field types match app_spec.txt schema
+
+- Feature #3: Data persists across server restart ✅
+  - Created RESTART_TEST member via API
+  - Fully stopped server (verified port 3000 free)
+  - Restarted server
+  - Confirmed RESTART_TEST data survived restart
+  - Data stored as JSON files in .data/ directory (on disk)
+  - Cleaned up test data after verification
+
+API ENDPOINTS CREATED:
+- GET /api/health - Database health check
+- GET /api/verify-collections - Collection structure verification
+- GET/PUT/DELETE /api/organizations/:orgNr - Organization CRUD
+- GET/POST /api/organizations/:orgNr/members - Member list/create
+- GET/PUT/DELETE /api/organizations/:orgNr/members/:memberNr - Member detail CRUD
+- Auth endpoints (login, login-code, logout, session) - scaffolded
+
+KEY ARCHITECTURE DECISIONS:
+- Database layer uses Proxy pattern for lazy initialization
+- Local development uses JSON files in .data/ directory
+- Production can switch to Firestore by setting FIREBASE_SERVICE_ACCOUNT_KEY
+- Both backends share identical CollectionRef/DocumentRef/Query interface
+- npm registry was blocked so no additional packages could be installed
+
+CURRENT STATUS: 3/148 features passing (2.0%)
+
+NEXT STEPS:
+- Feature #4: No mock data patterns in codebase
+- Feature #5: Backend API queries real database
+- Authentication system (login page, session management)
+- Competition management
+- Member management UI
