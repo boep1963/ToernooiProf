@@ -436,3 +436,53 @@ NEXT STEPS:
 - Score entry system refinements
 - Standings display
 - Responsive layout features
+
+=== Session 13 - 2026-02-13 ===
+Agent: Navigation Features (#45, #115, #119)
+
+COMPLETED:
+- Feature #45: Competition sub-navigation works ✅
+  - All 7 tabs verified: Overzicht, Spelers, Planning, Matrix, Uitslagen, Stand, Periodes
+  - Each tab loads correct page with proper content
+  - CompetitionSubNav component with responsive tab navigation and breadcrumbs
+  - Active tab highlighted with green border and background
+  - Zero console errors across all tab navigations
+
+- Feature #115: Active competition remembered across pages ✅
+  - Created CompetitionContext with sessionStorage persistence
+  - CompetitionProvider wraps dashboard layout
+  - CompetitionSubNav sets active competition on mount
+  - Competitions list shows "Laatst bekeken" banner with "Doorgaan" button
+  - Active competition row highlighted in table
+  - Tested: viewed competition → Stand → Planning → Dashboard → back to Competities
+  - "Testcompetitie 2026" remembered and displayed in banner
+  - "Doorgaan" button navigates back to the active competition
+
+- Feature #119: Breadcrumbs or back navigation within competitions ✅
+  - Breadcrumb navigation: Competities > [Competition Name]
+  - "Competities" links to /competities (list)
+  - Competition name links to /competities/:id (overview)
+  - Verified from /competities/:id/spelers - breadcrumb works
+  - Verified from /competities/:id/uitslagen - breadcrumb works
+  - Both navigation paths confirmed working with zero console errors
+
+NEW FILES:
+- src/context/CompetitionContext.tsx - Competition state context with sessionStorage
+
+MODIFIED FILES:
+- src/components/CompetitionSubNav.tsx - Added active competition tracking
+- src/app/(dashboard)/competities/page.tsx - Added "Laatst bekeken" banner and row highlighting
+- src/app/(dashboard)/layout.tsx - Added CompetitionProvider wrapper
+
+NOTE: Server now connects to real Firestore (not local .data/ JSON files).
+Database type: firestore. Test data (competition, members, players) created in Firestore.
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 50/148 features passing (33.8%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- More competition workflow features
+- Score entry system refinements
+- Responsive layout features
