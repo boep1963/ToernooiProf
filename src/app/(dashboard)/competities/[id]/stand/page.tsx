@@ -43,7 +43,8 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 export default function CompetitieStandPage() {
   const params = useParams();
   const router = useRouter();
-  const { orgNummer, orgNaam } = useAuth();
+  const { orgNummer, organization } = useAuth();
+  const orgNaam = organization?.org_naam || '';
 
   const compNr = parseInt(params.id as string, 10);
 
