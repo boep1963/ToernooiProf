@@ -396,34 +396,107 @@ export default function ScoreboardPage() {
         </div>
 
         {!hasMatch ? (
-          /* Waiting state */
+          /* Waiting state - tablet */
           <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
-            <div className="text-center px-4">
-              <div className="mb-6">
-                <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
-              <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
-              <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
-              <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
-                <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
-                <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
-              </div>
-              <div className="mt-6">
-                <button
-                  onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
-                  className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
-                >
-                  Wedstrijd toewijzen
-                </button>
-              </div>
+            <div className="text-center px-4 max-w-2xl w-full">
+              {showMatchSelector ? (
+                <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
+                  <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
+                  {availableMatches.length === 0 ? (
+                    <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                      {availableMatches.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => handleAssignMatch(m)}
+                          disabled={assigning}
+                          className="w-full text-left bg-[#003300] hover:bg-green-800/50 active:bg-green-700/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50 touch-manipulation min-h-[48px]"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-white font-semibold">
+                                {m.naam_A} vs {m.naam_B}
+                              </p>
+                              <p className="text-green-400 text-sm">
+                                {m.comp_naam} | {m.uitslag_code}
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-green-300 text-sm tabular-nums">
+                                {m.cartem_A} - {m.cartem_B}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowMatchSelector(false)}
+                    className="mt-4 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-3 rounded-xl transition-colors touch-manipulation min-h-[48px]"
+                  >
+                    Annuleren
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
+                  <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
+                  <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
+                  <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
+                    <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+                    <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
+                  </div>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
+                      className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
+                    >
+                      Wedstrijd toewijzen
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
           /* Tablet active match layout */
           <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-3 sm:py-4">
+            {/* Start match button for tablet - shown when assigned but not started */}
+            {data.status === 0 && (
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-4 sm:p-6 text-center w-full max-w-md">
+                  <p className="text-green-300 text-base sm:text-lg mb-2">Wedstrijd toegewezen</p>
+                  <p className="text-white text-xl sm:text-2xl font-bold mb-1">
+                    {match?.naam_A} vs {match?.naam_B}
+                  </p>
+                  <p className="text-green-400 text-sm mb-4">
+                    Doel: {match?.cartem_A} - {match?.cartem_B}
+                  </p>
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={handleStartMatch}
+                      disabled={starting}
+                      className="bg-green-600 hover:bg-green-500 active:bg-green-400 disabled:bg-green-800 text-white px-8 py-4 rounded-xl text-xl font-bold transition-colors shadow-lg touch-manipulation min-h-[48px]"
+                    >
+                      {starting ? 'Starten...' : 'Start partij'}
+                    </button>
+                    <button
+                      onClick={handleClearTable}
+                      className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-4 rounded-xl text-lg transition-colors touch-manipulation min-h-[48px]"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Score boxes row */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-start mb-3 sm:mb-4">
               {/* Player A score */}
