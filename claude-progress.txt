@@ -243,3 +243,49 @@ NEXT STEPS:
 - Score entry system
 - Standings display
 - Responsive layout features
+
+=== Session 7 - 2026-02-13 ===
+Agent: Search Features (#23, #111, #86)
+
+COMPLETED:
+- Feature #23: Search members by name ✅
+  - Added search input field on /leden page above member table
+  - Search icon (magnifying glass) on left, clear (X) button on right
+  - Case-insensitive partial matching across first name, tussenvoegsel, and last name
+  - Filters update instantly as user types
+  - Status bar shows "X van Y leden gevonden" when filtering
+  - Clear button resets to show all members
+  - "Geen leden gevonden" empty state with clear link when no matches
+  - Verified: "Jan" → 3 results, "Gro" → 1 result (Pieter de Groot), "Berg" → 2 results
+
+- Feature #111: Filter and search reset on page change ✅
+  - Search state resets when navigating away and back via usePathname() + useEffect
+  - Tested: typed "Karel" in search → navigated to Dashboard → returned to Leden
+  - Search field was empty and all 6 members were shown
+  - Uses Next.js usePathname hook to detect navigation changes
+
+- Feature #86: Search with special characters safe ✅
+  - Uses String.includes() instead of regex, inherently safe against special chars
+  - Tested: "(with[special*chars+$^" → no error, shows empty state
+  - Tested: "<script>alert(1)</script>" → no XSS, displayed as safe text
+  - Tested: "O'Brien" with apostrophe → no error, shows empty state
+  - Tested: 200-character long string → no crash, graceful empty state
+  - Zero console errors for all special character tests
+
+IMPLEMENTATION DETAILS:
+- Search is client-side filtering using useMemo for performance
+- getMemberFullName() helper builds full name from spa_vnaam, spa_tv, spa_anaam
+- No regex used → no escaping needed → inherently safe
+- Search input has proper aria-label and placeholder in Dutch
+- Dark mode fully supported for search UI elements
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 18/148 features passing (12.2%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- Match scheduling and planning
+- Score entry system
+- Standings display
+- Responsive layout features
