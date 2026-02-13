@@ -84,3 +84,61 @@ NEXT STEPS:
 - Authentication system (login page, session management)
 - Competition management
 - Member management UI
+
+=== Session 4 - 2026-02-13 ===
+Agent: Auth & Competition Features (#9, #10, #26)
+
+COMPLETED:
+- Feature #9: Login page displays with dual authentication options ✅
+  - Login page at /inloggen already existed with dual auth tabs
+  - "Inlogcode" tab with code input field and submit button
+  - "E-mail / Wachtwoord" tab with email + password fields and submit button
+  - All labels in Dutch, zero console errors
+  - Dark mode support via ThemeToggle component
+
+- Feature #10: User can login with legacy code ✅
+  - Entered login code "1205_AAY@#" for test organization (org 1205)
+  - POST /api/auth/login-code validates code against organizations collection
+  - Sets httpOnly session cookie (clubmatch-session) with org data
+  - Redirects to /dashboard after successful login
+  - Dashboard shows "Welkom bij ClubMatch, Test Biljartvereniging!"
+  - Session persists across page reloads (AuthContext checks /api/auth/session)
+  - Dashboard layout with sidebar, auth protection, loading state
+
+- Feature #26: Create new competition with all config ✅
+  - Created competition API: GET/POST at /api/organizations/:orgNr/competitions
+  - Created competition creation form at /competities/nieuw with all fields:
+    - Competitienaam, Datum, Discipline (5 options), Puntensysteem (3 options),
+      Moyenne formule (7 options), Minimale caramboles, Maximale beurten,
+      Vaste beurten (Ja/Nee), Naam sortering (Voornaam/Achternaam)
+  - Updated competition list page with table display (Nr, Naam, Datum, Discipline, Puntensysteem)
+  - Auto-generates sequential comp_nr per organization
+  - Dutch success notification after creation, auto-redirect to list
+  - Data persists across server restart (verified)
+  - Empty state with "Eerste competitie aanmaken" link
+
+NEW API ENDPOINTS:
+- GET /api/organizations/:orgNr/competitions - List competitions
+- POST /api/organizations/:orgNr/competitions - Create competition
+
+NEW PAGES:
+- /competities/nieuw - Competition creation form
+- /competities - Competition list (updated with table view)
+- /dashboard - Dashboard page (already existed, verified working)
+- Dashboard layout with auth protection (already existed, verified working)
+
+TEST ORGANIZATION DATA:
+- org_nummer: 1205
+- org_code: "1205_AAY@#"
+- org_naam: "Test Biljartvereniging"
+- org_wl_naam: "Jan de Vries"
+- org_wl_email: "jan@test.nl"
+- aantal_tafels: 4
+
+CURRENT STATUS: 8/148 features passing (5.4%)
+
+NEXT STEPS:
+- Member management UI (list, create, edit, delete)
+- Competition detail pages
+- Match scheduling
+- Score entry
