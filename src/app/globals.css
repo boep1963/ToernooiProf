@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode (toggled via .dark on <html>) */
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --color-accent: #2D5016;
   --color-accent-light: #3d6b20;

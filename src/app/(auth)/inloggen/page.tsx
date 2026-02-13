@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
@@ -61,9 +62,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 relative">
+      {/* Theme toggle in top-right corner */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">CM</span>
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             ClubMatch
           </h1>
@@ -72,7 +83,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 p-8 border border-slate-200 dark:border-slate-700">
           {/* Login method tabs */}
           <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
             <button
@@ -100,7 +111,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div role="alert" className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">
+            <div role="alert" className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
               {error}
             </div>
           )}
@@ -119,13 +130,13 @@ export default function LoginPage() {
                   placeholder="Bijv. 1205_AAY@#"
                   required
                   aria-required="true"
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors"
+                className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}
               </button>
@@ -144,7 +155,7 @@ export default function LoginPage() {
                   placeholder="uw@email.nl"
                   required
                   aria-required="true"
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
                 />
               </div>
               <div>
@@ -158,13 +169,13 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   aria-required="true"
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors"
+                className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}
               </button>
