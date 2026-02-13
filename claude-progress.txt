@@ -289,3 +289,51 @@ NEXT STEPS:
 - Score entry system
 - Standings display
 - Responsive layout features
+
+=== Session 8 - 2026-02-13 ===
+Agent: Member Delete & Count Features (#22, #25, #77)
+
+COMPLETED:
+- Feature #22: Delete member with confirmation ✅
+  - Delete flow already implemented in /leden page
+  - Created test member "DELETE_TEST MEMBER" via UI
+  - Clicked "Verwijderen" → confirmation dialog with "Bevestigen" and "Annuleren" (Dutch)
+  - Confirmed deletion → member removed from list (7 → 6)
+  - Verified deletion persisted across server restart via API
+  - Zero console errors, no mock data patterns
+
+- Feature #25: Member count displays correctly ✅
+  - Member list shows "X leden gevonden" footer that updates dynamically
+  - Started at 6 members, created COUNT_TEST MEMBER → count became 7
+  - Deleted COUNT_TEST MEMBER → count returned to 6
+  - Count updates immediately in the UI without page refresh
+  - When filtering with search, shows "X van Y leden gevonden"
+
+- Feature #77: Deleting member removes from competitions ✅
+  - Added cascade delete logic to DELETE /api/organizations/:orgNr/members/:memberNr
+  - When a member is deleted, all competition_players records for that member are also deleted
+  - Test flow:
+    1. Created CASCADE_TEST MEMBER (#7) with Libre moyenne 2.500
+    2. Added to Wintercompetitie 2026 (5 players, caramboles: 63)
+    3. Verified CASCADE_TEST visible in competition player list
+    4. Deleted member from /leden page via UI
+    5. Navigated to competition players → CASCADE_TEST gone (4 players)
+    6. API confirmed no orphaned data (count:4, no CASCADE_TEST)
+  - Server logs cascade delete count for debugging
+
+CODE CHANGES:
+- Modified: src/app/api/organizations/[orgNr]/members/[memberNr]/route.ts
+  - DELETE handler now cascade-deletes competition_players records for the deleted member
+  - Queries competition_players by spc_org and spc_nummer, deletes all matches
+  - Response includes cascade_deleted_players count
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 24/148 features passing (16.2%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- Match scheduling and planning
+- Score entry system
+- Standings display
+- Responsive layout features

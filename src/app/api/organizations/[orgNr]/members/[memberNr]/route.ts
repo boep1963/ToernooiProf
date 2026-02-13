@@ -145,10 +145,28 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const doc = snapshot.docs[0];
     await doc.ref.delete();
 
+    // Cascade delete: remove member from all competition_players
+    console.log('[MEMBER] Cascade deleting competition_players for member:', memberNumber, 'in org:', orgNumber);
+    const playerSnapshot = await db.collection('competition_players')
+      .where('spc_org', '==', orgNumber)
+      .where('spc_nummer', '==', memberNumber)
+      .get();
+
+    let deletedPlayerCount = 0;
+    for (const playerDoc of playerSnapshot.docs) {
+      await playerDoc.ref.delete();
+      deletedPlayerCount++;
+    }
+
+    if (deletedPlayerCount > 0) {
+      console.log(`[MEMBER] Cascade deleted ${deletedPlayerCount} competition_players entries for member ${memberNumber}`);
+    }
+
     console.log('[MEMBER] Member deleted successfully');
     return NextResponse.json({
       message: 'Lid succesvol verwijderd',
       spa_nummer: memberNumber,
+      cascade_deleted_players: deletedPlayerCount,
     });
   } catch (error) {
     console.error('[MEMBER] Error deleting member:', error);
