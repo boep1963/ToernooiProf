@@ -121,3 +121,176 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+/**
+ * PUT /api/organizations/:orgNr/scoreboards/:tableNr
+ * Update table status - assign match, start/stop match
+ *
+ * Body options:
+ * - { action: 'assign', comp_nr, uitslag_code } - Assign a match to table (status=0 waiting)
+ * - { action: 'start' } - Start the match (status=1 started)
+ * - { action: 'finish' } - Finish the match (status=2 result)
+ * - { action: 'clear' } - Clear the table (remove assignment)
+ */
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, tableNr } = await params;
+    const orgNummer = parseInt(orgNr, 10);
+    const tafelNr = parseInt(tableNr, 10);
+
+    if (isNaN(orgNummer) || isNaN(tafelNr)) {
+      return NextResponse.json(
+        { error: 'Ongeldige parameters.' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const action = body.action;
+
+    console.log(`[SCOREBOARD] PUT action:${action} for org:${orgNummer} table:${tafelNr}`);
+
+    // Find existing table record
+    const tableSnapshot = await db.collection('tables')
+      .where('org_nummer', '==', orgNummer)
+      .where('tafel_nr', '==', tafelNr)
+      .get();
+
+    if (action === 'assign') {
+      // Assign a match to this table
+      const compNr = Number(body.comp_nr);
+      const uitslagCode = String(body.uitslag_code || '');
+
+      if (!compNr || !uitslagCode) {
+        return NextResponse.json(
+          { error: 'comp_nr en uitslag_code zijn verplicht' },
+          { status: 400 }
+        );
+      }
+
+      const tableData = {
+        org_nummer: orgNummer,
+        comp_nr: compNr,
+        u_code: uitslagCode,
+        tafel_nr: tafelNr,
+        status: 0, // waiting
+      };
+
+      if (tableSnapshot.empty) {
+        // Create new table record
+        const docRef = await db.collection('tables').add(tableData);
+        console.log(`[SCOREBOARD] Created table record: ${docRef.id}`);
+        return NextResponse.json({
+          id: docRef.id,
+          ...tableData,
+          message: 'Wedstrijd toegewezen aan tafel',
+        });
+      } else {
+        // Update existing table record
+        const docRef = tableSnapshot.docs[0].ref;
+        await docRef.update(tableData);
+        console.log(`[SCOREBOARD] Updated table record: ${tableSnapshot.docs[0].id}`);
+        return NextResponse.json({
+          id: tableSnapshot.docs[0].id,
+          ...tableData,
+          message: 'Wedstrijd toegewezen aan tafel',
+        });
+      }
+    } else if (action === 'start') {
+      // Start the match (status 0 → 1)
+      if (tableSnapshot.empty) {
+        return NextResponse.json(
+          { error: 'Geen wedstrijd toegewezen aan deze tafel' },
+          { status: 400 }
+        );
+      }
+
+      const docRef = tableSnapshot.docs[0].ref;
+      await docRef.update({ status: 1 });
+      const tableData = tableSnapshot.docs[0].data();
+
+      // Initialize score_helpers record for this match
+      if (tableData?.u_code && tableData?.comp_nr) {
+        const existingScore = await db.collection('score_helpers')
+          .where('org_nummer', '==', orgNummer)
+          .where('comp_nr', '==', tableData.comp_nr)
+          .where('uitslag_code', '==', tableData.u_code)
+          .get();
+
+        if (existingScore.empty) {
+          // Get match data for initial caramboles targets
+          const matchSnapshot = await db.collection('matches')
+            .where('org_nummer', '==', orgNummer)
+            .where('comp_nr', '==', tableData.comp_nr)
+            .where('uitslag_code', '==', tableData.u_code)
+            .limit(1)
+            .get();
+
+          const matchData = matchSnapshot.empty ? null : matchSnapshot.docs[0].data();
+
+          await db.collection('score_helpers').add({
+            org_nummer: orgNummer,
+            comp_nr: tableData.comp_nr,
+            uitslag_code: tableData.u_code,
+            car_A_tem: matchData?.cartem_A || 0,
+            car_A_gem: 0,
+            hs_A: 0,
+            brt: 0,
+            car_B_tem: matchData?.cartem_B || 0,
+            car_B_gem: 0,
+            hs_B: 0,
+            turn: 1, // Player A starts
+            alert: 0,
+          });
+          console.log('[SCOREBOARD] Initialized score_helpers for match');
+        }
+      }
+
+      console.log(`[SCOREBOARD] Match started on table ${tafelNr}`);
+      return NextResponse.json({
+        id: tableSnapshot.docs[0].id,
+        status: 1,
+        message: 'Partij gestart',
+      });
+    } else if (action === 'finish') {
+      // Finish the match (status → 2)
+      if (tableSnapshot.empty) {
+        return NextResponse.json(
+          { error: 'Geen wedstrijd op deze tafel' },
+          { status: 400 }
+        );
+      }
+
+      const docRef = tableSnapshot.docs[0].ref;
+      await docRef.update({ status: 2 });
+
+      console.log(`[SCOREBOARD] Match finished on table ${tafelNr}`);
+      return NextResponse.json({
+        id: tableSnapshot.docs[0].id,
+        status: 2,
+        message: 'Partij afgelopen',
+      });
+    } else if (action === 'clear') {
+      // Clear the table
+      if (!tableSnapshot.empty) {
+        await tableSnapshot.docs[0].ref.delete();
+        console.log(`[SCOREBOARD] Table ${tafelNr} cleared`);
+      }
+      return NextResponse.json({
+        status: 0,
+        message: 'Tafel leeggemaakt',
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Ongeldige actie. Gebruik: assign, start, finish, clear' },
+        { status: 400 }
+      );
+    }
+  } catch (error) {
+    console.error('[SCOREBOARD] Error updating table:', error);
+    return NextResponse.json(
+      { error: 'Fout bij bijwerken tafel', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}

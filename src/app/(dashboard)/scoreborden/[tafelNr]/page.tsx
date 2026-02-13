@@ -56,6 +56,18 @@ const DISCIPLINE_NAMES: Record<number, string> = {
   5: 'Kader',
 };
 
+interface AvailableMatch {
+  id: string;
+  comp_nr: number;
+  comp_naam: string;
+  uitslag_code: string;
+  naam_A: string;
+  naam_B: string;
+  cartem_A: number;
+  cartem_B: number;
+  gespeeld: number;
+}
+
 export default function ScoreboardPage() {
   const params = useParams();
   const tafelNr = params?.tafelNr as string;
@@ -69,6 +81,12 @@ export default function ScoreboardPage() {
   const [serieA, setSerieA] = useState(0);
   const [serieB, setSerieB] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+
+  // Match assignment state
+  const [availableMatches, setAvailableMatches] = useState<AvailableMatch[]>([]);
+  const [showMatchSelector, setShowMatchSelector] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || !tafelNr) return;
@@ -187,6 +205,110 @@ export default function ScoreboardPage() {
     else setSerieB(0);
   }, [data]);
 
+  // Load available matches from competitions
+  const loadAvailableMatches = useCallback(async () => {
+    if (!orgNummer) return;
+    try {
+      // Get competitions
+      const compRes = await fetch(`/api/organizations/${orgNummer}/competitions`);
+      if (!compRes.ok) return;
+      const competitions = await compRes.json();
+
+      const allMatches: AvailableMatch[] = [];
+
+      for (const comp of competitions) {
+        const matchRes = await fetch(`/api/organizations/${orgNummer}/competitions/${comp.comp_nr}/matches`);
+        if (!matchRes.ok) continue;
+        const matchData = await matchRes.json();
+
+        for (const match of (matchData.matches || [])) {
+          if (match.gespeeld === 0) { // Only unplayed matches
+            allMatches.push({
+              id: match.id,
+              comp_nr: comp.comp_nr,
+              comp_naam: comp.comp_naam,
+              uitslag_code: match.uitslag_code,
+              naam_A: match.naam_A,
+              naam_B: match.naam_B,
+              cartem_A: match.cartem_A,
+              cartem_B: match.cartem_B,
+              gespeeld: match.gespeeld,
+            });
+          }
+        }
+      }
+
+      setAvailableMatches(allMatches);
+    } catch (err) {
+      console.error('Error loading matches:', err);
+    }
+  }, [orgNummer]);
+
+  // Assign match to this table
+  const handleAssignMatch = useCallback(async (match: AvailableMatch) => {
+    if (!orgNummer || assigning) return;
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/scoreboards/${tafelNr}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'assign',
+          comp_nr: match.comp_nr,
+          uitslag_code: match.uitslag_code,
+        }),
+      });
+
+      if (res.ok) {
+        setShowMatchSelector(false);
+        await fetchData(); // Refresh scoreboard data
+      }
+    } catch (err) {
+      console.error('Error assigning match:', err);
+    } finally {
+      setAssigning(false);
+    }
+  }, [orgNummer, tafelNr, assigning, fetchData]);
+
+  // Start the match on this table
+  const handleStartMatch = useCallback(async () => {
+    if (!orgNummer || starting) return;
+    setStarting(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/scoreboards/${tafelNr}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start' }),
+      });
+
+      if (res.ok) {
+        await fetchData(); // Refresh to get updated status
+      }
+    } catch (err) {
+      console.error('Error starting match:', err);
+    } finally {
+      setStarting(false);
+    }
+  }, [orgNummer, tafelNr, starting, fetchData]);
+
+  // Clear the table
+  const handleClearTable = useCallback(async () => {
+    if (!orgNummer) return;
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/scoreboards/${tafelNr}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear' }),
+      });
+
+      if (res.ok) {
+        await fetchData();
+      }
+    } catch (err) {
+      console.error('Error clearing table:', err);
+    }
+  }, [orgNummer, tafelNr, fetchData]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#003300]">
@@ -288,6 +410,14 @@ export default function ScoreboardPage() {
               <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
                 <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
                 <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
+                  className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
+                >
+                  Wedstrijd toewijzen
+                </button>
               </div>
             </div>
           </div>
@@ -645,29 +775,113 @@ export default function ScoreboardPage() {
 
       {/* Main scoreboard area */}
       {!hasMatch ? (
-        /* Waiting state - no match assigned */
+        /* Waiting state - no match assigned or match assigned but not started */
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
-          <div className="text-center px-4">
-            <div className="mb-8">
-              <svg className="w-24 h-24 md:w-32 md:h-32 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">Wachten op partij</h2>
-            <p className="text-xl md:text-2xl text-green-400 mb-2">Tafel {tafelNr}</p>
-            <p className="text-green-500 text-lg">
-              Selecteer een wedstrijd om het scorebord te starten
-            </p>
-            {/* Match status indicator */}
-            <div className="mt-8 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-8 py-4">
-              <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
-              <span className="text-yellow-400 text-xl font-medium">Wachtend</span>
-            </div>
+          <div className="text-center px-4 max-w-2xl w-full">
+            {/* Match selector */}
+            {showMatchSelector ? (
+              <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
+                <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
+                {availableMatches.length === 0 ? (
+                  <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
+                ) : (
+                  <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                    {availableMatches.map((match) => (
+                      <button
+                        key={match.id}
+                        onClick={() => handleAssignMatch(match)}
+                        disabled={assigning}
+                        className="w-full text-left bg-[#003300] hover:bg-green-800/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-white font-semibold">
+                              {match.naam_A} vs {match.naam_B}
+                            </p>
+                            <p className="text-green-400 text-sm">
+                              {match.comp_naam} | {match.uitslag_code}
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-green-300 text-sm tabular-nums">
+                              {match.cartem_A} - {match.cartem_B}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowMatchSelector(false)}
+                  className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl transition-colors"
+                >
+                  Annuleren
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8">
+                  <svg className="w-24 h-24 md:w-32 md:h-32 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-bold mb-4 text-white">Wachten op partij</h2>
+                <p className="text-xl md:text-2xl text-green-400 mb-2">Tafel {tafelNr}</p>
+                <p className="text-green-500 text-lg">
+                  Selecteer een wedstrijd om het scorebord te starten
+                </p>
+                {/* Match status indicator */}
+                <div className="mt-8 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-8 py-4">
+                  <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+                  <span className="text-yellow-400 text-xl font-medium">Wachtend</span>
+                </div>
+                {/* Assign match button */}
+                <div className="mt-8">
+                  <button
+                    onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
+                    className="bg-green-700 hover:bg-green-600 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-colors shadow-lg"
+                  >
+                    Wedstrijd toewijzen
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : (
         /* Active match scoreboard - mouse mode */
         <div className="max-w-[1860px] mx-auto px-4 md:px-6 py-4 md:py-6">
+          {/* Start match button - shown when match is assigned but not started */}
+          {data.status === 0 && (
+            <div className="flex items-center justify-center mb-6">
+              <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-center">
+                <p className="text-green-300 text-lg mb-2">Wedstrijd toegewezen</p>
+                <p className="text-white text-2xl font-bold mb-1">
+                  {match?.naam_A} vs {match?.naam_B}
+                </p>
+                <p className="text-green-400 text-sm mb-4">
+                  Doel: {match?.cartem_A} - {match?.cartem_B}
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={handleStartMatch}
+                    disabled={starting}
+                    className="bg-green-600 hover:bg-green-500 active:bg-green-400 disabled:bg-green-800 text-white px-8 py-4 rounded-xl text-xl font-bold transition-colors shadow-lg"
+                  >
+                    {starting ? 'Starten...' : 'Start partij'}
+                  </button>
+                  <button
+                    onClick={handleClearTable}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 rounded-xl text-lg transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Player names row */}
           <div className="grid grid-cols-2 gap-4 mb-4 md:mb-6">
             <div className={`text-left px-4 md:px-6 py-3 md:py-4 rounded-lg transition-opacity duration-300 ${turn === 1 ? 'opacity-100' : 'opacity-50'}`}>

@@ -45,6 +45,9 @@ firebase-debug.log
 # Local database
 .data/
 
+# Playwright MCP
+.playwright-mcp/
+
 # vercel
 .vercel
 

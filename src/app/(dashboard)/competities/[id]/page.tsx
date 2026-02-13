@@ -12,6 +12,7 @@ interface CompetitionData {
   comp_naam: string;
   comp_datum: string;
   discipline: number;
+  periode: number;
   punten_sys: number;
   moy_form: number;
   min_car: number;
@@ -88,6 +89,7 @@ export default function CompetitieDetailPage() {
     { label: 'Planning', href: `/competities/${compNr}/planning`, icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', desc: 'Wedstrijdplanning en schema' },
     { label: 'Uitslagen', href: `/competities/${compNr}/uitslagen`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', desc: 'Bekijk en voer uitslagen in' },
     { label: 'Stand', href: `/competities/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Klassement en stand' },
+    { label: 'Periodes', href: `/competities/${compNr}/periodes`, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'Periode-overgangen beheren' },
   ];
 
   return (
@@ -112,7 +114,7 @@ export default function CompetitieDetailPage() {
 
       {/* Competition Info Card */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Datum</p>
             <p className="text-sm text-slate-900 dark:text-white">{competition.comp_datum}</p>
@@ -128,6 +130,15 @@ export default function CompetitieDetailPage() {
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Formule</p>
             <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Periode</p>
+            <p className="text-sm text-slate-900 dark:text-white">
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-green-700 text-white text-xs font-bold rounded">
+                {competition.periode || 1}
+              </span>
+              <span className="ml-1 text-slate-500 dark:text-slate-400">van 5</span>
+            </p>
           </div>
         </div>
       </div>
