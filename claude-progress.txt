@@ -184,3 +184,62 @@ NEXT STEPS:
 - Match scheduling
 - Score entry
 - Responsive layout features
+
+=== Session 6 - 2026-02-13 ===
+Agent: Member & Competition Features (#19, #20, #30)
+
+COMPLETED:
+- Feature #19: Member list displays from Firestore ✅
+  - Rebuilt /leden page with full member list table
+  - Fetches real data from GET /api/organizations/:orgNr/members
+  - Table columns: Nr, Naam, Libre, Band, 3B kl., 3B gr., Kader, Acties
+  - Moyennes formatted to 3 decimal places, '-' for zero values
+  - Loading state, empty state with "Eerste lid toevoegen" link
+  - Delete with confirmation dialog
+  - Edit links to /leden/:nr/bewerken
+  - Member count footer ("X leden gevonden")
+  - Verified: created test member via API, appeared in list, persisted after refresh
+
+- Feature #20: Create new member with all fields ✅
+  - Created /leden/nieuw page with full member creation form
+  - Persoonsgegevens section: Voornaam, Tussenvoegsel, Achternaam
+  - Moyennes per discipline section: Libre, Bandstoten, Driebanden klein, Driebanden groot, Kader
+  - All number inputs with step=0.001 for 3 decimal precision
+  - Dutch success notification: 'Lid "Jan van Berg" is succesvol aangemaakt!'
+  - Auto-redirect to /leden after 1.5 seconds
+  - All fields verified saved correctly in Firestore via API call
+
+- Feature #30: Add player to competition ✅
+  - Created GET /api/organizations/:orgNr/competitions/:compNr (single competition)
+  - Created GET/POST /api/organizations/:orgNr/competitions/:compNr/players
+  - Created /competities/[id]/page.tsx - competition detail with nav cards
+  - Created /competities/[id]/spelers/page.tsx - competition players page
+  - "Speler toevoegen" opens inline dialog with member dropdown
+  - Auto-calculates caramboles: moyenne × formula multiplier (e.g., 3.500 × 25 = 88)
+  - Minimum caramboles enforced (0 moyenne → min 10 caramboles)
+  - Duplicate player prevention (already-added members filtered from dropdown)
+  - Dutch success notification after adding
+  - Players table shows Nr, Naam, Moyenne, Caramboles
+  - Data persists across server restart
+
+NEW API ENDPOINTS:
+- GET /api/organizations/:orgNr/competitions/:compNr - Get single competition
+- GET /api/organizations/:orgNr/competitions/:compNr/players - List competition players
+- POST /api/organizations/:orgNr/competitions/:compNr/players - Add player to competition
+
+NEW PAGES:
+- /leden - Member list (rebuilt from placeholder)
+- /leden/nieuw - New member creation form
+- /competities/[id] - Competition detail with navigation
+- /competities/[id]/spelers - Competition players management
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 15/148 features passing (10.1%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- Match scheduling and planning
+- Score entry system
+- Standings display
+- Responsive layout features
