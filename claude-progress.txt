@@ -660,3 +660,41 @@ NEXT STEPS:
 - Score entry system refinements
 - Responsive layout features
 - Additional navigation integrity checks
+
+=== Session - 2026-02-14 (continued) ===
+Agent: Accessibility Features (#81, #147, #82)
+
+COMPLETED:
+- Feature #81: Forms have proper labels and ARIA ✅
+  - All form fields have visible labels associated via htmlFor/id
+  - Required fields have aria-required="true" and required attributes
+  - Required fields have aria-invalid (false by default, true when errors present)
+  - Error messages linked via aria-describedby to their fields
+  - Error messages have role="alert" for screen reader announcement
+  - Added noValidate to competition and contact forms for custom validation
+  - Verified on member creation, member edit, competition creation, contact, and login forms
+
+- Feature #147: Error messages announced to screen readers ✅
+  - All 24 error notifications use role="alert" (implicit aria-live="assertive")
+  - All 11 success notifications use role="status" (implicit aria-live="polite")
+  - Inline field errors have role="alert" and are linked via aria-describedby
+  - Tested: submit empty form → error messages appear with role="alert"
+  - Tested: fix errors and submit → success message appears with role="status"
+  - Verified across 16 form files in the app
+
+- Feature #82: Tab navigation works through main UI ✅
+  - Added global focus-visible CSS rule in globals.css (green outline, 2px offset)
+  - Input/select/textarea excluded from global rule (use Tailwind focus:ring instead)
+  - Login page tab order: Theme toggle → Inlogcode tab → E-mail tab → Input → Submit → Register link
+  - Dashboard tab order: Sidebar nav (7 links) → Theme toggles → Uitloggen → Main content
+  - Form tab order: Fields in logical order (personal info → moyennes → submit → cancel)
+  - Screenshots verified visible focus rings on all element types
+
+CODE CHANGES:
+- Modified: src/app/globals.css (global focus-visible ring)
+- Modified: src/app/(dashboard)/competities/nieuw/page.tsx (noValidate, aria-required)
+- Modified: src/app/(dashboard)/contact/page.tsx (noValidate, aria-required)
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 66/150 features passing (44.0%)
