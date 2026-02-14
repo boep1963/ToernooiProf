@@ -9,6 +9,7 @@ interface ScoreboardData {
   tafel_nr: number;
   org_nummer: number;
   org_naam: string;
+  org_logo?: string;
   device_config: {
     soort: number; // 1=mouse, 2=tablet
   };
@@ -435,8 +436,15 @@ export default function ScoreboardPage() {
             <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold truncate flex-1 text-left ${turn === 1 ? 'text-white' : 'text-gray-400'}`}>
               {hasMatch && match ? match.naam_A : 'Speler A'}
             </h2>
-            {/* Center info */}
-            <div className="text-center px-4 flex-shrink-0">
+            {/* Center info with logo */}
+            <div className="text-center px-4 flex-shrink-0 flex flex-col items-center gap-1">
+              {data.org_logo && (
+                <img
+                  src={data.org_logo}
+                  alt="Logo"
+                  className="h-8 w-auto object-contain mb-1"
+                />
+              )}
               <p className="text-green-400 text-sm font-semibold">Tafel {tafelNr}</p>
               <p className="text-green-600 text-xs">{data.org_naam}</p>
             </div>
@@ -923,10 +931,20 @@ export default function ScoreboardPage() {
       <div className="bg-[#002200] border-b-2 border-green-600 px-6 py-3">
         <div className="flex items-center justify-between max-w-[1860px] mx-auto">
           <div className="flex items-center gap-4">
-            {/* Organization logo placeholder */}
-            <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center text-green-400 font-bold text-lg flex-shrink-0 border border-green-600">
-              {data.org_naam?.charAt(0) || 'C'}
-            </div>
+            {/* Organization logo */}
+            {data.org_logo ? (
+              <div className="h-10 flex items-center">
+                <img
+                  src={data.org_logo}
+                  alt="Logo"
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+            ) : (
+              <div className="w-10 h-10 bg-green-800 rounded-lg flex items-center justify-center text-green-400 font-bold text-lg flex-shrink-0 border border-green-600">
+                {data.org_naam?.charAt(0) || 'C'}
+              </div>
+            )}
             <h1 className="text-2xl md:text-3xl font-bold text-green-400">
               Tafel {tafelNr}
             </h1>

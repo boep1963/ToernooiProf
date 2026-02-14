@@ -34,6 +34,11 @@ export default function AccountPage() {
   // Newsletter toggle state
   const [isSavingNewsletter, setIsSavingNewsletter] = useState(false);
 
+  // Logo upload state
+  const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
+
   // Editable fields
   const [editName, setEditName] = useState('');
   const [editContactPerson, setEditContactPerson] = useState('');
@@ -207,6 +212,77 @@ export default function AccountPage() {
     }
   };
 
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedLogo(file);
+      setUploadSuccess('');
+      setError('');
+    }
+  };
+
+  const handleLogoUpload = async () => {
+    if (!selectedLogo || !orgNummer) return;
+
+    setIsUploadingLogo(true);
+    setError('');
+    setUploadSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('logo', selectedLogo);
+
+      const res = await fetch(`/api/organizations/${orgNummer}/logo`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUploadSuccess('Logo succesvol ge-upload!');
+        setSelectedLogo(null);
+        // Reset file input
+        const fileInput = document.getElementById('logo-file') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        // Refresh org details to show new logo
+        await fetchOrgDetails();
+      } else {
+        setError(data.error || 'Fout bij uploaden logo.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden bij het uploaden.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    if (!orgNummer) return;
+
+    if (!confirm('Weet u zeker dat u het logo wilt verwijderen?')) return;
+
+    setError('');
+    setUploadSuccess('');
+
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/logo`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUploadSuccess('Logo verwijderd!');
+        await fetchOrgDetails();
+      } else {
+        setError(data.error || 'Fout bij verwijderen logo.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden bij het verwijderen.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -253,8 +329,20 @@ export default function AccountPage() {
       )}
 
       {success && (
-        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
-          {success}
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
+      {uploadSuccess && (
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{uploadSuccess}</span>
+          <button onClick={() => setUploadSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 
@@ -390,6 +478,82 @@ export default function AccountPage() {
             </div>
           )}
         </form>
+
+          {/* Logo Upload */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Organisatie logo
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Upload een eigen logo voor uw organisatie. Het logo wordt weergegeven in de header en op scoreborden.
+            </p>
+
+            {/* Current Logo Display */}
+            {orgDetails.org_logo && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Huidig logo
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                    <img
+                      src={orgDetails.org_logo}
+                      alt="Organisatie logo"
+                      className="max-h-24 max-w-xs object-contain"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogoRemove}
+                    className="px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                  >
+                    Logo verwijderen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Instructions */}
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
+                Vereisten voor het logo:
+              </p>
+              <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
+                <li>Alleen JPG-formaat toegestaan</li>
+                <li>Maximale bestandsgrootte: 1 MB</li>
+                <li>Bij voorkeur verhouding 2:1 (breedte:hoogte)</li>
+                <li>Een nieuw logo overschrijft het oude logo</li>
+              </ul>
+            </div>
+
+            {/* File Input */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <input
+                  id="logo-file"
+                  type="file"
+                  accept="image/jpeg,image/jpg,.jpg,.jpeg"
+                  onChange={handleLogoSelect}
+                  className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 dark:file:bg-green-900/30 file:text-green-700 dark:file:text-green-400 hover:file:bg-green-100 dark:hover:file:bg-green-900/50 file:cursor-pointer file:transition-colors"
+                />
+              </div>
+              {selectedLogo && (
+                <button
+                  type="button"
+                  onClick={handleLogoUpload}
+                  disabled={isUploadingLogo}
+                  className="px-6 py-2 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+                >
+                  {isUploadingLogo ? 'Uploaden...' : 'Upload'}
+                </button>
+              )}
+            </div>
+            {selectedLogo && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Geselecteerd: {selectedLogo.name} ({(selectedLogo.size / 1024).toFixed(1)} KB)
+              </p>
+            )}
+          </div>
 
           {/* Newsletter Subscription */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">

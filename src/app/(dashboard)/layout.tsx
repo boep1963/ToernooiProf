@@ -57,8 +57,15 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          {/* Organization name in header */}
-          <div className="flex-1 flex items-center ml-2 lg:ml-0">
+          {/* Organization name and logo in header */}
+          <div className="flex-1 flex items-center gap-3 ml-2 lg:ml-0">
+            {organization?.org_logo && (
+              <img
+                src={organization.org_logo}
+                alt="Logo"
+                className="h-10 w-auto object-contain"
+              />
+            )}
             {organization && (
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[200px] sm:max-w-xs" title={organization.org_naam}>
                 {organization.org_naam}

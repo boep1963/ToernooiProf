@@ -106,6 +106,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       tafel_nr: tafelNr,
       org_nummer: orgNummer,
       org_naam: orgData?.org_naam || '',
+      org_logo: orgData?.org_logo || '',
       device_config: deviceConfig,
       table: tableData,
       match: matchData,

@@ -22,8 +22,8 @@ export default function NieuweCompetitie() {
     discipline: 1,
     punten_sys: 1,
     moy_form: 3,
-    min_car: 10,
-    max_beurten: 30,
+    min_car: 0,
+    max_beurten: 0,
     vast_beurten: 0,
     sorteren: 1,
   });
@@ -275,7 +275,7 @@ export default function NieuweCompetitie() {
                 id="min_car"
                 name="min_car"
                 type="number"
-                min="1"
+                min="0"
                 max="999"
                 value={formData.min_car}
                 onChange={handleChange}
@@ -290,7 +290,7 @@ export default function NieuweCompetitie() {
                 id="max_beurten"
                 name="max_beurten"
                 type="number"
-                min="1"
+                min="0"
                 max="999"
                 value={formData.max_beurten}
                 onChange={handleChange}
