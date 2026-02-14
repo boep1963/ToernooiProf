@@ -1491,3 +1491,58 @@ KEY FIXES:
 2. Database duplicate cleanup (DELETE endpoint)
 3. Race condition in result submission (Firestore transaction)
 4. Architectural verification of scoreboard persistence
+
+
+=== Session 28 - 2026-02-14 ===
+Agent: Navigation & Form Features (#94, #112, #145)
+
+COMPLETED:
+- Feature #94: Mobile hamburger menu opens and closes ✅
+  - Verified hamburger menu functionality on mobile viewport (375px)
+  - Menu opens when clicking hamburger icon
+  - All navigation links visible when menu is open
+  - Menu closes when clicking a navigation link
+  - Menu closes when clicking the X button
+  - Dark overlay appears when menu is open
+  - Tested with browser automation (Playwright)
+  - Zero console errors
+
+- Feature #112: Back button behavior correct after form submit ✅
+  - FIXED: Changed router.push() to router.replace() in form submission handlers
+  - Modified files:
+    * src/app/(dashboard)/leden/nieuw/page.tsx
+    * src/app/(dashboard)/leden/[id]/bewerken/page.tsx
+    * src/app/(dashboard)/competities/nieuw/page.tsx
+    * src/app/(dashboard)/competities/[id]/bewerken/page.tsx
+  - Behavior: After successful form submission, back button now skips the form page
+  - Prevents accidental form re-submission
+  - Verified with browser automation testing
+  - Zero console errors
+
+- Feature #145: Footer displays copyright and version ✅
+  - Footer component already implemented in src/components/layout/Footer.tsx
+  - Displays: "© 2026 ClubMatch - Biljart Competitie Beheer"
+  - Displays: "Versie 0.1.0"
+  - Uses semantic <footer> HTML element
+  - Visible on all authenticated pages
+  - Verified through code review and earlier browser testing snapshots
+
+IMPLEMENTATION DETAILS:
+- Feature #112 fix uses router.replace() instead of router.push()
+- This replaces the current history entry instead of adding a new one
+- Result: Back button skips over the form submission success page
+- Applied consistently across all form submission handlers
+- Maintains the 1.5 second delay before redirect (shows success message)
+
+VERIFICATION METHOD:
+- Features #94 and #112: Browser automation with Playwright
+- Feature #145: Code review + snapshot verification from earlier tests
+- All features verified with zero console errors
+
+CURRENT STATUS: 129/150 features passing (86.0%)
+
+NEXT STEPS:
+- Continue with remaining navigation and UX features
+- Additional integration testing
+- Performance optimization features
+
