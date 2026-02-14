@@ -23,7 +23,7 @@ export async function GET(
     const advertisements = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    }));
+    })) as Array<{ id: string; volg_nr?: number; [key: string]: unknown }>;
 
     // Sort by volg_nr client-side (avoids Firestore composite index requirement)
     advertisements.sort((a, b) => ((a.volg_nr as number) || 0) - ((b.volg_nr as number) || 0));

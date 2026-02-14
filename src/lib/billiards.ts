@@ -34,6 +34,11 @@ export function getMoyenneField(discipline: number): string {
  * Win (reached target, opponent didn't): 2 points
  * Loss: 0 points
  * Draw (both reached or same %): 1 point each
+ *
+ * Bonus points (if enabled via puntenSys):
+ * - Winner bonus: +1 if winner's match moyenne > registered moyenne
+ * - Draw bonus: +1 if draw player's match moyenne > registered moyenne (if enabled)
+ * - Loss bonus: +1 if loser's match moyenne > registered moyenne (if enabled)
  */
 export function calculateWRVPoints(
   player1Gem: number,
@@ -43,7 +48,9 @@ export function calculateWRVPoints(
   maxBeurten: number,
   beurten: number,
   vastBeurten: boolean,
-  puntenSys: number
+  puntenSys: number,
+  player1Moyenne?: number,
+  player2Moyenne?: number
 ): { points1: number; points2: number } {
   const pct1 = player1Tem > 0 ? (player1Gem / player1Tem) * 100 : 0;
   const pct2 = player2Tem > 0 ? (player2Gem / player2Tem) * 100 : 0;
@@ -106,15 +113,14 @@ export function calculateWRVPoints(
 
   // Apply bonus points if enabled
   const puntenStr = puntenSys.toString();
-  if (puntenStr.length >= 2 && puntenStr[1] === '1') {
-    // Bonus enabled
-    const moyenne1 = player1Tem > 0 ? player1Gem / beurten : 0;
-    const origMoyenne1 = player1Tem > 0 ? player1Tem / (MOYENNE_MULTIPLIERS[1] || 25) : 0;
-    const moyenne2 = player2Tem > 0 ? player2Gem / beurten : 0;
-    const origMoyenne2 = player2Tem > 0 ? player2Tem / (MOYENNE_MULTIPLIERS[1] || 25) : 0;
+  if (puntenStr.length >= 2 && puntenStr[1] === '1' && player1Moyenne !== undefined && player2Moyenne !== undefined) {
+    // Bonus enabled - calculate match moyenne (caramboles / beurten)
+    const matchMoyenne1 = beurten > 0 ? player1Gem / beurten : 0;
+    const matchMoyenne2 = beurten > 0 ? player2Gem / beurten : 0;
 
-    const aboveMoyenne1 = moyenne1 > origMoyenne1;
-    const aboveMoyenne2 = moyenne2 > origMoyenne2;
+    // Check if match moyenne exceeds registered moyenne
+    const aboveMoyenne1 = matchMoyenne1 > player1Moyenne;
+    const aboveMoyenne2 = matchMoyenne2 > player2Moyenne;
 
     // Winner bonus
     if (points1 === 2 && aboveMoyenne1) points1 += 1;

@@ -127,10 +127,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnapshot.docs[0].data();
-    const puntenSys = compData?.punten_sys || 1;
-    const maxBeurten = compData?.max_beurten || 0;
-    const vastBeurten = (compData?.vast_beurten || 0) === 1;
-    const periode = compData?.periode || 1;
+    const puntenSys = (compData?.punten_sys as number) || 1;
+    const maxBeurten = (compData?.max_beurten as number) || 0;
+    const vastBeurten = ((compData?.vast_beurten as number) || 0) === 1;
+    const periode = (compData?.periode as number) || 1;
+    const discipline = (compData?.discipline as number) || 1;
 
     // Calculate points based on scoring system
     let sp_1_punt = 0;
@@ -148,11 +149,42 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
 
     if (sysType === 1 || puntenSys >= 10) {
-      // WRV system
-      const wrv = calculateWRVPoints(p1Gem, p1Tem, p2Gem, p2Tem, maxBeurten, turns, vastBeurten, puntenSys);
+      // WRV system - need player moyennes for bonus calculation
+      let p1Moyenne: number | undefined;
+      let p2Moyenne: number | undefined;
+
+      // Fetch player moyennes from competition_players
+      const player1Snapshot = await db.collection('competition_players')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .where('spa_nr', '==', Number(sp_1_nr))
+        .limit(1)
+        .get();
+
+      const player2Snapshot = await db.collection('competition_players')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .where('spa_nr', '==', Number(sp_2_nr))
+        .limit(1)
+        .get();
+
+      if (!player1Snapshot.empty) {
+        const p1Data = player1Snapshot.docs[0].data();
+        // Get moyenne for the current discipline
+        const moyenneField = `spc_moyenne_${discipline}`;
+        p1Moyenne = Number(p1Data?.[moyenneField] as number) || 0;
+      }
+
+      if (!player2Snapshot.empty) {
+        const p2Data = player2Snapshot.docs[0].data();
+        const moyenneField = `spc_moyenne_${discipline}`;
+        p2Moyenne = Number(p2Data?.[moyenneField] as number) || 0;
+      }
+
+      const wrv = calculateWRVPoints(p1Gem, p1Tem, p2Gem, p2Tem, maxBeurten, turns, vastBeurten, puntenSys, p1Moyenne, p2Moyenne);
       sp_1_punt = wrv.points1;
       sp_2_punt = wrv.points2;
-      console.log(`[RESULTS] WRV points: P1=${sp_1_punt}, P2=${sp_2_punt}`);
+      console.log(`[RESULTS] WRV points: P1=${sp_1_punt}, P2=${sp_2_punt} (P1 moyenne: ${p1Moyenne}, P2 moyenne: ${p2Moyenne})`);
     } else if (sysType === 2) {
       // 10-point system
       sp_1_punt = calculate10PointScore(p1Gem, p1Tem);

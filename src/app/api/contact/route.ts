@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     let orgEmail = '';
     if (!orgSnapshot.empty) {
       const orgData = orgSnapshot.docs[0].data();
-      orgEmail = orgData?.org_wl_email || '';
+      orgEmail = (orgData?.org_wl_email as string) || '';
     }
 
     const now = new Date().toISOString();

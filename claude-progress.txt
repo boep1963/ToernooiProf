@@ -1092,3 +1092,15 @@ COMPLETED:
   - All async operations show loading states with green spinner and Dutch text
 
 CURRENT STATUS: 95/150 features passing (63.3%)
+
+=== Session 20 - 2026-02-14 ===
+Agent: Features #67, #97
+
+COMPLETED:
+- Feature #67: Empty states display when no data ✅
+- Feature #97: Form defaults set correctly for competitions ✅
+
+CODE CHANGES:
+- Modified: src/app/(dashboard)/competities/nieuw/page.tsx (updated min_car and max_beurten defaults to 0)
+
+CURRENT STATUS: 97/150 features passing (64.7%)

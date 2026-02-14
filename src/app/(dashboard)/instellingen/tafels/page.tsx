@@ -18,6 +18,8 @@ export default function TafelsInstellingenPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aantalTafels, setAantalTafels] = useState<number>(4);
+  const [savingAantalTafels, setSavingAantalTafels] = useState(false);
 
   useEffect(() => {
     if (!orgNummer || !organization) return;

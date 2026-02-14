@@ -116,9 +116,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnapshot.docs[0].data();
-    const discipline = compData?.discipline || 1;
-    const moyForm = compData?.moy_form || 3;
-    const minCar = compData?.min_car || 10;
+    const discipline = (compData?.discipline as number) || 1;
+    const moyForm = (compData?.moy_form as number) || 3;
+    const minCar = (compData?.min_car as number) || 10;
 
     // Get member details for moyenne
     console.log('[PLAYERS] Fetching member details for moyenne...');
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get the moyenne for the competition's discipline
     const moyenneField = getMoyenneField(discipline);
-    const moyenne = Number(memberData?.[moyenneField]) || 0;
+    const moyenne = Number(memberData?.[moyenneField] as number) || 0;
 
     // Calculate caramboles: moyenne × formula_multiplier, with minimum enforcement
     const caramboles = calculateCaramboles(moyenne, moyForm, minCar);
