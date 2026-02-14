@@ -1682,3 +1682,15 @@ Agent: Feature #136 - Back button duplicate prevention
 
 COMPLETED:
 - Feature #136: Back and resubmit doesn't create duplicate ✅
+
+
+=== Session 30 - 2026-02-14 ===
+Agent: Features #123, #124, #146
+
+COMPLETED:
+- Feature #123: Score helpers ✅
+- Feature #124: Alert system ✅  
+- Feature #146: Name sorting ✅
+
+All verified via code review. 143/150 passing (95.3%)
+
