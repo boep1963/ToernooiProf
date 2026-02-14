@@ -27,6 +27,9 @@ export default function CompetitiesPage() {
   const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchCompetitions = useCallback(async () => {
     if (!orgNummer) return;
@@ -51,6 +54,32 @@ export default function CompetitiesPage() {
     fetchCompetitions();
   }, [fetchCompetitions]);
 
+  const handleDelete = async (compNr: number) => {
+    if (!orgNummer) return;
+    setDeleteLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const deletedComp = competitions.find(c => c.comp_nr === compNr);
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        const naam = deletedComp?.comp_naam || `#${compNr}`;
+        setCompetitions(prev => prev.filter(c => c.comp_nr !== compNr));
+        setDeleteConfirm(null);
+        setSuccess(`Competitie "${naam}" is succesvol verwijderd.`);
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        setError('Fout bij verwijderen competitie.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden bij het verwijderen.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -74,8 +103,20 @@ export default function CompetitiesPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
-          {error}
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 
@@ -132,35 +173,64 @@ export default function CompetitiesPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nr</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Puntensysteem</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {competitions.map((comp) => {
-                const isActive = activeCompetition?.compNr === comp.comp_nr;
-                return (
-                <tr key={comp.id} className={`transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10 border-l-2 border-l-green-700 dark:border-l-green-400' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}>
-                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{comp.comp_nr}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/competities/${comp.comp_nr}`} className="text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
-                      {comp.comp_naam}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{comp.comp_datum}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nr</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Puntensysteem</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {competitions.map((comp) => {
+                  const isActive = activeCompetition?.compNr === comp.comp_nr;
+                  return (
+                  <tr key={comp.id} className={`transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10 border-l-2 border-l-green-700 dark:border-l-green-400' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}>
+                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{comp.comp_nr}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/competities/${comp.comp_nr}`} className="text-sm font-medium text-green-700 dark:text-green-400 hover:underline">
+                        {comp.comp_naam}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{comp.comp_datum}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
+                    <td className="px-4 py-3 text-right">
+                      {deleteConfirm === comp.comp_nr ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleDelete(comp.comp_nr)}
+                            disabled={deleteLoading}
+                            className="text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md transition-colors"
+                          >
+                            {deleteLoading ? 'Bezig...' : 'Bevestigen'}
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            className="text-xs px-2.5 py-1.5 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-md transition-colors"
+                          >
+                            Annuleren
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteConfirm(comp.comp_nr)}
+                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                        >
+                          Verwijderen
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

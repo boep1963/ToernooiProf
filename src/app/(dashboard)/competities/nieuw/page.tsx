@@ -30,6 +30,7 @@ export default function NieuweCompetitie() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -37,6 +38,14 @@ export default function NieuweCompetitie() {
       ...prev,
       [name]: type === 'number' ? Number(value) : value,
     }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,11 +60,20 @@ export default function NieuweCompetitie() {
       return;
     }
 
+    // Validate required fields
+    const errors: Record<string, string> = {};
     if (!formData.comp_naam.trim()) {
-      setError('Competitienaam is verplicht.');
+      errors.comp_naam = 'Competitienaam is verplicht.';
+    }
+    if (!formData.comp_datum) {
+      errors.comp_datum = 'Datum is verplicht.';
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setIsSubmitting(false);
       return;
     }
+    setFieldErrors({});
 
     try {
       const res = await fetch(`/api/organizations/${orgNummer}/competitions`, {
@@ -139,10 +157,14 @@ export default function NieuweCompetitie() {
                 type="text"
                 value={formData.comp_naam}
                 onChange={handleChange}
-                required
                 placeholder="Bijv. Wintercompetitie 2026"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                aria-invalid={!!fieldErrors.comp_naam}
+                aria-describedby={fieldErrors.comp_naam ? 'comp_naam-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_naam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.comp_naam && (
+                <p id="comp_naam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_naam}</p>
+              )}
             </div>
             <div>
               <label htmlFor="comp_datum" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -154,9 +176,13 @@ export default function NieuweCompetitie() {
                 type="date"
                 value={formData.comp_datum}
                 onChange={handleChange}
-                required
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                aria-invalid={!!fieldErrors.comp_datum}
+                aria-describedby={fieldErrors.comp_datum ? 'comp_datum-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.comp_datum && (
+                <p id="comp_datum-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_datum}</p>
+              )}
             </div>
           </div>
         </div>

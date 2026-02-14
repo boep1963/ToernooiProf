@@ -32,9 +32,9 @@ export async function GET(
     const article = { id: docSnap.id, ...docSnap.data() };
 
     // Get comments for this article from news_reactions collection
+    // Note: avoid where+orderBy combo that requires Firestore composite index
     const commentsSnapshot = await db.collection('news_reactions')
       .where('news_id', '==', id)
-      .orderBy('tijd', 'asc')
       .get();
 
     const comments: Record<string, unknown>[] = [];
@@ -43,6 +43,13 @@ export async function GET(
       if (data) {
         comments.push({ id: doc.id, ...data });
       }
+    });
+
+    // Sort by tijd ascending in application code
+    comments.sort((a, b) => {
+      const aTime = String(a.tijd || '');
+      const bTime = String(b.tijd || '');
+      return aTime.localeCompare(bTime);
     });
 
     return NextResponse.json({ ...article, comments });
