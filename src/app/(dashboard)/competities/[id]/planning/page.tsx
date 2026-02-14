@@ -49,6 +49,50 @@ export default function CompetitePlanningPage() {
   const router = useRouter();
   const { orgNummer } = useAuth();
 
+  // Add print styles
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        .print\\:hidden {
+          display: none !important;
+        }
+        @page {
+          margin: 1.5cm;
+          size: A4 landscape;
+        }
+        /* Hide navigation and other UI elements */
+        nav, header, aside, .sidebar {
+          display: none !important;
+        }
+        /* Ensure tables don't break across pages */
+        table {
+          page-break-inside: auto;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        /* Optimize for print */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const compNr = parseInt(params.id as string, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -182,9 +226,25 @@ export default function CompetitePlanningPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <div className="print:hidden">
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      </div>
 
-      <div className="mb-4">
+      {/* Print header - only visible when printing */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-3xl font-bold text-black mb-2">
+          Wedstrijdplanning - {competition.comp_naam}
+        </h1>
+        <div className="text-sm text-gray-700 space-y-1">
+          <p><strong>Discipline:</strong> {DISCIPLINES[competition.discipline]}</p>
+          <p><strong>Aantal spelers:</strong> {players.length}</p>
+          <p><strong>Aantal wedstrijden:</strong> {totalPairings}</p>
+          <p><strong>Afgedrukt:</strong> {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+        </div>
+        <hr className="mt-4 border-gray-300" />
+      </div>
+
+      <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Planning - {competition.comp_naam}
         </h1>
@@ -194,7 +254,7 @@ export default function CompetitePlanningPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between print:hidden">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
             <button onClick={fetchData} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium">
@@ -208,7 +268,7 @@ export default function CompetitePlanningPage() {
       )}
 
       {success && (
-        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between print:hidden">
           <span>{success}</span>
           <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -217,7 +277,7 @@ export default function CompetitePlanningPage() {
       )}
 
       {/* Stats bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-6 print:hidden">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Spelers</p>
@@ -247,9 +307,9 @@ export default function CompetitePlanningPage() {
         </div>
       </div>
 
-      {/* Generate button */}
-      {players.length >= 2 && (
-        <div className="mb-6">
+      {/* Action buttons */}
+      <div className="mb-6 flex flex-wrap gap-3">
+        {players.length >= 2 && (
           <button
             onClick={() => handleGenerateMatches(matches.length > 0)}
             disabled={isGenerating}
@@ -260,16 +320,29 @@ export default function CompetitePlanningPage() {
             </svg>
             {isGenerating ? 'Bezig met genereren...' : matches.length > 0 ? 'Opnieuw genereren' : 'Wedstrijden genereren'}
           </button>
-          {players.length < 2 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-              Voeg minimaal 2 spelers toe om wedstrijden te genereren.
-            </p>
-          )}
-        </div>
+        )}
+
+        {matches.length > 0 && (
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg transition-colors shadow-sm print:hidden"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Afdrukken
+          </button>
+        )}
+      </div>
+
+      {players.length < 2 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          Voeg minimaal 2 spelers toe om wedstrijden te genereren.
+        </p>
       )}
 
       {players.length < 2 && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center print:hidden">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -307,6 +380,7 @@ export default function CompetitePlanningPage() {
                       <th className="text-center px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">vs</th>
                       <th className="text-center px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Car.</th>
                       <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Speler B</th>
+                      <th className="text-center px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tafel</th>
                       <th className="text-center px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                     </tr>
                   </thead>
@@ -340,6 +414,11 @@ export default function CompetitePlanningPage() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-center">
+                          <span className="text-sm font-medium text-slate-900 dark:text-white">
+                            {match.tafel || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-center">
                           {match.gespeeld === 1 ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                               Gespeeld
@@ -362,7 +441,7 @@ export default function CompetitePlanningPage() {
 
       {/* Empty state when no matches exist and enough players */}
       {matches.length === 0 && players.length >= 2 && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center print:hidden">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
