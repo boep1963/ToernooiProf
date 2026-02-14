@@ -55,7 +55,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/organizations/:orgNr/competitions/:compNr/players
- * Add a member as player to a competition
+ * Add a member (or multiple members) as player(s) to a competition
+ * Body: { spc_nummer: number } OR { spc_nummers: number[] }
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
@@ -75,28 +76,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const memberNummer = Number(body.spc_nummer);
 
-    if (!memberNummer) {
+    // Support both single and bulk operations
+    const isBulk = Array.isArray(body.spc_nummers);
+    const memberNummers = isBulk ? body.spc_nummers : [Number(body.spc_nummer)];
+
+    if (!memberNummers || memberNummers.length === 0 || memberNummers.some((n) => !n)) {
       return NextResponse.json(
-        { error: 'Speler nummer is verplicht' },
+        { error: 'Speler nummer(s) zijn verplicht' },
         { status: 400 }
-      );
-    }
-
-    // Check if player is already in this competition
-    console.log('[PLAYERS] Checking for duplicate player...');
-    const existingCheck = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
-      .where('spc_nummer', '==', memberNummer)
-      .limit(1)
-      .get();
-
-    if (!existingCheck.empty) {
-      return NextResponse.json(
-        { error: 'Dit lid is al toegevoegd aan deze competitie' },
-        { status: 409 }
       );
     }
 
@@ -120,76 +108,123 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const moyForm = (compData?.moy_form as number) || 3;
     const minCar = (compData?.min_car as number) || 10;
 
-    // Get member details for moyenne
-    console.log('[PLAYERS] Fetching member details for moyenne...');
-    const memberSnapshot = await db.collection('members')
-      .where('spa_org', '==', orgNummer)
-      .where('spa_nummer', '==', memberNummer)
-      .limit(1)
-      .get();
+    const addedPlayers = [];
+    const errors = [];
 
-    if (memberSnapshot.empty) {
+    // Process each member
+    for (const memberNummer of memberNummers) {
+      try {
+        // Check if player is already in this competition
+        console.log(`[PLAYERS] Checking for duplicate player ${memberNummer}...`);
+        const existingCheck = await db.collection('competition_players')
+          .where('spc_org', '==', orgNummer)
+          .where('spc_competitie', '==', compNumber)
+          .where('spc_nummer', '==', memberNummer)
+          .limit(1)
+          .get();
+
+        if (!existingCheck.empty) {
+          errors.push({ spc_nummer: memberNummer, error: 'Al toegevoegd' });
+          continue;
+        }
+
+        // Get member details for moyenne
+        console.log(`[PLAYERS] Fetching member ${memberNummer} details for moyenne...`);
+        const memberSnapshot = await db.collection('members')
+          .where('spa_org', '==', orgNummer)
+          .where('spa_nummer', '==', memberNummer)
+          .limit(1)
+          .get();
+
+        if (memberSnapshot.empty) {
+          errors.push({ spc_nummer: memberNummer, error: 'Lid niet gevonden' });
+          continue;
+        }
+
+        const memberData = memberSnapshot.docs[0].data();
+
+        // Get the moyenne for the competition's discipline
+        const moyenneField = getMoyenneField(discipline);
+        const moyenne = Number(memberData?.[moyenneField] as number) || 0;
+
+        // Calculate caramboles: moyenne × formula_multiplier, with minimum enforcement
+        const caramboles = calculateCaramboles(moyenne, moyForm, minCar);
+
+        // Build moyennes for all 5 disciplines from the member
+        const spc_moyenne_1 = Number(memberData?.spa_moy_lib) || 0;
+        const spc_moyenne_2 = Number(memberData?.spa_moy_band) || 0;
+        const spc_moyenne_3 = Number(memberData?.spa_moy_3bkl) || 0;
+        const spc_moyenne_4 = Number(memberData?.spa_moy_3bgr) || 0;
+        const spc_moyenne_5 = Number(memberData?.spa_moy_kad) || 0;
+
+        // Calculate caramboles for all disciplines (stored in spc_car_1 through spc_car_5)
+        const spc_car_1 = calculateCaramboles(spc_moyenne_1, moyForm, minCar);
+        const spc_car_2 = calculateCaramboles(spc_moyenne_2, moyForm, minCar);
+        const spc_car_3 = calculateCaramboles(spc_moyenne_3, moyForm, minCar);
+        const spc_car_4 = calculateCaramboles(spc_moyenne_4, moyForm, minCar);
+        const spc_car_5 = calculateCaramboles(spc_moyenne_5, moyForm, minCar);
+
+        const playerData = {
+          spc_nummer: memberNummer,
+          spc_org: orgNummer,
+          spc_competitie: compNumber,
+          spc_moyenne_1,
+          spc_moyenne_2,
+          spc_moyenne_3,
+          spc_moyenne_4,
+          spc_moyenne_5,
+          spc_car_1,
+          spc_car_2,
+          spc_car_3,
+          spc_car_4,
+          spc_car_5,
+          // Store the member name for display purposes
+          spa_vnaam: memberData?.spa_vnaam || '',
+          spa_tv: memberData?.spa_tv || '',
+          spa_anaam: memberData?.spa_anaam || '',
+          created_at: new Date().toISOString(),
+        };
+
+        console.log(`[PLAYERS] Adding player ${memberNummer} to competition ${compNumber}, discipline moyenne: ${moyenne}, caramboles: ${caramboles}`);
+        const docRef = await db.collection('competition_players').add(playerData);
+
+        addedPlayers.push({
+          id: docRef.id,
+          ...playerData,
+          discipline_moyenne: moyenne,
+          discipline_caramboles: caramboles,
+        });
+
+        console.log(`[PLAYERS] Player ${memberNummer} added successfully with doc ID:`, docRef.id);
+      } catch (error) {
+        console.error(`[PLAYERS] Error adding player ${memberNummer}:`, error);
+        errors.push({ spc_nummer: memberNummer, error: 'Fout bij toevoegen' });
+      }
+    }
+
+    // Return appropriate response based on results
+    if (addedPlayers.length === 0) {
       return NextResponse.json(
-        { error: 'Lid niet gevonden' },
-        { status: 404 }
+        { error: 'Geen spelers toegevoegd', details: errors },
+        { status: 400 }
       );
     }
 
-    const memberData = memberSnapshot.docs[0].data();
-
-    // Get the moyenne for the competition's discipline
-    const moyenneField = getMoyenneField(discipline);
-    const moyenne = Number(memberData?.[moyenneField] as number) || 0;
-
-    // Calculate caramboles: moyenne × formula_multiplier, with minimum enforcement
-    const caramboles = calculateCaramboles(moyenne, moyForm, minCar);
-
-    // Build moyennes for all 5 disciplines from the member
-    const spc_moyenne_1 = Number(memberData?.spa_moy_lib) || 0;
-    const spc_moyenne_2 = Number(memberData?.spa_moy_band) || 0;
-    const spc_moyenne_3 = Number(memberData?.spa_moy_3bkl) || 0;
-    const spc_moyenne_4 = Number(memberData?.spa_moy_3bgr) || 0;
-    const spc_moyenne_5 = Number(memberData?.spa_moy_kad) || 0;
-
-    // Calculate caramboles for all disciplines (stored in spc_car_1 through spc_car_5)
-    const spc_car_1 = calculateCaramboles(spc_moyenne_1, moyForm, minCar);
-    const spc_car_2 = calculateCaramboles(spc_moyenne_2, moyForm, minCar);
-    const spc_car_3 = calculateCaramboles(spc_moyenne_3, moyForm, minCar);
-    const spc_car_4 = calculateCaramboles(spc_moyenne_4, moyForm, minCar);
-    const spc_car_5 = calculateCaramboles(spc_moyenne_5, moyForm, minCar);
-
-    const playerData = {
-      spc_nummer: memberNummer,
-      spc_org: orgNummer,
-      spc_competitie: compNumber,
-      spc_moyenne_1,
-      spc_moyenne_2,
-      spc_moyenne_3,
-      spc_moyenne_4,
-      spc_moyenne_5,
-      spc_car_1,
-      spc_car_2,
-      spc_car_3,
-      spc_car_4,
-      spc_car_5,
-      // Store the member name for display purposes
-      spa_vnaam: memberData?.spa_vnaam || '',
-      spa_tv: memberData?.spa_tv || '',
-      spa_anaam: memberData?.spa_anaam || '',
-      created_at: new Date().toISOString(),
-    };
-
-    console.log(`[PLAYERS] Adding player ${memberNummer} to competition ${compNumber}, discipline moyenne: ${moyenne}, caramboles: ${caramboles}`);
-    const docRef = await db.collection('competition_players').add(playerData);
-
-    console.log('[PLAYERS] Player added successfully with doc ID:', docRef.id);
-    return NextResponse.json({
-      id: docRef.id,
-      ...playerData,
-      discipline_moyenne: moyenne,
-      discipline_caramboles: caramboles,
-      message: 'Speler succesvol toegevoegd aan competitie',
-    }, { status: 201 });
+    if (isBulk) {
+      return NextResponse.json({
+        players: addedPlayers,
+        count: addedPlayers.length,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `${addedPlayers.length} speler(s) succesvol toegevoegd aan competitie`,
+      }, { status: 201 });
+    } else {
+      // Single player response (backward compatibility)
+      const player = addedPlayers[0];
+      return NextResponse.json({
+        ...player,
+        message: 'Speler succesvol toegevoegd aan competitie',
+      }, { status: 201 });
+    }
   } catch (error) {
     console.error('[PLAYERS] Error adding player:', error);
     return NextResponse.json(

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
-import { calculateCaramboles, getMoyenneField } from '@/lib/billiards';
+import { calculateCaramboles, getMoyenneField, formatPlayerName } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 
 interface CompetitionData {
@@ -76,6 +76,8 @@ export default function CompetitieSpelersPage() {
   const [success, setSuccess] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [bulkMode, setBulkMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [playerToRemove, setPlayerToRemove] = useState<PlayerData | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
@@ -180,6 +182,65 @@ export default function CompetitieSpelersPage() {
     }
   };
 
+  const handleBulkAddPlayers = async () => {
+    if (!orgNummer || selectedMembers.length === 0 || !competition) return;
+    setIsSubmitting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/players`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spc_nummers: selectedMembers }),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        // Add all new players to the list
+        if (data.players) {
+          setPlayers((prev) => [...prev, ...data.players]);
+        }
+        setShowAddDialog(false);
+        setBulkMode(false);
+        setSelectedMembers([]);
+        setSuccess(`${data.count} speler(s) succesvol toegevoegd aan de competitie!`);
+        if (data.errors && data.errors.length > 0) {
+          setSuccess(`${data.count} speler(s) toegevoegd. ${data.errors.length} overgeslagen (al toegevoegd of niet gevonden).`);
+        }
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Fout bij toevoegen spelers.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleMemberSelection = (memberNummer: number) => {
+    setSelectedMembers((prev) => {
+      if (prev.includes(memberNummer)) {
+        return prev.filter((n) => n !== memberNummer);
+      } else {
+        return [...prev, memberNummer];
+      }
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedMembers.length === availableMembers.length) {
+      setSelectedMembers([]);
+    } else {
+      setSelectedMembers(availableMembers.map((m) => m.spa_nummer));
+    }
+  };
+
   const handleRemovePlayer = async () => {
     if (!orgNummer || !playerToRemove) return;
     setIsSubmitting(true);
@@ -228,7 +289,7 @@ export default function CompetitieSpelersPage() {
   };
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
-    return [vnaam, tv, anaam].filter(Boolean).join(' ');
+    return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
   };
 
   if (isLoading) {
@@ -295,14 +356,78 @@ export default function CompetitieSpelersPage() {
       {/* Add Player Dialog */}
       {showAddDialog && (
         <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Speler toevoegen
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {bulkMode ? 'Meerdere spelers toevoegen' : 'Speler toevoegen'}
+            </h2>
+            {availableMembers.length > 0 && (
+              <button
+                onClick={() => {
+                  setBulkMode(!bulkMode);
+                  setSelectedMember(null);
+                  setSelectedMembers([]);
+                }}
+                className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+              >
+                {bulkMode ? 'Schakel naar enkelvoudig' : 'Schakel naar bulk'}
+              </button>
+            )}
+          </div>
 
           {availableMembers.length === 0 ? (
             <p className="text-slate-500 dark:text-slate-400 text-sm">
               Alle leden zijn al toegevoegd aan deze competitie, of er zijn nog geen leden aangemaakt.
             </p>
+          ) : bulkMode ? (
+            <>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Selecteer leden ({selectedMembers.length} van {availableMembers.length})
+                  </label>
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+                  >
+                    {selectedMembers.length === availableMembers.length ? 'Deselecteer alles' : 'Selecteer alles'}
+                  </button>
+                </div>
+                <div className="max-h-80 overflow-y-auto border border-slate-300 dark:border-slate-600 rounded-lg">
+                  {availableMembers.map((m) => (
+                    <label
+                      key={m.spa_nummer}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer border-b border-slate-200 dark:border-slate-700 last:border-b-0"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.includes(m.spa_nummer)}
+                        onChange={() => toggleMemberSelection(m.spa_nummer)}
+                        className="w-4 h-4 text-green-700 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                      <span className="flex-1 text-sm text-slate-900 dark:text-white">
+                        {formatName(m.spa_vnaam, m.spa_tv, m.spa_anaam)} (Nr. {m.spa_nummer})
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleBulkAddPlayers}
+                  disabled={selectedMembers.length === 0 || isSubmitting}
+                  className="px-4 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  {isSubmitting ? 'Bezig...' : `${selectedMembers.length} speler(s) toevoegen`}
+                </button>
+                <button
+                  onClick={() => { setShowAddDialog(false); setBulkMode(false); setSelectedMembers([]); }}
+                  className="px-4 py-2.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+                >
+                  Annuleren
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <div className="mb-4">
