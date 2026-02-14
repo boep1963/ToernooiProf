@@ -198,14 +198,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.log(`[RESULTS] Belgian: P1=${sp_1_punt}, P2=${sp_2_punt}`);
     }
 
-    // Check if result already exists for this match
-    const existingResult = await db.collection('results')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .where('uitslag_code', '==', uitslag_code)
-      .limit(1)
-      .get();
-
+    // Prepare result data outside transaction
     const resultData = {
       org_nummer: orgNummer,
       comp_nr: compNumber,
@@ -226,20 +219,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       gespeeld: 1,
     };
 
-    let resultId: string;
+    // Use Firestore transaction to prevent race conditions from concurrent submissions
+    // This ensures atomicity: only one result per uitslag_code will be created
+    const resultId = await db.runTransaction(async (transaction) => {
+      // Check if result already exists within transaction
+      const existingResult = await transaction.get(
+        db.collection('results')
+          .where('org_nummer', '==', orgNummer)
+          .where('comp_nr', '==', compNumber)
+          .where('uitslag_code', '==', uitslag_code)
+          .limit(1)
+      );
 
-    if (!existingResult.empty) {
-      // Update existing result
-      const docRef = existingResult.docs[0].ref;
-      await docRef.update(resultData);
-      resultId = existingResult.docs[0].id;
-      console.log(`[RESULTS] Updated existing result: ${resultId}`);
-    } else {
-      // Create new result
-      const docRef = await db.collection('results').add(resultData);
-      resultId = docRef.id;
-      console.log(`[RESULTS] Created new result: ${resultId}`);
-    }
+      if (!existingResult.empty) {
+        // Update existing result
+        const docRef = existingResult.docs[0].ref;
+        transaction.update(docRef, resultData);
+        console.log(`[RESULTS] Updating existing result in transaction: ${docRef.id}`);
+        return docRef.id;
+      } else {
+        // Create new result
+        const newDocRef = db.collection('results').doc();
+        transaction.set(newDocRef, resultData);
+        console.log(`[RESULTS] Creating new result in transaction: ${newDocRef.id}`);
+        return newDocRef.id;
+      }
+    });
 
     // Mark the match as played (gespeeld=1)
     console.log('[RESULTS] Marking match as played...');

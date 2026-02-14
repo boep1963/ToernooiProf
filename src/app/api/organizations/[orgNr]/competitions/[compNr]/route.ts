@@ -186,6 +186,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       players: 0,
       matches: 0,
       results: 0,
+      tables: 0,
+      score_helpers: 0,
+      score_helpers_tablet: 0,
     };
 
     // Cascade delete: competition_players
