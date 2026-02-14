@@ -21,6 +21,19 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch',
 };
 
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('nl-NL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function CompetitiesPage() {
   const { orgNummer } = useAuth();
   const { activeCompetition } = useCompetition();
@@ -39,7 +52,13 @@ export default function CompetitiesPage() {
       const res = await fetch(`/api/organizations/${orgNummer}/competitions`);
       if (res.ok) {
         const data = await res.json();
-        setCompetitions(data);
+        // Sort competitions by date (newest first)
+        const sorted = data.sort((a: CompetitionItem, b: CompetitionItem) => {
+          const dateA = new Date(a.comp_datum);
+          const dateB = new Date(b.comp_datum);
+          return dateB.getTime() - dateA.getTime();
+        });
+        setCompetitions(sorted);
       } else {
         setError('Fout bij ophalen competities.');
       }
@@ -201,7 +220,7 @@ export default function CompetitiesPage() {
                         {comp.comp_naam}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{comp.comp_datum}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.comp_datum)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
                     <td className="px-4 py-3 text-right">

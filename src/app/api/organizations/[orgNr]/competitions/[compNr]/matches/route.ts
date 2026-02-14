@@ -206,6 +206,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Create match documents
     const createdMatches: Record<string, unknown>[] = [];
+    const createdPairings = new Set<string>(); // Track created pairings to prevent duplicates
 
     for (let roundIdx = 0; roundIdx < roundsMatches.length; roundIdx++) {
       const round = roundsMatches[roundIdx];
@@ -214,6 +215,41 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         const playerB = playerLookup.get(playerBNr);
 
         if (!playerA || !playerB) continue;
+
+        // Create a normalized pairing key (always smaller number first)
+        const pairingKey = playerANr < playerBNr
+          ? `${periode}_${playerANr}_${playerBNr}`
+          : `${periode}_${playerBNr}_${playerANr}`;
+
+        // Check if this pairing already exists in this batch
+        if (createdPairings.has(pairingKey)) {
+          console.log(`[MATCHES] Skipping duplicate pairing: ${playerA.naam} vs ${playerB.naam} in period ${periode}`);
+          continue;
+        }
+
+        // Check if this pairing already exists in the database
+        const existingPairing = await db.collection('matches')
+          .where('org_nummer', '==', orgNummer)
+          .where('comp_nr', '==', compNumber)
+          .where('periode', '==', periode)
+          .get();
+
+        let isDuplicate = false;
+        existingPairing.forEach((doc) => {
+          const data = doc.data();
+          const numA = Number(data.nummer_A);
+          const numB = Number(data.nummer_B);
+          // Check both directions: A vs B and B vs A
+          if ((numA === playerANr && numB === playerBNr) ||
+              (numA === playerBNr && numB === playerANr)) {
+            isDuplicate = true;
+          }
+        });
+
+        if (isDuplicate) {
+          console.log(`[MATCHES] Skipping duplicate pairing (already in DB): ${playerA.naam} vs ${playerB.naam} in period ${periode}`);
+          continue;
+        }
 
         const matchCode = generateMatchCode(periode, playerANr, playerBNr);
 
@@ -236,6 +272,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         console.log(`[MATCHES] Creating match: ${playerA.naam} vs ${playerB.naam} (${matchCode})`);
         const docRef = await db.collection('matches').add(matchData);
         createdMatches.push({ id: docRef.id, ...matchData });
+        createdPairings.add(pairingKey); // Track this pairing
       }
     }
 
