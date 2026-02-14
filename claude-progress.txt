@@ -486,3 +486,32 @@ NEXT STEPS:
 - More competition workflow features
 - Score entry system refinements
 - Responsive layout features
+
+=== Session 14 - 2026-02-14 ===
+Agent: UI/Layout Bug Fix (#149)
+
+COMPLETED:
+- Feature #149: Fix sidebar and main content stacking vertically instead of side-by-side on desktop ✅
+  - Bug: Sidebar had `lg:static lg:z-auto` classes which switched it from fixed to static
+    positioning on desktop, causing sidebar and content to stack vertically
+  - Fix (already applied by previous session, uncommitted): Removed `lg:static lg:z-auto`
+    from aside className in Sidebar.tsx line 107
+  - Sidebar now stays `fixed` at all breakpoints with `lg:translate-x-0` for desktop visibility
+  - Content wrapper uses `lg:ml-64` (256px margin) to offset for sidebar width
+  - Verified all 6 feature steps:
+    1. Sidebar.tsx code has correct classes (no lg:static, no lg:z-auto)
+    2. Desktop (1280px): sidebar fixed left, content side-by-side (CSS confirmed: position:fixed, ml:256px)
+    3. Mobile (375px): sidebar hidden, slides in as overlay on menu tap
+    4. Header sticky behavior works correctly with fixed sidebar
+    5. Scrolling main content does NOT scroll sidebar (fixed position verified)
+    6. Zero console errors across all pages tested (dashboard, leden)
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 52/150 features passing (34.7%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- More competition workflow features
+- Score entry system refinements
+- Responsive layout features
