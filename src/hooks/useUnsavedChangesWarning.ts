@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * Hook to warn users about unsaved form changes before navigation
@@ -24,7 +24,7 @@ export function useUnsavedChangesWarning(
   isDirty: boolean,
   message: string = 'Je hebt niet-opgeslagen wijzigingen. Weet je zeker dat je deze pagina wilt verlaten?'
 ) {
-  const router = useRouter();
+  const pathname = usePathname();
 
   // Warn on browser navigation (refresh, close tab, back/forward buttons)
   useEffect(() => {
@@ -45,32 +45,43 @@ export function useUnsavedChangesWarning(
     };
   }, [isDirty, message]);
 
-  // Warn on Next.js client-side navigation (sidebar links, programmatic navigation)
+  // Warn on client-side navigation (Link clicks, browser back button)
   useEffect(() => {
-    // Store original router.push for interception
-    const originalPush = router.push;
-    const originalBack = router.back;
+    if (!isDirty) return;
 
-    if (isDirty) {
-      // Intercept router.push
-      router.push = (href: string, options?: Record<string, unknown>) => {
-        if (window.confirm(message)) {
-          originalPush.call(router, href, options);
-        }
-      };
+    // Intercept all link clicks to show confirmation dialog
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a[href]') as HTMLAnchorElement;
 
-      // Intercept router.back
-      router.back = () => {
-        if (window.confirm(message)) {
-          originalBack.call(router);
+      if (link && link.href) {
+        const url = new URL(link.href);
+        const currentUrl = new URL(window.location.href);
+
+        // Only warn if navigating to a different page
+        if (url.pathname !== currentUrl.pathname) {
+          if (!window.confirm(message)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         }
-      };
-    }
+      }
+    };
+
+    // Intercept browser back/forward buttons
+    const handlePopState = (e: PopStateEvent) => {
+      if (!window.confirm(message)) {
+        // Push state back to current page
+        window.history.pushState(null, '', pathname);
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-      // Restore original methods
-      router.push = originalPush;
-      router.back = originalBack;
+      document.removeEventListener('click', handleClick, true);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, [isDirty, message, router]);
+  }, [isDirty, message, pathname]);
 }
