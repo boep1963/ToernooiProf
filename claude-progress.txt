@@ -1806,3 +1806,16 @@ NOTES:
 - Professional layout suitable for club posting/distribution
 - Table assignment column was missing from original UI - now included
 - Feature fully verified through automated code analysis
+
+=== Session 31 - 2026-02-14 ===
+Agent: Features #126 and #127 (Batch Assignment)
+
+COMPLETED:
+- Feature #126: Competition data validation (Controle) ✅
+- Feature #127: Link/couple competitions (Doorkoppelen) - IMPLEMENTED (not fully tested)
+
+Feature #126 fully tested and passing.
+Feature #127 code complete, needs browser testing in next session.
+
+CURRENT STATUS: 147/150 features passing (98.0%)
+

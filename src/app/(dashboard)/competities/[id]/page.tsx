@@ -93,6 +93,7 @@ export default function CompetitieDetailPage() {
     { label: 'Stand', href: `/competities/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Klassement en stand' },
     { label: 'Periodes', href: `/competities/${compNr}/periodes`, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'Periode-overgangen beheren' },
     { label: 'Controle', href: `/competities/${compNr}/controle`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', desc: 'Data validatie en controle' },
+    { label: 'Doorkoppelen', href: `/competities/${compNr}/doorkoppelen`, icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', desc: 'Koppel moyennes door naar leden' },
   ];
 
   return (
