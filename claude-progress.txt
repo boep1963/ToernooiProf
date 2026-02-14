@@ -620,3 +620,43 @@ NEXT STEPS:
 - More competition workflow features
 - Score entry system refinements
 - Responsive layout features
+
+=== Session 16 - 2026-02-14 ===
+Agent: Navigation Integrity Features (#8, #71, #93)
+
+COMPLETED:
+- Feature #8: Header displays organization info and controls ✅
+  - Added organization name display to dashboard header
+  - Destructured `organization` from useAuth() hook
+  - Organization name shown as semibold text with truncation for long names
+  - Header now shows: org name (left), theme toggle + logout (right)
+  - Verified: "Test Biljartvereniging" displayed in header after login
+  - Zero console errors
+
+- Feature #71: Help pages accessible and display content ✅
+  - Replaced placeholder help page with full help system
+  - 10 help topics: Algemeen, Ledenbeheer, Competities, Spelers, Planning, Uitslagen, Stand, Periodes, Scoreborden, Instellingen
+  - Sidebar topic navigation with active state highlighting (green)
+  - Content area displays Dutch help text matching PHP source content
+  - Related links (e.g., "Ga naar Ledenbeheer") navigate to feature pages
+  - Quick navigation buttons below content for jumping between topics
+  - All content in Dutch, sourced from PHPcode/ClubMatch/Help/*.php
+  - Zero console errors, no mock data patterns
+
+- Feature #93: 404 page for unknown routes ✅
+  - Already implemented by previous session (src/app/not-found.tsx)
+  - Verified: /nonexistent-page shows "404 Pagina niet gevonden" in Dutch
+  - Navigation links: "Naar dashboard" and "Naar inlogpagina" both work
+  - Zero JavaScript errors
+
+CODE CHANGES:
+- Modified: src/app/(dashboard)/layout.tsx - Added organization name to header
+- Rewritten: src/app/(dashboard)/help/page.tsx - Full help system with 10 topics
+
+CURRENT STATUS: 68/150 features passing (45.3%)
+
+NEXT STEPS:
+- More competition workflow features
+- Score entry system refinements
+- Responsive layout features
+- Additional navigation integrity checks
