@@ -93,12 +93,11 @@ De app is geconfigureerd voor Firebase Hosting met site **clubmatch**.
 ```bash
 firebase login
 firebase use clubmatch   # of je project-id
-npm run build            # Next.js build
-npx next export          # alleen bij static export (zie next.config)
+npm run build:hosting    # maakt de map 'out' met een minimale pagina
 firebase deploy
 ```
 
-Let op: deze app gebruikt API routes en server-side logica. Voor een volledige deploy met API’s kun je **Firebase App Hosting** (Next.js) of Hosting + **Cloud Functions** gebruiken. Bij een statische export (`next export`) werken de API routes niet; die moeten dan elders (bijv. Cloud Functions) worden gehost.
+Let op: deze app gebruikt API routes en server-side logica en kan niet als statische export worden gebouwd. `build:hosting` zet alleen een minimale `out`-map voor Firebase Hosting. Voor de **volledige app** (inloggen, API’s, scoreborden) gebruik **Firebase App Hosting** (Next.js) of Hosting + **Cloud Functions**.
 
 ## Licentie
 
