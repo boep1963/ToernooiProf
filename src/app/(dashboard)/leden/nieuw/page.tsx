@@ -165,7 +165,7 @@ export default function NieuwLid() {
         const naam = [data.spa_vnaam, data.spa_tv, data.spa_anaam].filter(Boolean).join(' ');
         setSuccess(`Lid "${naam}" is succesvol aangemaakt!`);
         setTimeout(() => {
-          router.push('/leden');
+          router.replace('/leden');
         }, 1500);
       } else {
         const data = await res.json();

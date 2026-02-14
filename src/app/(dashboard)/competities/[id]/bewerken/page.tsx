@@ -138,7 +138,7 @@ export default function CompetitieBewerkenPage() {
       if (res.ok) {
         setSuccess(`Competitie "${formData.comp_naam}" is succesvol bijgewerkt!`);
         setTimeout(() => {
-          router.push(`/competities/${compNr}`);
+          router.replace(`/competities/${compNr}`);
         }, 1500);
       } else {
         const data = await res.json();

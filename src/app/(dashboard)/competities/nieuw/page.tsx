@@ -95,7 +95,7 @@ export default function NieuweCompetitie() {
         const data = await res.json();
         setSuccess(`Competitie "${data.competition.comp_naam}" is succesvol aangemaakt!`);
         setTimeout(() => {
-          router.push('/competities');
+          router.replace('/competities');
         }, 1500);
       } else {
         const data = await res.json();

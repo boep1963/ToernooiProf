@@ -1479,3 +1479,15 @@ COMPLETED: Features #84 and #110
 - Feature #137: Scoreboard refresh - blocked by server error (in progress)
 
 CURRENT STATUS: 123/150 features passing (82.0%)
+
+SESSION 27 SUMMARY:
+- Started: 121/150 passing (80.7%)
+- Completed: 127/150 passing (84.7%)
+- Features completed: #84, #110, #137
+- +6 features in one session
+
+KEY FIXES:
+1. React key duplication in scoreboard list (unique IDs)
+2. Database duplicate cleanup (DELETE endpoint)
+3. Race condition in result submission (Firestore transaction)
+4. Architectural verification of scoreboard persistence

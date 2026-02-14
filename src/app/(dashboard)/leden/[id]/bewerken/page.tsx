@@ -173,7 +173,7 @@ export default function BewerkLid() {
         const naam = [payload.spa_vnaam, payload.spa_tv, payload.spa_anaam].filter(Boolean).join(' ');
         setSuccess(`Lid "${naam}" is succesvol bijgewerkt!`);
         setTimeout(() => {
-          router.push('/leden');
+          router.replace('/leden');
         }, 1500);
       } else {
         const data = await res.json();
