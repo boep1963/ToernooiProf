@@ -1574,3 +1574,22 @@ COMPLETED:
 - Feature #117: Standings tiebreaker logic correct ✅
 
 CURRENT STATUS: 137/150 features passing (91.3%)
+
+=== Session 29 - 2026-02-14 ===
+Agent: Accessibility Features (#106, #141)
+
+COMPLETED:
+- Feature #106: Color contrast meets WCAG standards
+- Feature #141: Screen reader compatible navigation
+
+FEATURE #106: Fixed dark mode error text contrast from 3.51:1 to 6.98:1
+- Changed dark:text-red-400 to dark:text-red-200 in 21 files
+- All elements now meet WCAG AA (4.5:1 minimum)
+
+FEATURE #141: Screen reader navigation
+- Added aria-current="page" to active links
+- Added aria-expanded to hamburger button  
+- Added skip-to-content link
+- All navigation properly labeled
+
+CURRENT STATUS: 136/150 features passing (90.7%)
