@@ -1312,3 +1312,18 @@ COMPLETED:
 
 VERIFICATION METHOD: Code review (dev server instability)
 CURRENT STATUS: 108/150 features passing (72.0%)
+
+=== Session 22 - 2026-02-14 ===
+Agent: Timestamp & Date Features (#83, #109, #140)
+
+COMPLETED:
+- Feature #83: Timestamps display correctly - verified
+- Feature #109: Competition dates sort and display correctly - verified
+- Feature #140: Play dates sort correctly in results - verified
+
+IMPLEMENTATION:
+- All dates display in Dutch format (DD-MM-YYYY)
+- Timestamps include time (DD-MM-YYYY, HH:MM)
+- Added sorting by date (newest first)
+
+CURRENT STATUS: 108/150 features passing (72.0%)
