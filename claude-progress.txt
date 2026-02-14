@@ -488,6 +488,36 @@ NEXT STEPS:
 - Responsive layout features
 
 === Session 14 - 2026-02-14 ===
+Agent: Infrastructure Feature (#150)
+
+COMPLETED:
+- Feature #150: Namespace all Firestore collections under ClubMatch/data/ ✅
+  - Verified FIRESTORE_PREFIX constant defined in db.ts: `const FIRESTORE_PREFIX = 'ClubMatch/data'`
+  - Verified collection() method uses prefixed path: `firestore.collection(`${FIRESTORE_PREFIX}/${name}`)`
+  - Verified healthCheck() uses prefixed path: `firestore.collection(`${FIRESTORE_PREFIX}/_health_check`)`
+  - Verified batch() methods use prefixed path for all operations (set, update, delete)
+  - Verified listCollections() uses namespace document: `firestore.doc(FIRESTORE_PREFIX).listCollections()`
+  - Verified verify-collections and seed routes use db abstraction (no direct Firestore bypass)
+  - Verified local fallback storage is NOT prefixed (uses flat .data/*.json files)
+  - Tested CRUD operations end-to-end via browser: CREATE member → READ in list → DELETE
+  - Health endpoint returns collections ["competitions","members","organizations"] from namespace
+  - Data persists across server restart (verified with PREFIX_TEST member)
+  - Zero mock data patterns in src/ (grep clean)
+  - Zero console errors in browser
+
+KEY OBSERVATION:
+  The FIRESTORE_PREFIX and all path changes were already implemented by a previous session.
+  This session verified all 10 feature steps were correctly implemented and working.
+
+CURRENT STATUS: 52/150 features passing (34.7%)
+
+NEXT STEPS:
+- Member edit page (/leden/:nr/bewerken)
+- More competition workflow features
+- Score entry system refinements
+- Responsive layout features
+
+=== Session 14 - 2026-02-14 ===
 Agent: UI/Layout Bug Fix (#149)
 
 COMPLETED:
