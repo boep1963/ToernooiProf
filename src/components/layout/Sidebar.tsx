@@ -112,8 +112,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo / Brand */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-700">
           <Link href="/dashboard" className="flex items-center space-x-2 min-h-[44px]">
-            <div className="w-8 h-8 rounded-lg bg-green-700 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CM</span>
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img
+                src="/clubmatch-logo.svg"
+                alt="ClubMatch Logo - Biljart Competitie Beheer"
+                className="w-full h-full"
+              />
             </div>
             <span className="text-lg font-bold text-slate-900 dark:text-white">
               ClubMatch
