@@ -15,6 +15,7 @@ interface CompetitionData {
   discipline: number;
   punten_sys: number;
   periode: number;
+  sorteren: number;
 }
 
 interface PlayerData {
@@ -58,7 +59,7 @@ export default function CompetitieMatrixPage() {
   const [error, setError] = useState('');
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
-    return [vnaam, tv, anaam].filter(Boolean).join(' ');
+    return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
   };
 
   const fetchData = useCallback(async () => {
