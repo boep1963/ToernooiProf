@@ -8,6 +8,20 @@
   --color-accent-light: #3d6b20;
 }
 
+/* Global focus-visible ring for keyboard navigation accessibility */
+*:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove focus-visible outline from inputs that already have focus:ring styling */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
 /* Tabular numbers for scores and statistics */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
