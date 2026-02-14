@@ -288,6 +288,24 @@ export default function CompetiteUitslagenPage() {
     return acc;
   }, {});
 
+  // Sort matches within each round by play date (newest first)
+  Object.keys(matchesByRound).forEach(round => {
+    matchesByRound[Number(round)].sort((a, b) => {
+      const resultA = results.find(r => r.uitslag_code === a.uitslag_code);
+      const resultB = results.find(r => r.uitslag_code === b.uitslag_code);
+
+      // Matches without results go to the end
+      if (!resultA && !resultB) return 0;
+      if (!resultA) return 1;
+      if (!resultB) return -1;
+
+      // Sort by date (newest first)
+      const dateA = new Date(resultA.speeldatum);
+      const dateB = new Date(resultB.speeldatum);
+      return dateB.getTime() - dateA.getTime();
+    });
+  });
+
   const roundNumbers = Object.keys(matchesByRound)
     .map(Number)
     .sort((a, b) => a - b);
