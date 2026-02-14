@@ -4,25 +4,14 @@
  * Feature #120: Login date tracking updated on login
  *
  * Verification steps:
- * 1. Get current login date from Firestore for test org
+ * 1. Get current login date from local database for test org
  * 2. Login via API
  * 3. Verify date_inlog field was updated to current timestamp
  */
 
-import admin from 'firebase-admin';
 import { readFileSync } from 'fs';
 
-const serviceAccount = JSON.parse(
-  readFileSync('./.data/firebase-service-account.json', 'utf-8')
-);
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
-
-const db = admin.firestore();
+const DB_FILE = './.data/organizations.json';
 
 async function testLoginDateTracking() {
   console.log('\n=== Feature #120: Login Date Tracking Test ===\n');
@@ -30,19 +19,16 @@ async function testLoginDateTracking() {
   const testCode = '1205_AAY@#';
 
   // Step 1: Get current login date
-  console.log('Step 1: Getting current login date from Firestore...');
-  const orgSnapshot = await db.collection('organizations')
-    .where('org_code', '==', testCode)
-    .limit(1)
-    .get();
+  console.log('Step 1: Getting current login date from database...');
+  const beforeData = JSON.parse(readFileSync(DB_FILE, 'utf-8'));
+  const orgEntry = Object.entries(beforeData).find(([_, org]) => org.org_code === testCode);
 
-  if (orgSnapshot.empty) {
+  if (!orgEntry) {
     console.error('❌ Test organization not found!');
     process.exit(1);
   }
 
-  const orgDoc = orgSnapshot.docs[0];
-  const orgData = orgDoc.data();
+  const [orgId, orgData] = orgEntry;
   const oldLoginDate = orgData.date_inlog;
 
   console.log(`   Organization: ${orgData.org_naam} (${orgData.org_nummer})`);
@@ -76,17 +62,15 @@ async function testLoginDateTracking() {
   console.log(`   Organization: ${loginResult.organization.org_naam}`);
 
   // Step 3: Verify date_inlog was updated
-  console.log('\nStep 3: Verifying date_inlog was updated in Firestore...');
+  console.log('\nStep 3: Verifying date_inlog was updated in database...');
 
-  // Get fresh data from Firestore
-  const updatedSnapshot = await db.collection('organizations')
-    .where('org_code', '==', testCode)
-    .limit(1)
-    .get();
+  // Small delay to ensure file write completed
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  const updatedDoc = updatedSnapshot.docs[0];
-  const updatedData = updatedDoc.data();
-  const newLoginDate = updatedData.date_inlog;
+  // Get fresh data from database
+  const afterData = JSON.parse(readFileSync(DB_FILE, 'utf-8'));
+  const updatedOrg = afterData[orgId];
+  const newLoginDate = updatedOrg.date_inlog;
 
   console.log(`   Old date_inlog: ${oldLoginDate}`);
   console.log(`   New date_inlog: ${newLoginDate}`);
