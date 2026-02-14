@@ -55,7 +55,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const playerMap: Record<number, { name: string; nr: number }> = {};
     playersSnapshot.forEach((doc) => {
       const data = doc.data();
-      const nr = data.spc_nummer;
+      if (!data) return;
+      const nr = Number(data.spc_nummer);
       const name = [data.spa_vnaam, data.spa_tv, data.spa_anaam].filter(Boolean).join(' ');
       playerMap[nr] = { name, nr };
     });
@@ -97,9 +98,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Aggregate results
     resultsSnapshot.forEach((doc) => {
       const result = doc.data();
+      if (!result) return;
 
       // Player 1 stats
-      const p1Nr = result.sp_1_nr;
+      const p1Nr = Number(result.sp_1_nr);
       if (standingsMap[p1Nr]) {
         standingsMap[p1Nr].matchesPlayed += 1;
         standingsMap[p1Nr].carambolesGemaakt += Number(result.sp_1_cargem) || 0;
@@ -125,7 +127,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
 
       // Player 2 stats
-      const p2Nr = result.sp_2_nr;
+      const p2Nr = Number(result.sp_2_nr);
       if (standingsMap[p2Nr]) {
         standingsMap[p2Nr].matchesPlayed += 1;
         standingsMap[p2Nr].carambolesGemaakt += Number(result.sp_2_cargem) || 0;
