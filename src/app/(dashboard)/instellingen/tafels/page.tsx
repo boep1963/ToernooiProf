@@ -33,6 +33,24 @@ export default function TafelsInstellingenPage() {
         if (!res.ok) throw new Error('Failed to fetch');
         let data = await res.json();
 
+        // Deduplicate configs based on tafel_nr to fix "duplicate key" React error
+        const uniqueMap = new Map();
+        if (Array.isArray(data)) {
+          data.forEach((item: any) => {
+            if (!uniqueMap.has(item.tafel_nr)) {
+              uniqueMap.set(item.tafel_nr, item);
+            }
+          });
+          
+          // If duplicates were found, trigger cleanup in background
+          if (data.length > uniqueMap.size) {
+             fetch(`/api/organizations/${orgNummer}/scoreboards/device`, { method: 'DELETE' }).catch(console.error);
+          }
+          
+          data = Array.from(uniqueMap.values());
+          data.sort((a: any, b: any) => a.tafel_nr - b.tafel_nr);
+        }
+
         if (data.length === 0) {
           // Initialize device configs for all tables
           await fetch(`/api/organizations/${orgNummer}/scoreboards/device`, {
