@@ -1,10 +1,23 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { readFileSync } from 'fs';
 
-const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+// Load .env.local
+const envFile = readFileSync('.env.local', 'utf8');
+const envVars = {};
+envFile.split('\n').forEach(line => {
+  if (line && !line.startsWith('#')) {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      envVars[match[1].trim()] = match[2].trim();
+    }
+  }
+});
+
+const serviceAccountKey = envVars.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!serviceAccountKey) {
-  console.error('FIREBASE_SERVICE_ACCOUNT_KEY not set');
+  console.error('FIREBASE_SERVICE_ACCOUNT_KEY not set in .env.local');
   process.exit(1);
 }
 

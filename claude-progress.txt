@@ -874,3 +874,16 @@ NEXT STEPS:
 - More competition workflow features
 - Scoreboard and standings display
 - Responsive layout features
+
+=== Session 18 - 2026-02-14 ===
+Agent: Caramboles Auto-Calculation Feature
+
+COMPLETED:
+- Feature #32: Caramboles auto-calculation from moyenne ✅
+
+TEST VERIFICATION:
+- Feature #32: test-caramboles-calc.mjs - all tests passing
+- Feature #36: Code review - matrix page fully implemented
+- Feature #38: test-wrv-draw.mjs - all tests passing
+
+CURRENT STATUS: 82/150 features passing (54.7%)
