@@ -574,3 +574,49 @@ NEXT STEPS:
 - More competition workflow features
 - Score entry system refinements
 - Responsive layout features
+
+=== Session - 2026-02-14 (continued) ===
+Agent: Features #21, #90, #28
+
+COMPLETED:
+- Feature #21: Edit existing member ✅
+  - Created /leden/[id]/bewerken/page.tsx with pre-filled form
+  - Fetches member data from GET API, submits changes via PUT
+  - Dutch success notification with auto-redirect
+  - Per-field validation with required field markers
+
+- Feature #90: Success notifications for all CRUD operations ✅
+  - Added delete success notification to leden/page.tsx
+  - Made all notifications closeable with X button across 8 pages:
+    leden/page.tsx, leden/nieuw/page.tsx, leden/[id]/bewerken/page.tsx,
+    competities/nieuw/page.tsx, competities/[id]/uitslagen/page.tsx,
+    competities/[id]/spelers/page.tsx, competities/[id]/periodes/page.tsx,
+    competities/[id]/planning/page.tsx
+
+- Feature #28: Delete competition with cascade ✅
+  - Created DELETE handler in /api/organizations/[orgNr]/competitions/[compNr]/route.ts
+  - Cascade deletes: competition_players, matches, results
+  - Fixed field name bugs: spc_comp→spc_competitie, wed_org/wed_comp→org_nummer/comp_nr,
+    uit_org/uit_comp→org_nummer/comp_nr (aligned with actual Firestore field names)
+  - Updated competities/page.tsx with delete button, Dutch confirmation dialog
+    (Bevestigen/Annuleren), success notification, and Acties column
+  - Verified cascade: 1 player deleted, competition removed from list, 404 on GET
+
+CODE CHANGES:
+- Created: src/app/(dashboard)/leden/[id]/bewerken/page.tsx
+- Modified: src/app/(dashboard)/leden/page.tsx (delete notification)
+- Modified: src/app/(dashboard)/leden/nieuw/page.tsx (closeable notifications)
+- Modified: src/app/(dashboard)/competities/page.tsx (delete button + notifications)
+- Modified: src/app/(dashboard)/competities/nieuw/page.tsx (closeable notifications)
+- Modified: src/app/(dashboard)/competities/[id]/uitslagen/page.tsx (closeable notifications)
+- Modified: src/app/(dashboard)/competities/[id]/spelers/page.tsx (closeable notifications)
+- Modified: src/app/(dashboard)/competities/[id]/periodes/page.tsx (closeable notifications)
+- Modified: src/app/(dashboard)/competities/[id]/planning/page.tsx (closeable notifications)
+- Modified: src/app/api/organizations/[orgNr]/competitions/[compNr]/route.ts (DELETE handler + field name fixes)
+
+CURRENT STATUS: 62/150 features passing (41.3%)
+
+NEXT STEPS:
+- More competition workflow features
+- Score entry system refinements
+- Responsive layout features

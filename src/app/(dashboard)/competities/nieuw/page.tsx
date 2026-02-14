@@ -158,12 +158,14 @@ export default function NieuweCompetitie() {
                 value={formData.comp_naam}
                 onChange={handleChange}
                 placeholder="Bijv. Wintercompetitie 2026"
+                required
+                aria-required="true"
                 aria-invalid={!!fieldErrors.comp_naam}
                 aria-describedby={fieldErrors.comp_naam ? 'comp_naam-error' : undefined}
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_naam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_naam && (
-                <p id="comp_naam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_naam}</p>
+                <p id="comp_naam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_naam}</p>
               )}
             </div>
             <div>
@@ -176,12 +178,14 @@ export default function NieuweCompetitie() {
                 type="date"
                 value={formData.comp_datum}
                 onChange={handleChange}
+                required
+                aria-required="true"
                 aria-invalid={!!fieldErrors.comp_datum}
                 aria-describedby={fieldErrors.comp_datum ? 'comp_datum-error' : undefined}
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_datum && (
-                <p id="comp_datum-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_datum}</p>
+                <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_datum}</p>
               )}
             </div>
           </div>
@@ -202,6 +206,8 @@ export default function NieuweCompetitie() {
                 name="discipline"
                 value={formData.discipline}
                 onChange={handleChange}
+                required
+                aria-required="true"
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
                 {Object.entries(DISCIPLINES).map(([value, label]) => (
@@ -218,6 +224,8 @@ export default function NieuweCompetitie() {
                 name="punten_sys"
                 value={formData.punten_sys}
                 onChange={handleChange}
+                required
+                aria-required="true"
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
                 {Object.entries(PUNTEN_SYSTEMEN).map(([value, label]) => (

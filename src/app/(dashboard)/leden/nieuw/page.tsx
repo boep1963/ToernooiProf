@@ -162,12 +162,14 @@ export default function NieuwLid() {
                 value={formData.spa_vnaam}
                 onChange={handleChange}
                 placeholder="Bijv. Jan"
+                required
+                aria-required="true"
                 aria-invalid={!!fieldErrors.spa_vnaam}
                 aria-describedby={fieldErrors.spa_vnaam ? 'spa_vnaam-error' : undefined}
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_vnaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_vnaam && (
-                <p id="spa_vnaam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_vnaam}</p>
+                <p id="spa_vnaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_vnaam}</p>
               )}
             </div>
             <div>
@@ -195,12 +197,14 @@ export default function NieuwLid() {
                 value={formData.spa_anaam}
                 onChange={handleChange}
                 placeholder="Bijv. Berg"
+                required
+                aria-required="true"
                 aria-invalid={!!fieldErrors.spa_anaam}
                 aria-describedby={fieldErrors.spa_anaam ? 'spa_anaam-error' : undefined}
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_anaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_anaam && (
-                <p id="spa_anaam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_anaam}</p>
+                <p id="spa_anaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_anaam}</p>
               )}
             </div>
           </div>

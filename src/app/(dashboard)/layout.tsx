@@ -9,7 +9,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isAuthenticated, isLoading, isVerified, logout } = useAuth();
+  const { isAuthenticated, isLoading, isVerified, organization, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -57,7 +57,14 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="flex-1" />
+          {/* Organization name in header */}
+          <div className="flex-1 flex items-center ml-2 lg:ml-0">
+            {organization && (
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[200px] sm:max-w-xs" title={organization.org_naam}>
+                {organization.org_naam}
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
             <button
