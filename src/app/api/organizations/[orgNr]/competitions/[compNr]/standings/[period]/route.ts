@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { formatPlayerName } from '@/lib/billiards';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; period: string }>;
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnapshot.docs[0].data();
+    const sorteren = Number(compData?.sorteren) || 1;
 
     // Fetch all competition players
     const playersSnapshot = await db.collection('competition_players')
@@ -57,7 +59,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const data = doc.data();
       if (!data) return;
       const nr = Number(data.spc_nummer);
-      const name = [data.spa_vnaam, data.spa_tv, data.spa_anaam].filter(Boolean).join(' ');
+      const name = formatPlayerName(
+        String(data.spa_vnaam || ''),
+        String(data.spa_tv || ''),
+        String(data.spa_anaam || ''),
+        sorteren
+      );
       playerMap[nr] = { name, nr };
     });
 

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
+import { formatPlayerName } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 
 interface CompetitionData {
