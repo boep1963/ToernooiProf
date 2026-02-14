@@ -30,7 +30,7 @@ export default function TafelsInstellingenPage() {
 
         if (data.length === 0) {
           // Initialize device configs for all tables
-          const aantalTafels = (organization as Record<string, unknown>).aantal_tafels as number || 4;
+          const aantalTafels = (organization as unknown as Record<string, unknown>).aantal_tafels as number || 4;
           await fetch(`/api/organizations/${orgNummer}/scoreboards/device`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

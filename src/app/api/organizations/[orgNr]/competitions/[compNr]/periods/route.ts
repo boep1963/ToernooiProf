@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnapshot.docs[0].data();
-    const currentPeriode = compData?.periode || 1;
+    const currentPeriode = Number(compData?.periode) || 1;
 
     // Get players
     const playersSnapshot = await db.collection('competition_players')
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const compDoc = compSnapshot.docs[0];
     const compData = compDoc.data();
-    const currentPeriode = compData?.periode || 1;
+    const currentPeriode = Number(compData?.periode) || 1;
     const newPeriode = currentPeriode + 1;
 
     // Enforce maximum 5 periods

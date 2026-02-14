@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       orgNummer: session.orgNummer,
+      verified: orgData?.verified === true || orgData?.verified === undefined,
       organization: {
         org_nummer: orgData?.org_nummer,
         org_naam: orgData?.org_naam,

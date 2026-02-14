@@ -22,6 +22,7 @@ export default function NieuwLid() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,6 +30,14 @@ export default function NieuwLid() {
       ...prev,
       [name]: value,
     }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,11 +52,20 @@ export default function NieuwLid() {
       return;
     }
 
-    if (!formData.spa_vnaam.trim() && !formData.spa_anaam.trim()) {
-      setError('Voornaam of achternaam is verplicht.');
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    if (!formData.spa_vnaam.trim()) {
+      errors.spa_vnaam = 'Voornaam is verplicht.';
+    }
+    if (!formData.spa_anaam.trim()) {
+      errors.spa_anaam = 'Achternaam is verplicht.';
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setIsSubmitting(false);
       return;
     }
+    setFieldErrors({});
 
     try {
       const payload = {
@@ -109,14 +127,20 @@ export default function NieuwLid() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
-          {error}
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 
       {success && (
-        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
-          {success}
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 
@@ -129,7 +153,7 @@ export default function NieuwLid() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="spa_vnaam" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Voornaam
+                Voornaam <span className="text-red-500">*</span>
               </label>
               <input
                 id="spa_vnaam"
@@ -138,8 +162,13 @@ export default function NieuwLid() {
                 value={formData.spa_vnaam}
                 onChange={handleChange}
                 placeholder="Bijv. Jan"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                aria-invalid={!!fieldErrors.spa_vnaam}
+                aria-describedby={fieldErrors.spa_vnaam ? 'spa_vnaam-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_vnaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_vnaam && (
+                <p id="spa_vnaam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_vnaam}</p>
+              )}
             </div>
             <div>
               <label htmlFor="spa_tv" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -157,7 +186,7 @@ export default function NieuwLid() {
             </div>
             <div>
               <label htmlFor="spa_anaam" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Achternaam
+                Achternaam <span className="text-red-500">*</span>
               </label>
               <input
                 id="spa_anaam"
@@ -166,12 +195,17 @@ export default function NieuwLid() {
                 value={formData.spa_anaam}
                 onChange={handleChange}
                 placeholder="Bijv. Berg"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                aria-invalid={!!fieldErrors.spa_anaam}
+                aria-describedby={fieldErrors.spa_anaam ? 'spa_anaam-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_anaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_anaam && (
+                <p id="spa_anaam-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_anaam}</p>
+              )}
             </div>
           </div>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Voornaam of achternaam is verplicht.
+            Voornaam en achternaam zijn verplicht.
           </p>
         </div>
 

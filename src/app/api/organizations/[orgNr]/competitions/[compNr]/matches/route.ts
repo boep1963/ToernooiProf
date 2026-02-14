@@ -88,9 +88,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnapshot.docs[0].data();
-    const discipline = compData?.discipline || 1;
-    const periode = compData?.periode || 1;
-    const sorteren = compData?.sorteren || 1;
+    const discipline = Number(compData?.discipline) || 1;
+    const periode = Number(compData?.periode) || 1;
+    const sorteren = Number(compData?.sorteren) || 1;
 
     // Get discipline-specific caramboles key
     const carKeyMap: Record<number, string> = {
@@ -120,15 +120,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         players.push({
           nummer: Number(data.spc_nummer) || 0,
           naam: formatPlayerName(
-            data.spa_vnaam || '',
-            data.spa_tv || '',
-            data.spa_anaam || '',
+            String(data.spa_vnaam || ''),
+            String(data.spa_tv || ''),
+            String(data.spa_anaam || ''),
             sorteren
           ),
           caramboles: Number(data[carKey]) || 0,
-          vnaam: data.spa_vnaam || '',
-          tv: data.spa_tv || '',
-          anaam: data.spa_anaam || '',
+          vnaam: String(data.spa_vnaam || ''),
+          tv: String(data.spa_tv || ''),
+          anaam: String(data.spa_anaam || ''),
         });
       }
     });

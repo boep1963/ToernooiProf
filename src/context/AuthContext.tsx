@@ -6,6 +6,7 @@ import type { Organization } from '@/types';
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isVerified: boolean;
   organization: Organization | null;
   orgNummer: number | null;
 }
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
     isLoading: true,
+    isVerified: false,
     organization: null,
     orgNummer: null,
   });
@@ -35,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState({
             isAuthenticated: true,
             isLoading: false,
+            isVerified: data.verified === true,
             organization: data.organization,
             orgNummer: data.orgNummer,
           });
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState({
           isAuthenticated: true,
           isLoading: false,
+          isVerified: true,
           organization,
           orgNummer,
         });
@@ -76,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState({
       isAuthenticated: false,
       isLoading: false,
+      isVerified: false,
       organization: null,
       orgNummer: null,
     });

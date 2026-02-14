@@ -31,6 +31,9 @@ export default function AccountPage() {
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Newsletter toggle state
+  const [isSavingNewsletter, setIsSavingNewsletter] = useState(false);
+
   // Editable fields
   const [editName, setEditName] = useState('');
   const [editContactPerson, setEditContactPerson] = useState('');
@@ -122,6 +125,38 @@ export default function AccountPage() {
       setError('Er is een fout opgetreden. Probeer het later opnieuw.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleNewsletterToggle = async () => {
+    if (!orgNummer || !orgDetails) return;
+    setIsSavingNewsletter(true);
+    setError('');
+    setSuccess('');
+
+    const newValue = orgDetails.nieuwsbrief === 1 ? 0 : 1;
+
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nieuwsbrief: newValue }),
+      });
+
+      if (res.ok) {
+        setOrgDetails({ ...orgDetails, nieuwsbrief: newValue });
+        setSuccess(
+          newValue === 1
+            ? 'U bent succesvol aangemeld voor de nieuwsbrief!'
+            : 'U bent succesvol afgemeld voor de nieuwsbrief.'
+        );
+      } else {
+        setError('Fout bij bijwerken nieuwsbriefstatus.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+    } finally {
+      setIsSavingNewsletter(false);
     }
   };
 
@@ -350,6 +385,40 @@ export default function AccountPage() {
             </div>
           )}
         </form>
+
+          {/* Newsletter Subscription */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Nieuwsbrief
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Ontvang updates en nieuws over ClubMatch per e-mail.
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleNewsletterToggle}
+                disabled={isSavingNewsletter}
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                  orgDetails.nieuwsbrief === 1
+                    ? 'bg-green-600'
+                    : 'bg-slate-300 dark:bg-slate-600'
+                } ${isSavingNewsletter ? 'opacity-50 cursor-wait' : ''}`}
+                role="switch"
+                aria-checked={orgDetails.nieuwsbrief === 1}
+                aria-label="Nieuwsbrief abonnement"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    orgDetails.nieuwsbrief === 1 ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                {orgDetails.nieuwsbrief === 1 ? 'Aangemeld' : 'Afgemeld'}
+              </span>
+            </div>
+          </div>
 
           {/* Danger Zone - Account Deletion */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">

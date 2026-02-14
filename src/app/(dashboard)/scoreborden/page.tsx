@@ -28,7 +28,7 @@ export default function ScorebordenPage() {
 
         if (data.length === 0) {
           // Initialize device configs for all tables
-          const aantalTafels = (organization as Record<string, unknown>).aantal_tafels || 4;
+          const aantalTafels = (organization as unknown as Record<string, unknown>).aantal_tafels || 4;
           await fetch(`/api/organizations/${orgNummer}/scoreboards/device`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ export default function ScorebordenPage() {
       } catch (error) {
         console.error('Error fetching device configs:', error);
         // Generate default configs based on organization tables
-        const aantalTafels = (organization as Record<string, unknown>)?.aantal_tafels as number || 4;
+        const aantalTafels = (organization as unknown as Record<string, unknown>)?.aantal_tafels as number || 4;
         const defaults: DeviceConfig[] = [];
         for (let i = 1; i <= aantalTafels; i++) {
           defaults.push({

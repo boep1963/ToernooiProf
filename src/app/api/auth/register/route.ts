@@ -148,16 +148,17 @@ export async function POST(request: NextRequest) {
     console.log(`[REGISTER] Organisatienummer: ${nextOrgNummer}`);
     console.log('============================================');
 
-    // Set session cookie for the new user (auto-login after registration)
+    // Set session cookie for the new user (unverified state)
     const response = NextResponse.json({
       success: true,
       org_nummer: nextOrgNummer,
       org_code: loginCode,
       org_naam: org_naam.trim(),
-      message: 'Account succesvol aangemaakt!',
+      email: org_wl_email.trim(),
+      message: 'Account aangemaakt! Verifieer uw e-mailadres om verder te gaan.',
     }, { status: 201 });
 
-    // Set session cookie
+    // Set session cookie (unverified - user needs to complete email verification)
     response.cookies.set('clubmatch-session', JSON.stringify({
       orgNummer: nextOrgNummer,
       orgNaam: org_naam.trim(),

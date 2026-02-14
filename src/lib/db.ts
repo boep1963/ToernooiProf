@@ -335,6 +335,14 @@ function createLocalDb(): DbInstance {
 // Firestore adapter (wraps real Firestore to match our interface)
 // ============================================================
 
+/**
+ * Namespace prefix for all Firestore collections.
+ * All collections are stored as subcollections under ClubMatch/data/ document.
+ * This keeps the Firestore root clean and organizes all app data in one place.
+ * Example: 'organizations' becomes 'ClubMatch/data/organizations'
+ */
+const FIRESTORE_PREFIX = 'ClubMatch/data';
+
 function createFirestoreAdapter(firestore: Firestore): DbInstance {
   function wrapDocRef(firestoreDocRef: FirebaseFirestore.DocumentReference): DocumentRef {
     const self: DocumentRef = {
@@ -417,7 +425,7 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
   return {
     isFirestore: true,
     collection(name: string): CollectionRef {
-      return wrapCollectionRef(firestore.collection(name));
+      return wrapCollectionRef(firestore.collection(`${FIRESTORE_PREFIX}/${name}`));
     },
     batch(): BatchRef {
       const firestoreBatch = firestore.batch();
@@ -425,13 +433,13 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
         set(ref: DocumentRef, data: Record<string, unknown>) {
           // We need the underlying Firestore ref - use collection path
           // This is a simplified approach
-          firestoreBatch.set(firestore.collection('_batch').doc(ref.id), data);
+          firestoreBatch.set(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id), data);
         },
         update(ref: DocumentRef, data: Record<string, unknown>) {
-          firestoreBatch.update(firestore.collection('_batch').doc(ref.id), data);
+          firestoreBatch.update(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id), data);
         },
         delete(ref: DocumentRef) {
-          firestoreBatch.delete(firestore.collection('_batch').doc(ref.id));
+          firestoreBatch.delete(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id));
         },
         async commit() {
           await firestoreBatch.commit();
@@ -440,7 +448,7 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
     },
     async healthCheck(): Promise<{ status: string; type: string }> {
       try {
-        const testRef = firestore.collection('_health_check');
+        const testRef = firestore.collection(`${FIRESTORE_PREFIX}/_health_check`);
         await testRef.limit(1).get();
         return { status: 'connected', type: 'firestore' };
       } catch {
@@ -449,7 +457,9 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
     },
     async listCollections(): Promise<{ id: string }[]> {
       try {
-        const collections = await firestore.listCollections();
+        // List subcollections of the ClubMatch/data namespace document
+        const namespaceDoc = firestore.doc(FIRESTORE_PREFIX);
+        const collections = await namespaceDoc.listCollections();
         return collections.map(c => ({ id: c.id }));
       } catch {
         return [];
@@ -516,7 +526,7 @@ export async function initializeCollections(): Promise<string[]> {
     const requiredCollections = [
       'organizations', 'competitions', 'members', 'competition_players',
       'matches', 'results', 'tables', 'device_config',
-      'score_helpers', 'score_helpers_tablet', 'news_reactions',
+      'score_helpers', 'score_helpers_tablet', 'news_reactions', 'news',
     ];
     ensureDbDir();
     const initialized: string[] = [];

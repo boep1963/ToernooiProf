@@ -11,11 +11,6 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState<{
-    org_nummer: number;
-    org_code: string;
-    org_naam: string;
-  } | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +55,9 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess({
-          org_nummer: data.org_nummer,
-          org_code: data.org_code,
-          org_naam: data.org_naam,
-        });
+        // Redirect to verification page with email
+        window.location.href = `/verificatie?email=${encodeURIComponent(email.trim())}`;
+        return;
       } else {
         if (data.errors && Array.isArray(data.errors)) {
           setFieldErrors(data.errors);
@@ -78,83 +71,6 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
-
-  // Success state - show confirmation with login code
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 relative">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-2xl">CM</span>
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-              ClubMatch
-            </h1>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">
-              Account aangemaakt!
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 p-8 border border-slate-200 dark:border-slate-700">
-            <div className="text-center space-y-4">
-              {/* Success icon */}
-              <div className="flex items-center justify-center mb-2">
-                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                </div>
-              </div>
-
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                Welkom, {success.org_naam}!
-              </h2>
-
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
-                Uw account is succesvol aangemaakt. Hieronder vindt u uw inlogcode.
-                Bewaar deze goed!
-              </p>
-
-              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Uw inlogcode:</p>
-                <p className="text-2xl font-mono font-bold text-green-700 dark:text-green-400 tracking-wider select-all">
-                  {success.org_code}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  Organisatienummer: {success.org_nummer}
-                </p>
-              </div>
-
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                Let op: Noteer uw inlogcode. U heeft deze nodig om in te loggen.
-              </p>
-
-              <a
-                href="/dashboard"
-                className="block w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm text-center min-h-[44px] leading-[28px]"
-              >
-                Ga naar Dashboard
-              </a>
-
-              <a
-                href="/inloggen"
-                className="block text-sm text-slate-500 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400 hover:underline min-h-[44px] leading-[44px]"
-              >
-                Naar inlogpagina
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 relative">

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
+import CompetitionSubNav from '@/components/CompetitionSubNav';
 
 interface CompetitionData {
   id: string;
@@ -217,27 +218,15 @@ export default function CompetitieStandPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push(`/competities/${compNr}`)}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar competitie"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Stand - {competition.comp_naam}
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
-            </p>
-          </div>
-        </div>
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Stand - {competition.comp_naam}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+        </p>
       </div>
 
       {error && (

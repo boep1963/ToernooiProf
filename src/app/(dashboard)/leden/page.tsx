@@ -48,6 +48,7 @@ export default function LedenPage() {
   const [members, setMembers] = useState<MemberItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,13 +100,19 @@ export default function LedenPage() {
   const handleDelete = async (memberNr: number) => {
     if (!orgNummer) return;
     setDeleteLoading(true);
+    setError('');
+    setSuccess('');
     try {
+      const deletedMember = members.find(m => m.spa_nummer === memberNr);
       const res = await fetch(`/api/organizations/${orgNummer}/members/${memberNr}`, {
         method: 'DELETE',
       });
       if (res.ok) {
+        const naam = deletedMember ? getMemberFullName(deletedMember) : `#${memberNr}`;
         setMembers(prev => prev.filter(m => m.spa_nummer !== memberNr));
         setDeleteConfirm(null);
+        setSuccess(`Lid "${naam}" is succesvol verwijderd.`);
+        setTimeout(() => setSuccess(''), 4000);
       } else {
         setError('Fout bij verwijderen lid.');
       }
@@ -144,8 +151,20 @@ export default function LedenPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
-          {error}
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 
