@@ -22,7 +22,14 @@ export default function ContactPage() {
     setError('');
     setSuccess('');
 
-    if (!bericht.trim()) {
+    // Validate onderwerp (subject)
+    if (!onderwerp || !onderwerp.trim()) {
+      setError('Selecteer een onderwerp.');
+      return;
+    }
+
+    // Validate bericht (message)
+    if (!bericht || !bericht.trim()) {
       setError('Vul een bericht in.');
       return;
     }
@@ -158,7 +165,7 @@ export default function ContactPage() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={isSubmitting || !bericht.trim()}
+            disabled={isSubmitting || !onderwerp.trim() || !bericht.trim()}
             className="flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             {isSubmitting ? (
