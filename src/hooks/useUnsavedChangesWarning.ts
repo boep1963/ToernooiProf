@@ -53,7 +53,7 @@ export function useUnsavedChangesWarning(
 
     if (isDirty) {
       // Intercept router.push
-      router.push = (href: string, options?: any) => {
+      router.push = (href: string, options?: Record<string, unknown>) => {
         if (window.confirm(message)) {
           originalPush.call(router, href, options);
         }
