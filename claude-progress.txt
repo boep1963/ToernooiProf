@@ -698,3 +698,37 @@ CODE CHANGES:
 ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
 
 CURRENT STATUS: 66/150 features passing (44.0%)
+
+=== Session - 2026-02-14 (continued) ===
+Agent: Auth Verification Features (#17, #122)
+
+COMPLETED:
+- Feature #17: Invalid email/password is rejected with Dutch error ✅
+  - Already fully implemented by previous sessions
+  - Verified: invalid login code "9999_INVALID" → "Ongeldige inlogcode. Probeer het opnieuw."
+  - Verified: invalid email/password → "Geen account gevonden voor dit e-mailadres."
+  - Error displayed with role="alert" for accessibility, red styling, dismissible X button
+  - User remains on /inloggen page after invalid credentials
+  - Multiple Firebase Auth error codes handled with Dutch messages:
+    auth/user-not-found, auth/wrong-password, auth/invalid-email,
+    auth/too-many-requests, auth/user-disabled, auth/invalid-credential
+  - Zero console errors
+
+- Feature #122: Email verification flow works ✅
+  - Already fully implemented by previous sessions
+  - Full flow tested end-to-end:
+    1. Registered "Verificatie Test Club" (org #1206) → redirected to /verificatie
+    2. Verification code (29425) logged to server terminal (dev mode)
+    3. Unverified user accessing /dashboard → redirected to /verificatie
+    4. Entered verification code → "Verificatie voltooid!" success with login code
+    5. After verification → full dashboard access granted
+  - Session API returns verified: true after verification
+  - Dashboard layout enforces verification check via AuthContext.isVerified
+  - Unverified orgs (verified: false) blocked from protected routes
+  - Legacy orgs (verified: undefined) treated as verified for backward compatibility
+  - Test org cleaned up after verification
+
+NO CODE CHANGES (both features were already implemented by previous sessions)
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 72/150 features passing (48.0%)
