@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
+import Footer from '@/components/layout/Footer';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CompetitionProvider } from '@/context/CompetitionContext';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -44,7 +45,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 overflow-x-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="lg:ml-64">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Top bar with mobile menu toggle and theme toggle */}
         <header className="sticky top-0 z-30 h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 lg:px-6">
           <button
@@ -90,9 +91,12 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main content */}
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

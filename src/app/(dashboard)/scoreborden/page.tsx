@@ -89,7 +89,7 @@ export default function ScorebordenPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {configs.map((config) => (
           <Link
-            key={config.tafel_nr}
+            key={config.id || `table-${config.tafel_nr}`}
             href={`/scoreborden/${config.tafel_nr}`}
             className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md hover:border-green-500 dark:hover:border-green-400 transition-all group"
           >

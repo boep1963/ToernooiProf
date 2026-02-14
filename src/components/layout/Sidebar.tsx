@@ -157,10 +157,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Footer with theme toggle */}
         <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              &copy; {new Date().getFullYear()} ClubMatch
-            </p>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-slate-400 dark:text-slate-500">
+              <p>&copy; {new Date().getFullYear()} ClubMatch</p>
+              <p className="mt-1">Versie 0.1.0</p>
+            </div>
             <ThemeToggle />
           </div>
         </div>

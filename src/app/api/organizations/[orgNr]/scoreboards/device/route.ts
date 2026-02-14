@@ -46,6 +46,66 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
+ * DELETE /api/organizations/:orgNr/scoreboards/device
+ * Remove duplicate device configurations (keep only first per table)
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr } = await params;
+    const orgNummer = parseInt(orgNr, 10);
+
+    if (isNaN(orgNummer)) {
+      return NextResponse.json(
+        { error: 'Ongeldig organisatienummer.' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[DEVICE_CONFIG] Removing duplicates for org:', orgNummer);
+
+    // Get all configs
+    const snapshot = await db.collection('device_config')
+      .where('org_nummer', '==', orgNummer)
+      .get();
+
+    // Group by tafel_nr, keep only first per table
+    const seen = new Map<number, string>();
+    const toDelete: string[] = [];
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const tafelNr = data.tafel_nr as number;
+
+      if (seen.has(tafelNr)) {
+        // Duplicate - mark for deletion
+        toDelete.push(doc.id);
+      } else {
+        // First occurrence - keep it
+        seen.set(tafelNr, doc.id);
+      }
+    });
+
+    // Delete duplicates
+    for (const docId of toDelete) {
+      await db.collection('device_config').doc(docId).delete();
+    }
+
+    console.log(`[DEVICE_CONFIG] Deleted ${toDelete.length} duplicate configs`);
+    return NextResponse.json({
+      success: true,
+      deleted: toDelete.length,
+      remaining: seen.size,
+    });
+  } catch (error) {
+    console.error('[DEVICE_CONFIG] Error removing duplicates:', error);
+    return NextResponse.json(
+      { error: 'Fout bij verwijderen duplicaten.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * POST /api/organizations/:orgNr/scoreboards/device
  * Initialize device configurations for all tables
  */

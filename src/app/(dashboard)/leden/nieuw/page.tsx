@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
@@ -25,9 +25,75 @@ export default function NieuwLid() {
   const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState('');
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Warn about unsaved changes before navigation
   useUnsavedChangesWarning(isDirty && !success);
+
+  // Check for duplicates when name changes (with debounce)
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Only check if we have both required fields
+    if (!formData.spa_vnaam.trim() || !formData.spa_anaam.trim() || !orgNummer) {
+      setDuplicateWarning('');
+      return;
+    }
+
+    // Set new timer
+    debounceTimer.current = setTimeout(async () => {
+      const fullName = [formData.spa_vnaam, formData.spa_tv, formData.spa_anaam]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+        .toLowerCase();
+
+      setIsCheckingDuplicate(true);
+      try {
+        const res = await fetch(`/api/organizations/${orgNummer}/members`);
+        if (res.ok) {
+          const members = await res.json();
+          const existingMember = members.find((m: any) => {
+            const existingName = [m.spa_vnaam, m.spa_tv, m.spa_anaam]
+              .filter(Boolean)
+              .join(' ')
+              .trim()
+              .toLowerCase();
+            return existingName === fullName;
+          });
+
+          if (existingMember) {
+            const displayName = [existingMember.spa_vnaam, existingMember.spa_tv, existingMember.spa_anaam]
+              .filter(Boolean)
+              .join(' ');
+            setDuplicateWarning(
+              `Er bestaat al een lid met de naam "${displayName}". ` +
+              `Weet je zeker dat je een nieuw lid met dezelfde naam wilt toevoegen?`
+            );
+          } else {
+            setDuplicateWarning('');
+          }
+        }
+      } catch {
+        // Silently fail - don't block form submission on duplicate check failure
+        setDuplicateWarning('');
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    }, 800);
+
+    // Cleanup on unmount
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [formData.spa_vnaam, formData.spa_tv, formData.spa_anaam, orgNummer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -148,6 +214,20 @@ export default function NieuwLid() {
         <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
           <span>{success}</span>
           <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
+      {duplicateWarning && (
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 text-sm border border-yellow-200 dark:border-yellow-800 flex items-start justify-between">
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{duplicateWarning}</span>
+          </div>
+          <button onClick={() => setDuplicateWarning('')} className="ml-3 text-yellow-600 hover:text-yellow-800 dark:hover:text-yellow-300 transition-colors" aria-label="Waarschuwing sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>

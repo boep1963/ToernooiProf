@@ -122,6 +122,28 @@ export default function BewerkLid() {
     if (!formData.spa_anaam.trim()) {
       errors.spa_anaam = 'Achternaam is verplicht.';
     }
+
+    // Validate moyenne fields (must be numeric and non-negative if provided)
+    const moyenneFields = [
+      { key: 'spa_moy_lib', label: 'Libre moyenne' },
+      { key: 'spa_moy_band', label: 'Bandstoten moyenne' },
+      { key: 'spa_moy_3bkl', label: 'Driebanden klein moyenne' },
+      { key: 'spa_moy_3bgr', label: 'Driebanden groot moyenne' },
+      { key: 'spa_moy_kad', label: 'Kader moyenne' },
+    ];
+
+    for (const field of moyenneFields) {
+      const value = formData[field.key as keyof typeof formData];
+      if (value && value.trim() !== '') {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) {
+          errors[field.key] = `${field.label} moet een geldig getal zijn.`;
+        } else if (numValue < 0) {
+          errors[field.key] = `${field.label} mag niet negatief zijn.`;
+        }
+      }
+    }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setIsSubmitting(false);
@@ -332,8 +354,13 @@ export default function BewerkLid() {
                 value={formData.spa_moy_lib}
                 onChange={handleChange}
                 placeholder="0.000"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums"
+                aria-invalid={!!fieldErrors.spa_moy_lib}
+                aria-describedby={fieldErrors.spa_moy_lib ? 'spa_moy_lib-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_lib ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_moy_lib && (
+                <p id="spa_moy_lib-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_lib}</p>
+              )}
             </div>
             <div>
               <label htmlFor="spa_moy_band" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -348,8 +375,13 @@ export default function BewerkLid() {
                 value={formData.spa_moy_band}
                 onChange={handleChange}
                 placeholder="0.000"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums"
+                aria-invalid={!!fieldErrors.spa_moy_band}
+                aria-describedby={fieldErrors.spa_moy_band ? 'spa_moy_band-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_band ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_moy_band && (
+                <p id="spa_moy_band-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_band}</p>
+              )}
             </div>
             <div>
               <label htmlFor="spa_moy_3bkl" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -364,8 +396,13 @@ export default function BewerkLid() {
                 value={formData.spa_moy_3bkl}
                 onChange={handleChange}
                 placeholder="0.000"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums"
+                aria-invalid={!!fieldErrors.spa_moy_3bkl}
+                aria-describedby={fieldErrors.spa_moy_3bkl ? 'spa_moy_3bkl-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_3bkl ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_moy_3bkl && (
+                <p id="spa_moy_3bkl-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_3bkl}</p>
+              )}
             </div>
             <div>
               <label htmlFor="spa_moy_3bgr" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -380,8 +417,13 @@ export default function BewerkLid() {
                 value={formData.spa_moy_3bgr}
                 onChange={handleChange}
                 placeholder="0.000"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums"
+                aria-invalid={!!fieldErrors.spa_moy_3bgr}
+                aria-describedby={fieldErrors.spa_moy_3bgr ? 'spa_moy_3bgr-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_3bgr ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_moy_3bgr && (
+                <p id="spa_moy_3bgr-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_3bgr}</p>
+              )}
             </div>
             <div>
               <label htmlFor="spa_moy_kad" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -396,8 +438,13 @@ export default function BewerkLid() {
                 value={formData.spa_moy_kad}
                 onChange={handleChange}
                 placeholder="0.000"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums"
+                aria-invalid={!!fieldErrors.spa_moy_kad}
+                aria-describedby={fieldErrors.spa_moy_kad ? 'spa_moy_kad-error' : undefined}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_kad ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
+              {fieldErrors.spa_moy_kad && (
+                <p id="spa_moy_kad-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_kad}</p>
+              )}
             </div>
           </div>
         </div>
