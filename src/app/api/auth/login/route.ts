@@ -1,20 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { adminAuth } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { idToken } = body;
 
-    if (!email || !password) {
+    if (!idToken) {
       return NextResponse.json(
-        { error: 'E-mailadres en wachtwoord zijn verplicht.' },
+        { error: 'Firebase authenticatie token is verplicht.' },
         { status: 400 }
       );
     }
 
-    // For email/password login: look up org by email in the database
-    // Firebase Auth verification happens client-side; server validates org exists
-    console.log('[AUTH] Looking up organization by email...');
+    // Verify Firebase Auth ID token on the server
+    console.log('[AUTH] Verifying Firebase Auth ID token...');
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(idToken);
+    } catch (tokenError) {
+      console.error('[AUTH] Token verification failed:', tokenError);
+      return NextResponse.json(
+        { error: 'Ongeldige authenticatie. Probeer opnieuw in te loggen.' },
+        { status: 401 }
+      );
+    }
+
+    const email = decodedToken.email;
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Geen e-mailadres gekoppeld aan dit account.' },
+        { status: 400 }
+      );
+    }
+
+    // Look up organization by email in the database
+    console.log('[AUTH] Looking up organization by email:', email);
     const orgSnapshot = await db.collection('organizations')
       .where('org_wl_email', '==', email)
       .limit(1)
@@ -60,7 +82,7 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    console.log('[AUTH] Email login successful for org:', orgData?.org_nummer);
+    console.log('[AUTH] Firebase Auth login successful for org:', orgData?.org_nummer, '(email:', email, ')');
     return response;
   } catch (error) {
     console.error('[AUTH] Login error:', error);

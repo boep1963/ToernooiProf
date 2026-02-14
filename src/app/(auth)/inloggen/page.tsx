@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
@@ -42,10 +44,17 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Step 1: Authenticate with Firebase Auth client-side
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Step 2: Get the Firebase ID token
+      const idToken = await userCredential.user.getIdToken();
+
+      // Step 3: Send the ID token to our backend for verification and session creation
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ idToken }),
       });
 
       if (res.ok) {
@@ -54,8 +63,31 @@ export default function LoginPage() {
         const data = await res.json();
         setError(data.error || 'Ongeldig e-mailadres of wachtwoord.');
       }
-    } catch {
-      setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+    } catch (err: unknown) {
+      // Handle Firebase Auth specific errors with Dutch messages
+      const firebaseError = err as { code?: string };
+      switch (firebaseError.code) {
+        case 'auth/user-not-found':
+          setError('Geen account gevonden voor dit e-mailadres.');
+          break;
+        case 'auth/wrong-password':
+          setError('Ongeldig wachtwoord. Probeer het opnieuw.');
+          break;
+        case 'auth/invalid-email':
+          setError('Ongeldig e-mailadres formaat.');
+          break;
+        case 'auth/too-many-requests':
+          setError('Te veel inlogpogingen. Probeer het later opnieuw.');
+          break;
+        case 'auth/user-disabled':
+          setError('Dit account is gedeactiveerd.');
+          break;
+        case 'auth/invalid-credential':
+          setError('Ongeldig e-mailadres of wachtwoord.');
+          break;
+        default:
+          setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+      }
     } finally {
       setIsLoading(false);
     }
