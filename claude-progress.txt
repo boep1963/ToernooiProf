@@ -540,8 +540,37 @@ ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
 
 CURRENT STATUS: 52/150 features passing (34.7%)
 
+=== Session 15 - 2026-02-14 ===
+Agent: Form Validation Features (#24, #118, #73)
+
+COMPLETED:
+- Feature #24: Member form validates required fields ✅
+  - Added per-field validation for voornaam and achternaam (both required)
+  - Inline Dutch error messages: "Voornaam is verplicht." and "Achternaam is verplicht."
+  - Red border on invalid fields, error text below each field
+  - Required field indicators (*) on labels
+  - Error clears when user starts typing in the field
+  - Applied to both create (/leden/nieuw) and edit (/leden/[id]/bewerken) forms
+
+- Feature #118: Validation errors clear when input corrected ✅
+  - Implemented as part of feature #24's handleChange function
+  - fieldErrors state cleared per-field when user types in that field
+
+- Feature #73: Competition form validates required fields ✅
+  - Added per-field validation for comp_naam and comp_datum
+  - Inline Dutch error: "Competitienaam is verplicht." with red border
+  - Error clears when user starts typing (consistent with member form pattern)
+
+CODE CHANGES:
+- Modified: src/app/(dashboard)/leden/nieuw/page.tsx
+- Modified: src/app/(dashboard)/leden/[id]/bewerken/page.tsx
+- Modified: src/app/(dashboard)/competities/nieuw/page.tsx
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 59/150 features passing (39.3%)
+
 NEXT STEPS:
-- Member edit page (/leden/:nr/bewerken)
 - More competition workflow features
 - Score entry system refinements
 - Responsive layout features
