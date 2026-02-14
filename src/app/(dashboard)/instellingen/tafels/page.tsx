@@ -26,17 +26,19 @@ export default function TafelsInstellingenPage() {
 
     const fetchConfigs = async () => {
       try {
+        const currentAantalTafels = (organization as unknown as Record<string, unknown>).aantal_tafels as number || 4;
+        setAantalTafels(currentAantalTafels);
+
         const res = await fetch(`/api/organizations/${orgNummer}/scoreboards/device`);
         if (!res.ok) throw new Error('Failed to fetch');
         let data = await res.json();
 
         if (data.length === 0) {
           // Initialize device configs for all tables
-          const aantalTafels = (organization as unknown as Record<string, unknown>).aantal_tafels as number || 4;
           await fetch(`/api/organizations/${orgNummer}/scoreboards/device`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ aantal_tafels: aantalTafels }),
+            body: JSON.stringify({ aantal_tafels: currentAantalTafels }),
           });
 
           const res2 = await fetch(`/api/organizations/${orgNummer}/scoreboards/device`);
@@ -62,6 +64,48 @@ export default function TafelsInstellingenPage() {
       )
     );
     setSaved(false);
+  };
+
+  const handleSaveAantalTafels = async () => {
+    if (!orgNummer) return;
+
+    setSavingAantalTafels(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aantal_tafels: aantalTafels }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Fout bij opslaan aantal tafels');
+      }
+
+      // Reinitialize device configs for new table count
+      await fetch(`/api/organizations/${orgNummer}/scoreboards/device`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aantal_tafels: aantalTafels }),
+      });
+
+      // Refresh configs
+      const configRes = await fetch(`/api/organizations/${orgNummer}/scoreboards/device`);
+      const data = await configRes.json();
+      setConfigs(data);
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+
+      // Force reload to update organization data in auth context
+      window.location.reload();
+    } catch (err) {
+      console.error('Error saving aantal tafels:', err);
+      setError('Fout bij opslaan aantal tafels');
+    } finally {
+      setSavingAantalTafels(false);
+    }
   };
 
   const handleSave = async () => {
@@ -157,6 +201,52 @@ export default function TafelsInstellingenPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Number of Tables Configuration */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+          Aantal tafels
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Stel in hoeveel tafels uw vereniging heeft (1-12). Dit bepaalt hoeveel scoreborden beschikbaar zijn.
+        </p>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            <label htmlFor="aantal_tafels" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Aantal tafels
+            </label>
+            <select
+              id="aantal_tafels"
+              value={aantalTafels}
+              onChange={(e) => setAantalTafels(Number(e.target.value))}
+              className="w-32 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
+                <option key={num} value={num}>{num}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <button
+              onClick={handleSaveAantalTafels}
+              disabled={savingAantalTafels}
+              className="mt-6 bg-green-700 hover:bg-green-600 disabled:bg-green-800 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors min-h-[44px]"
+            >
+              {savingAantalTafels ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Opslaan...
+                </span>
+              ) : (
+                'Aantal tafels opslaan'
+              )}
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">
+          ⚠️ Let op: Het wijzigen van het aantal tafels zal de bediening voor nieuwe tafels opnieuw initialiseren.
+        </p>
       </div>
 
       {/* Table configuration */}
