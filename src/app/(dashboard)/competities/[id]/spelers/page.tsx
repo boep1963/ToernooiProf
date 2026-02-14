@@ -270,7 +270,7 @@ export default function CompetitieSpelersPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
             <button onClick={fetchData} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium">
@@ -418,7 +418,7 @@ export default function CompetitieSpelersPage() {
                     <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{player.spc_nummer}</td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)}
+                        {formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)} ({getPlayerDisciplineCar(player)})
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">

@@ -122,7 +122,7 @@ export default function CompetitiesPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
             <button onClick={fetchCompetitions} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium">
@@ -243,7 +243,7 @@ export default function CompetitiesPage() {
                       ) : (
                         <button
                           onClick={() => setDeleteConfirm(comp.comp_nr)}
-                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
                         >
                           Verwijderen
                         </button>

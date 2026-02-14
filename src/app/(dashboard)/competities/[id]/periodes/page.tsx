@@ -319,7 +319,7 @@ export default function CompetitiePeriodesPage() {
 
       {/* Notifications */}
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
             <button onClick={fetchData} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium">
@@ -400,10 +400,10 @@ export default function CompetitiePeriodesPage() {
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
         <div className="mb-6 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 p-6">
-          <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">
+          <h3 className="text-lg font-semibold text-red-700 dark:text-red-200 mb-2">
             Periode {competition.periode} verwijderen?
           </h3>
-          <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+          <p className="text-sm text-red-600 dark:text-red-200 mb-4">
             Alle wedstrijden en uitslagen van periode {competition.periode} worden definitief verwijderd.
             De competitie keert terug naar periode {competition.periode - 1}.
           </p>

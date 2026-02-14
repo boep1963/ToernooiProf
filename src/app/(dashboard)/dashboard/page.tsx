@@ -466,7 +466,7 @@ export default function DashboardPage() {
                 </p>
               </div>
               {createError && (
-                <p className="text-sm text-red-600 dark:text-red-400">
+                <p className="text-sm text-red-600 dark:text-red-200">
                   {createError}
                 </p>
               )}

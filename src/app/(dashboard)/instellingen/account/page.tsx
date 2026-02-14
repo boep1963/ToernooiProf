@@ -320,7 +320,7 @@ export default function AccountPage() {
 
       {/* Notifications */}
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -505,7 +505,7 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={handleLogoRemove}
-                    className="px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                    className="px-4 py-2 text-sm font-medium text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors border border-red-200 dark:border-red-800"
                   >
                     Logo verwijderen
                   </button>
@@ -591,7 +591,7 @@ export default function AccountPage() {
 
           {/* Danger Zone - Account Deletion */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">
-            <h2 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">
+            <h2 className="text-lg font-semibold text-red-700 dark:text-red-200 mb-2">
               Gevarenzone
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
@@ -639,7 +639,7 @@ export default function AccountPage() {
                 <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-3">
                   Typ de naam van uw organisatie om de verwijdering te bevestigen:
                 </p>
-                <p className="text-sm text-red-700 dark:text-red-400 mb-3 font-mono bg-red-100 dark:bg-red-900/40 px-3 py-1.5 rounded inline-block">
+                <p className="text-sm text-red-700 dark:text-red-200 mb-3 font-mono bg-red-100 dark:bg-red-900/40 px-3 py-1.5 rounded inline-block">
                   {orgDetails.org_naam}
                 </p>
                 <div className="mb-3">

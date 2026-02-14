@@ -132,7 +132,7 @@ export default function NieuweCompetitie() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -174,7 +174,7 @@ export default function NieuweCompetitie() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_naam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_naam && (
-                <p id="comp_naam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_naam}</p>
+                <p id="comp_naam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_naam}</p>
               )}
             </div>
             <div>
@@ -194,7 +194,7 @@ export default function NieuweCompetitie() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_datum && (
-                <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.comp_datum}</p>
+                <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_datum}</p>
               )}
             </div>
           </div>

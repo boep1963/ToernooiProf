@@ -215,7 +215,7 @@ export default function BewerkLid() {
             </h1>
           </div>
         </div>
-        <div role="alert" className="p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
+        <div role="alert" className="p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800">
           {loadError}
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function BewerkLid() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -288,7 +288,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_vnaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_vnaam && (
-                <p id="spa_vnaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_vnaam}</p>
+                <p id="spa_vnaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_vnaam}</p>
               )}
             </div>
             <div>
@@ -323,7 +323,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.spa_anaam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_anaam && (
-                <p id="spa_anaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_anaam}</p>
+                <p id="spa_anaam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_anaam}</p>
               )}
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_lib ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_moy_lib && (
-                <p id="spa_moy_lib-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_lib}</p>
+                <p id="spa_moy_lib-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_moy_lib}</p>
               )}
             </div>
             <div>
@@ -380,7 +380,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_band ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_moy_band && (
-                <p id="spa_moy_band-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_band}</p>
+                <p id="spa_moy_band-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_moy_band}</p>
               )}
             </div>
             <div>
@@ -401,7 +401,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_3bkl ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_moy_3bkl && (
-                <p id="spa_moy_3bkl-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_3bkl}</p>
+                <p id="spa_moy_3bkl-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_moy_3bkl}</p>
               )}
             </div>
             <div>
@@ -422,7 +422,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_3bgr ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_moy_3bgr && (
-                <p id="spa_moy_3bgr-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_3bgr}</p>
+                <p id="spa_moy_3bgr-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_moy_3bgr}</p>
               )}
             </div>
             <div>
@@ -443,7 +443,7 @@ export default function BewerkLid() {
                 className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors tabular-nums ${fieldErrors.spa_moy_kad ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.spa_moy_kad && (
-                <p id="spa_moy_kad-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.spa_moy_kad}</p>
+                <p id="spa_moy_kad-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.spa_moy_kad}</p>
               )}
             </div>
           </div>
