@@ -177,7 +177,34 @@ export default function CompetiteUitslagenPage() {
   const handleSubmitResult = async () => {
     if (!orgNummer || !selectedMatch || !competition) return;
 
+    // Validate numeric fields
+    const sp1Cargem = Number(formData.sp_1_cargem) || 0;
+    const sp1Hs = Number(formData.sp_1_hs) || 0;
+    const sp2Cargem = Number(formData.sp_2_cargem) || 0;
+    const sp2Hs = Number(formData.sp_2_hs) || 0;
     const brt = Number(formData.brt);
+
+    // Validate caramboles (cannot be negative)
+    if (sp1Cargem < 0) {
+      setError('Caramboles voor speler 1 kunnen niet negatief zijn.');
+      return;
+    }
+    if (sp2Cargem < 0) {
+      setError('Caramboles voor speler 2 kunnen niet negatief zijn.');
+      return;
+    }
+
+    // Validate highest series (cannot be negative)
+    if (sp1Hs < 0) {
+      setError('Hoogste serie voor speler 1 kan niet negatief zijn.');
+      return;
+    }
+    if (sp2Hs < 0) {
+      setError('Hoogste serie voor speler 2 kan niet negatief zijn.');
+      return;
+    }
+
+    // Validate turns (must be greater than 0)
     if (!brt || brt <= 0) {
       setError('Aantal beurten moet groter zijn dan 0.');
       return;
@@ -197,12 +224,12 @@ export default function CompetiteUitslagenPage() {
             uitslag_code: selectedMatch.uitslag_code,
             sp_1_nr: selectedMatch.nummer_A,
             sp_1_cartem: selectedMatch.cartem_A,
-            sp_1_cargem: Number(formData.sp_1_cargem) || 0,
-            sp_1_hs: Number(formData.sp_1_hs) || 0,
+            sp_1_cargem: sp1Cargem,
+            sp_1_hs: sp1Hs,
             sp_2_nr: selectedMatch.nummer_B,
             sp_2_cartem: selectedMatch.cartem_B,
-            sp_2_cargem: Number(formData.sp_2_cargem) || 0,
-            sp_2_hs: Number(formData.sp_2_hs) || 0,
+            sp_2_cargem: sp2Cargem,
+            sp_2_hs: sp2Hs,
             brt: brt,
           }),
         }
