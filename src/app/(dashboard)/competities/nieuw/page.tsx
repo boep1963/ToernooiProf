@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
@@ -31,6 +32,10 @@ export default function NieuweCompetitie() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Warn about unsaved changes before navigation
+  useUnsavedChangesWarning(isDirty && !success);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -38,6 +43,10 @@ export default function NieuweCompetitie() {
       ...prev,
       [name]: type === 'number' ? Number(value) : value,
     }));
+    // Mark form as dirty when user starts typing
+    if (!isDirty) {
+      setIsDirty(true);
+    }
     // Clear field error when user starts typing
     if (fieldErrors[name]) {
       setFieldErrors(prev => {

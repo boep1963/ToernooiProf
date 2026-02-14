@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 
 export default function NieuwLid() {
   const router = useRouter();
@@ -23,6 +24,10 @@ export default function NieuwLid() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Warn about unsaved changes before navigation
+  useUnsavedChangesWarning(isDirty && !success);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -30,6 +35,10 @@ export default function NieuwLid() {
       ...prev,
       [name]: value,
     }));
+    // Mark form as dirty when user starts typing
+    if (!isDirty) {
+      setIsDirty(true);
+    }
     // Clear field error when user starts typing
     if (fieldErrors[name]) {
       setFieldErrors(prev => {

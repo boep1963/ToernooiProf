@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 
 interface MemberData {
   id: string;
@@ -42,6 +43,10 @@ export default function BewerkLid() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Warn about unsaved changes before navigation
+  useUnsavedChangesWarning(isDirty && !success);
 
   const fetchMember = useCallback(async () => {
     if (!orgNummer || !memberId) return;
@@ -83,6 +88,10 @@ export default function BewerkLid() {
       ...prev,
       [name]: value,
     }));
+    // Mark form as dirty when user starts typing
+    if (!isDirty) {
+      setIsDirty(true);
+    }
     // Clear field error when user starts typing
     if (fieldErrors[name]) {
       setFieldErrors(prev => {
