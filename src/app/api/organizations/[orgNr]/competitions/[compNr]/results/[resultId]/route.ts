@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; resultId: string }>;
@@ -12,10 +13,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr, resultId } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber) || !resultId) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber) || !resultId) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }

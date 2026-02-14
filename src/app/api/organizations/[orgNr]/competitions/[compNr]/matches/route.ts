@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, formatPlayerName } from '@/lib/billiards';
 
 interface RouteParams {
@@ -13,10 +14,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -62,10 +67,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }

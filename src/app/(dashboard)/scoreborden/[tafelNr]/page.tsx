@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 interface ScoreboardData {
@@ -376,9 +377,9 @@ export default function ScoreboardPage() {
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#003300]">
         <div className="text-center">
           <p className="text-red-400 text-xl mb-4">{error || 'Geen data beschikbaar'}</p>
-          <a href="/scoreborden" className="text-green-400 hover:text-green-300 underline text-lg">
+          <Link href="/scoreborden" className="text-green-400 hover:text-green-300 underline text-lg">
             Terug naar overzicht
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -882,7 +883,7 @@ export default function ScoreboardPage() {
 
         {/* Back to overview link - tablet sized */}
         <div className="fixed bottom-3 left-3 z-[110]">
-          <a
+          <Link
             href="/scoreborden"
             className="bg-gray-800/80 hover:bg-gray-700 active:bg-gray-600 text-white px-5 py-3 rounded-xl text-sm transition-colors inline-flex items-center gap-2 backdrop-blur-sm min-h-[48px] touch-manipulation"
           >
@@ -890,7 +891,7 @@ export default function ScoreboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Terug
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -1217,7 +1218,7 @@ export default function ScoreboardPage() {
 
       {/* Back to overview link */}
       <div className="fixed bottom-4 left-4 z-[110]">
-        <a
+        <Link
           href="/scoreborden"
           className="bg-gray-800/80 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm transition-colors inline-flex items-center gap-2 backdrop-blur-sm"
         >
@@ -1225,7 +1226,7 @@ export default function ScoreboardPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Terug
-        </a>
+        </Link>
       </div>
     </div>
   );

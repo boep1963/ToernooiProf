@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; periodNr: string }>;
@@ -13,11 +14,16 @@ interface RouteParams {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr, periodNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
+
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
     const compNumber = parseInt(compNr, 10);
     const periodeNr = parseInt(periodNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber) || isNaN(periodeNr)) {
+    if (isNaN(compNumber) || isNaN(periodeNr)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }

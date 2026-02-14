@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateCaramboles, getMoyenneField } from '@/lib/billiards';
 
 interface RouteParams {
@@ -13,10 +14,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -55,10 +60,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -185,6 +194,75 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.error('[PLAYERS] Error adding player:', error);
     return NextResponse.json(
       { error: 'Fout bij toevoegen speler', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/organizations/:orgNr/competitions/:compNr/players
+ * Remove a player from a competition
+ * Body: { spc_nummer: number } - the member number to remove
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, compNr } = await params;
+
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json(
+        { error: 'Ongeldige parameters' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const memberNummer = Number(body.spc_nummer);
+
+    if (!memberNummer) {
+      return NextResponse.json(
+        { error: 'Speler nummer is verplicht' },
+        { status: 400 }
+      );
+    }
+
+    // Find the player in this competition
+    console.log(`[PLAYERS] Looking for player ${memberNummer} in competition ${compNumber}...`);
+    const playerSnapshot = await db.collection('competition_players')
+      .where('spc_org', '==', orgNummer)
+      .where('spc_competitie', '==', compNumber)
+      .where('spc_nummer', '==', memberNummer)
+      .limit(1)
+      .get();
+
+    if (playerSnapshot.empty) {
+      return NextResponse.json(
+        { error: 'Speler niet gevonden in deze competitie' },
+        { status: 404 }
+      );
+    }
+
+    const playerDoc = playerSnapshot.docs[0];
+    const playerData = playerDoc.data();
+
+    // Delete the player
+    await playerDoc.ref.delete();
+
+    console.log(`[PLAYERS] Player ${memberNummer} removed from competition ${compNumber}`);
+    return NextResponse.json({
+      message: 'Speler succesvol verwijderd uit competitie',
+      spc_nummer: memberNummer,
+      player_name: `${playerData?.spa_vnaam || ''} ${playerData?.spa_tv || ''} ${playerData?.spa_anaam || ''}`.trim(),
+    });
+  } catch (error) {
+    console.error('[PLAYERS] Error removing player:', error);
+    return NextResponse.json(
+      { error: 'Fout bij verwijderen speler', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }
     );
   }

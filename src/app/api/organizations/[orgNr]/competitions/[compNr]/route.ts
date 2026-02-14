@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -12,10 +13,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -48,6 +53,95 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
+ * PUT /api/organizations/:orgNr/competitions/:compNr
+ * Update competition settings
+ */
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, compNr } = await params;
+
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json(
+        { error: 'Ongeldige parameters' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body.comp_naam || typeof body.comp_naam !== 'string' || body.comp_naam.trim() === '') {
+      return NextResponse.json(
+        { error: 'Competitienaam is verplicht.' },
+        { status: 400 }
+      );
+    }
+
+    if (!body.comp_datum) {
+      return NextResponse.json(
+        { error: 'Datum is verplicht.' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[COMPETITION] Updating competition:', compNumber, 'in org:', orgNummer);
+
+    // Find the competition
+    const snapshot = await db.collection('competitions')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return NextResponse.json(
+        { error: 'Competitie niet gevonden' },
+        { status: 404 }
+      );
+    }
+
+    const doc = snapshot.docs[0];
+
+    // Build update object with only allowed fields
+    const updateData: Record<string, unknown> = {
+      comp_naam: body.comp_naam.trim(),
+      comp_datum: body.comp_datum,
+      discipline: Number(body.discipline) || 1,
+      punten_sys: Number(body.punten_sys) || 1,
+      moy_form: Number(body.moy_form) || 3,
+      min_car: Number(body.min_car) || 10,
+      max_beurten: Number(body.max_beurten) || 30,
+      vast_beurten: Number(body.vast_beurten) || 0,
+      sorteren: Number(body.sorteren) || 1,
+      updated_at: new Date().toISOString(),
+    };
+
+    await doc.ref.update(updateData);
+
+    console.log(`[COMPETITION] Competition ${compNumber} updated successfully`);
+
+    return NextResponse.json({
+      id: doc.id,
+      org_nummer: orgNummer,
+      comp_nr: compNumber,
+      ...updateData,
+    });
+  } catch (error) {
+    console.error('[COMPETITION] Error updating competition:', error);
+    return NextResponse.json(
+      { error: 'Fout bij bijwerken competitie' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/organizations/:orgNr/competitions/:compNr
  * Delete a competition and cascade delete all associated data:
  * - competition_players
@@ -57,10 +151,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
-    const compNumber = parseInt(compNr, 10);
 
-    if (isNaN(orgNummer) || isNaN(compNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }

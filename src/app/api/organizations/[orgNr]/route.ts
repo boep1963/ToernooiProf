@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -12,14 +13,11 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
 
-    if (isNaN(orgNummer)) {
-      return NextResponse.json(
-        { error: 'Ongeldig organisatienummer.' },
-        { status: 400 }
-      );
-    }
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
 
     console.log('[ORG] Querying database for organization:', orgNummer);
     const orgSnapshot = await db.collection('organizations')
@@ -62,14 +60,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
 
-    if (isNaN(orgNummer)) {
-      return NextResponse.json(
-        { error: 'Ongeldig organisatienummer.' },
-        { status: 400 }
-      );
-    }
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
 
     const body = await request.json();
 
@@ -113,14 +108,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
-    const orgNummer = parseInt(orgNr, 10);
 
-    if (isNaN(orgNummer)) {
-      return NextResponse.json(
-        { error: 'Ongeldig organisatienummer.' },
-        { status: 400 }
-      );
-    }
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
 
     console.log('[ORG] Deleting organization from database:', orgNummer);
     const orgSnapshot = await db.collection('organizations')

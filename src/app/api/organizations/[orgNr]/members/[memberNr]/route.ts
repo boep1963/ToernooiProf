@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; memberNr: string }>;
@@ -12,10 +13,14 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, memberNr } = await params;
-    const orgNumber = parseInt(orgNr, 10);
-    const memberNumber = parseInt(memberNr, 10);
 
-    if (isNaN(orgNumber) || isNaN(memberNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNumber = authResult.orgNummer;
+
+    const memberNumber = parseInt(memberNr, 10);
+    if (isNaN(memberNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -54,10 +59,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, memberNr } = await params;
-    const orgNumber = parseInt(orgNr, 10);
-    const memberNumber = parseInt(memberNr, 10);
 
-    if (isNaN(orgNumber) || isNaN(memberNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNumber = authResult.orgNummer;
+
+    const memberNumber = parseInt(memberNr, 10);
+    if (isNaN(memberNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }
@@ -118,10 +127,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, memberNr } = await params;
-    const orgNumber = parseInt(orgNr, 10);
-    const memberNumber = parseInt(memberNr, 10);
 
-    if (isNaN(orgNumber) || isNaN(memberNumber)) {
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNumber = authResult.orgNummer;
+
+    const memberNumber = parseInt(memberNr, 10);
+    if (isNaN(memberNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
         { status: 400 }

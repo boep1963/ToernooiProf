@@ -77,6 +77,8 @@ export default function CompetitieSpelersPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [playerToRemove, setPlayerToRemove] = useState<PlayerData | null>(null);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -170,6 +172,40 @@ export default function CompetitieSpelersPage() {
       } else {
         const data = await res.json();
         setError(data.error || 'Fout bij toevoegen speler.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemovePlayer = async () => {
+    if (!orgNummer || !playerToRemove) return;
+    setIsSubmitting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/players`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spc_nummer: playerToRemove.spc_nummer }),
+        }
+      );
+
+      if (res.ok) {
+        setPlayers((prev) => prev.filter((p) => p.spc_nummer !== playerToRemove.spc_nummer));
+        const naam = formatName(playerToRemove.spa_vnaam, playerToRemove.spa_tv, playerToRemove.spa_anaam);
+        setSuccess(`${naam} is succesvol verwijderd uit de competitie!`);
+        setTimeout(() => setSuccess(''), 4000);
+        setShowRemoveDialog(false);
+        setPlayerToRemove(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Fout bij verwijderen speler.');
       }
     } catch {
       setError('Er is een fout opgetreden.');
@@ -373,6 +409,7 @@ export default function CompetitieSpelersPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Caramboles</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -390,6 +427,14 @@ export default function CompetitieSpelersPage() {
                     <td className="px-4 py-3 text-sm font-medium text-green-700 dark:text-green-400 text-right tabular-nums">
                       {getPlayerDisciplineCar(player)}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => { setPlayerToRemove(player); setShowRemoveDialog(true); }}
+                        className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+                      >
+                        Verwijderen
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -399,6 +444,36 @@ export default function CompetitieSpelersPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {players.length} {players.length === 1 ? 'speler' : 'spelers'} in competitie
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Player Confirmation Dialog */}
+      {showRemoveDialog && playerToRemove && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+              Speler verwijderen
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Weet u zeker dat u <strong>{formatName(playerToRemove.spa_vnaam, playerToRemove.spa_tv, playerToRemove.spa_anaam)}</strong> wilt verwijderen uit deze competitie?
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => { setShowRemoveDialog(false); setPlayerToRemove(null); }}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleRemovePlayer}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {isSubmitting ? 'Bezig...' : 'Bevestigen'}
+              </button>
+            </div>
           </div>
         </div>
       )}

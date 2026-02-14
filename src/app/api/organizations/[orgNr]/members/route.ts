@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -12,14 +13,11 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
-    const orgNumber = parseInt(orgNr, 10);
 
-    if (isNaN(orgNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldig organisatienummer' },
-        { status: 400 }
-      );
-    }
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNumber = authResult.orgNummer;
 
     console.log('[MEMBERS] Querying database for members of org:', orgNumber);
     const snapshot = await db.collection('members')
@@ -53,14 +51,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
-    const orgNumber = parseInt(orgNr, 10);
 
-    if (isNaN(orgNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldig organisatienummer' },
-        { status: 400 }
-      );
-    }
+    // Validate session and org access
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNumber = authResult.orgNummer;
 
     const body = await request.json();
 
