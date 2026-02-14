@@ -81,6 +81,25 @@ src/
 - **10-punten**: punten = floor(gemaakte caramboles / te maken caramboles * 10)
 - **Belgisch**: zoals 10-punten maar winnaar krijgt 12, gelijk = 11 elk
 
+## Firebase Hosting
+
+De app is geconfigureerd voor Firebase Hosting met site **clubmatch**.
+
+- **Config**: `firebase.json` (hosting site: `clubmatch`), `.firebaserc` (Firebase project).
+- Pas in `.firebaserc` het project `default` aan naar je eigen Firebase project-id als die afwijkt.
+
+**Deploy (na installatie Firebase CLI: `npm i -g firebase-tools`):**
+
+```bash
+firebase login
+firebase use clubmatch   # of je project-id
+npm run build            # Next.js build
+npx next export          # alleen bij static export (zie next.config)
+firebase deploy
+```
+
+Let op: deze app gebruikt API routes en server-side logica. Voor een volledige deploy met API’s kun je **Firebase App Hosting** (Next.js) of Hosting + **Cloud Functions** gebruiken. Bij een statische export (`next export`) werken de API routes niet; die moeten dan elders (bijv. Cloud Functions) worden gehost.
+
 ## Licentie
 
 Alle rechten voorbehouden.
