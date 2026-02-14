@@ -40,6 +40,7 @@ interface MatchData {
 interface ResultData {
   id: string;
   uitslag_code: string;
+  speeldatum: string;
   sp_1_nr: number;
   sp_1_cartem: number;
   sp_1_cargem: number;
@@ -59,6 +60,21 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   2: '10-punten',
   3: 'Belgisch (12-punten)',
 };
+
+function formatDateTime(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('nl-NL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function CompetiteUitslagenPage() {
   const params = useParams();
@@ -496,6 +512,7 @@ export default function CompetiteUitslagenPage() {
                       <th className="text-center px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pnt</th>
                       <th className="text-center px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Car.</th>
                       <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Speler B</th>
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
                       <th className="text-center px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actie</th>
                     </tr>
                   </thead>
@@ -561,6 +578,15 @@ export default function CompetiteUitslagenPage() {
                               {match.naam_B}
                             </div>
                             <div className="text-xs text-slate-400">doel: {match.cartem_B}</div>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            {result && result.speeldatum ? (
+                              <div className="text-xs text-slate-600 dark:text-slate-400">
+                                {formatDateTime(result.speeldatum)}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-300 dark:text-slate-600">-</span>
+                            )}
                           </td>
                           <td className="px-2 py-2.5 text-center">
                             <div className="flex items-center gap-1 justify-center">
