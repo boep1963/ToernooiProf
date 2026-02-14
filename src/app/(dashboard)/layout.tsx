@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CompetitionProvider } from '@/context/CompetitionContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import OrganizationLogo from '@/components/common/OrganizationLogo';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,7 +72,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
           {/* Organization name and logo in header */}
           <div className="flex-1 flex items-center gap-3 ml-2 lg:ml-0">
             {organization?.org_logo && (
-              <img
+              <OrganizationLogo
                 src={organization.org_logo}
                 alt="Logo"
                 className="h-10 w-auto object-contain"

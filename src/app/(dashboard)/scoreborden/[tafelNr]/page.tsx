@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import OrganizationLogo from '@/components/common/OrganizationLogo';
 
 interface ScoreboardData {
   tafel_nr: number;
@@ -439,7 +440,7 @@ export default function ScoreboardPage() {
             {/* Center info with logo */}
             <div className="text-center px-4 flex-shrink-0 flex flex-col items-center gap-1">
               {data.org_logo && (
-                <img
+                <OrganizationLogo
                   src={data.org_logo}
                   alt="Logo"
                   className="h-8 w-auto object-contain mb-1"
@@ -934,7 +935,7 @@ export default function ScoreboardPage() {
             {/* Organization logo */}
             {data.org_logo ? (
               <div className="h-10 flex items-center">
-                <img
+                <OrganizationLogo
                   src={data.org_logo}
                   alt="Logo"
                   className="h-10 w-auto object-contain"

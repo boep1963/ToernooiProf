@@ -281,7 +281,7 @@ export default function TafelsInstellingenPage() {
                 <label className="inline-flex items-center gap-2 cursor-pointer min-h-[44px] px-3">
                   <input
                     type="radio"
-                    name={`tafel_${config.tafel_nr}`}
+                    name={`tafel_mode_${config.tafel_nr}`}
                     value="1"
                     checked={config.soort === 1}
                     onChange={() => handleDeviceChange(config.tafel_nr, 1)}
@@ -292,7 +292,7 @@ export default function TafelsInstellingenPage() {
                 <label className="inline-flex items-center gap-2 cursor-pointer min-h-[44px] px-3">
                   <input
                     type="radio"
-                    name={`tafel_${config.tafel_nr}`}
+                    name={`tafel_mode_${config.tafel_nr}`}
                     value="2"
                     checked={config.soort === 2}
                     onChange={() => handleDeviceChange(config.tafel_nr, 2)}

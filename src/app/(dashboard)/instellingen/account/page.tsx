@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import OrganizationLogo from '@/components/common/OrganizationLogo';
 
 interface OrgDetails {
   org_nummer: number;
@@ -496,7 +497,7 @@ export default function AccountPage() {
                 </label>
                 <div className="flex items-center gap-4">
                   <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
-                    <img
+                    <OrganizationLogo
                       src={orgDetails.org_logo}
                       alt="Organisatie logo"
                       className="max-h-24 max-w-xs object-contain"
