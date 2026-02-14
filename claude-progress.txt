@@ -1565,3 +1565,12 @@ COMPLETED: All 3 assigned features
 - Feature #116: Newsletter subscription toggle works ✅
 
 CURRENT STATUS: 136/150 features passing (90.7%)
+
+=== Session 29 - 2026-02-14 ===
+Agent: Features #113, #117, #123 (Batch Assignment)
+
+COMPLETED:
+- Feature #113: Player name display with caramboles ✅
+- Feature #117: Standings tiebreaker logic correct ✅
+
+CURRENT STATUS: 137/150 features passing (91.3%)
