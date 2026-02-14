@@ -224,10 +224,43 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       cascadeCounts.results++;
     }
 
+    // Cascade delete: tables (if they have comp_nr field)
+    console.log('[COMPETITION] Cascade deleting tables for comp:', compNumber);
+    const tablesSnapshot = await db.collection('tables')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .get();
+    for (const doc of tablesSnapshot.docs) {
+      await doc.ref.delete();
+      cascadeCounts.tables++;
+    }
+
+    // Cascade delete: score_helpers
+    console.log('[COMPETITION] Cascade deleting score_helpers for comp:', compNumber);
+    const scoreHelpersSnapshot = await db.collection('score_helpers')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .get();
+    for (const doc of scoreHelpersSnapshot.docs) {
+      await doc.ref.delete();
+      cascadeCounts.score_helpers++;
+    }
+
+    // Cascade delete: score_helpers_tablet
+    console.log('[COMPETITION] Cascade deleting score_helpers_tablet for comp:', compNumber);
+    const scoreHelpersTabletSnapshot = await db.collection('score_helpers_tablet')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .get();
+    for (const doc of scoreHelpersTabletSnapshot.docs) {
+      await doc.ref.delete();
+      cascadeCounts.score_helpers_tablet++;
+    }
+
     // Delete the competition itself
     await compDoc.ref.delete();
 
-    console.log(`[COMPETITION] Competition ${compNumber} deleted. Cascade: ${cascadeCounts.players} players, ${cascadeCounts.matches} matches, ${cascadeCounts.results} results`);
+    console.log(`[COMPETITION] Competition ${compNumber} deleted. Cascade: ${cascadeCounts.players} players, ${cascadeCounts.matches} matches, ${cascadeCounts.results} results, ${cascadeCounts.tables} tables, ${cascadeCounts.score_helpers} score_helpers, ${cascadeCounts.score_helpers_tablet} score_helpers_tablet`);
 
     return NextResponse.json({
       message: 'Competitie succesvol verwijderd',
