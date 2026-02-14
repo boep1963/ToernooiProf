@@ -540,8 +540,32 @@ export async function initializeCollections(): Promise<string[]> {
     return initialized;
   }
 
-  // Firestore mode: collections are created implicitly
-  return [];
+  // Firestore mode: ensure all required collections exist by checking and creating if needed
+  const requiredCollections = [
+    'organizations', 'competitions', 'members', 'competition_players',
+    'matches', 'results', 'tables', 'device_config',
+    'score_helpers', 'score_helpers_tablet', 'news_reactions', 'news',
+  ];
+
+  const initialized: string[] = [];
+  const existingCollections = await instance.listCollections();
+  const existingNames = new Set(existingCollections.map(c => c.id));
+
+  for (const name of requiredCollections) {
+    if (!existingNames.has(name)) {
+      // Create a placeholder document to initialize the collection
+      // This ensures the collection exists and shows up in listCollections()
+      const placeholderRef = instance.collection(name).doc('_init');
+      await placeholderRef.set({
+        _placeholder: true,
+        _initialized: new Date().toISOString(),
+        _note: 'This document ensures the collection exists. It can be safely deleted once real data exists.'
+      });
+      initialized.push(name);
+    }
+  }
+
+  return initialized;
 }
 
 export default db;
