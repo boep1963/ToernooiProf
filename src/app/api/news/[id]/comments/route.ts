@@ -46,7 +46,7 @@ export async function GET(
     return NextResponse.json(comments);
   } catch (error) {
     console.error('[NEWS] Error fetching comments:', error);
-    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij ophalen reacties.' }, { status: 500 });
   }
 }
 
@@ -57,7 +57,7 @@ export async function POST(
 ) {
   const auth = await getAuthOrg();
   if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Niet ingelogd. Log opnieuw in.' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -66,7 +66,7 @@ export async function POST(
     // Verify the news article exists
     const newsDoc = await db.collection('news').doc(id).get();
     if (!newsDoc.exists) {
-      return NextResponse.json({ error: 'News article not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Nieuwsbericht niet gevonden.' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -112,6 +112,6 @@ export async function POST(
     return NextResponse.json({ id: docRef.id, ...commentData }, { status: 201 });
   } catch (error) {
     console.error('[NEWS] Error adding comment:', error);
-    return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij plaatsen reactie.' }, { status: 500 });
   }
 }

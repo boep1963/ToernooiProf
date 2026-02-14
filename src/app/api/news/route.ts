@@ -34,7 +34,7 @@ export async function GET() {
     return NextResponse.json(articles);
   } catch (error) {
     console.error('[NEWS] Error fetching news:', error);
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij ophalen nieuwsberichten.' }, { status: 500 });
   }
 }
 
@@ -42,7 +42,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const auth = await getAuthOrg();
   if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Niet ingelogd. Log opnieuw in.' }, { status: 401 });
   }
 
   try {
@@ -93,6 +93,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: docRef.id, ...newsData }, { status: 201 });
   } catch (error) {
     console.error('[NEWS] Error creating news:', error);
-    return NextResponse.json({ error: 'Failed to create news' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij aanmaken nieuwsbericht.' }, { status: 500 });
   }
 }

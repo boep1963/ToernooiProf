@@ -94,7 +94,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     console.log('[COMPETITION] Cascade deleting competition_players for comp:', compNumber);
     const playersSnapshot = await db.collection('competition_players')
       .where('spc_org', '==', orgNummer)
-      .where('spc_comp', '==', compNumber)
+      .where('spc_competitie', '==', compNumber)
       .get();
     for (const doc of playersSnapshot.docs) {
       await doc.ref.delete();
@@ -104,8 +104,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Cascade delete: matches
     console.log('[COMPETITION] Cascade deleting matches for comp:', compNumber);
     const matchesSnapshot = await db.collection('matches')
-      .where('wed_org', '==', orgNummer)
-      .where('wed_comp', '==', compNumber)
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
       .get();
     for (const doc of matchesSnapshot.docs) {
       await doc.ref.delete();
@@ -115,8 +115,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Cascade delete: results
     console.log('[COMPETITION] Cascade deleting results for comp:', compNumber);
     const resultsSnapshot = await db.collection('results')
-      .where('uit_org', '==', orgNummer)
-      .where('uit_comp', '==', compNumber)
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
       .get();
     for (const doc of resultsSnapshot.docs) {
       await doc.ref.delete();

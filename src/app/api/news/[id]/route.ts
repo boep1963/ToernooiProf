@@ -26,7 +26,7 @@ export async function GET(
     // Get the news article
     const docSnap = await db.collection('news').doc(id).get();
     if (!docSnap.exists) {
-      return NextResponse.json({ error: 'News article not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Nieuwsbericht niet gevonden.' }, { status: 404 });
     }
 
     const article = { id: docSnap.id, ...docSnap.data() };
@@ -55,7 +55,7 @@ export async function GET(
     return NextResponse.json({ ...article, comments });
   } catch (error) {
     console.error('[NEWS] Error fetching news article:', error);
-    return NextResponse.json({ error: 'Failed to fetch news article' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij ophalen nieuwsbericht.' }, { status: 500 });
   }
 }
 
@@ -66,7 +66,7 @@ export async function PUT(
 ) {
   const auth = await getAuthOrg();
   if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Niet ingelogd. Log opnieuw in.' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -74,7 +74,7 @@ export async function PUT(
   try {
     const docSnap = await db.collection('news').doc(id).get();
     if (!docSnap.exists) {
-      return NextResponse.json({ error: 'News article not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Nieuwsbericht niet gevonden.' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -89,7 +89,7 @@ export async function PUT(
     return NextResponse.json({ id, ...updateData });
   } catch (error) {
     console.error('[NEWS] Error updating news:', error);
-    return NextResponse.json({ error: 'Failed to update news' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij bijwerken nieuwsbericht.' }, { status: 500 });
   }
 }
 
@@ -100,7 +100,7 @@ export async function DELETE(
 ) {
   const auth = await getAuthOrg();
   if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Niet ingelogd. Log opnieuw in.' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -108,7 +108,7 @@ export async function DELETE(
   try {
     const docSnap = await db.collection('news').doc(id).get();
     if (!docSnap.exists) {
-      return NextResponse.json({ error: 'News article not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Nieuwsbericht niet gevonden.' }, { status: 404 });
     }
 
     // Delete associated comments
@@ -128,6 +128,6 @@ export async function DELETE(
     return NextResponse.json({ deleted: true, comments_deleted: commentsSnapshot.size });
   } catch (error) {
     console.error('[NEWS] Error deleting news:', error);
-    return NextResponse.json({ error: 'Failed to delete news' }, { status: 500 });
+    return NextResponse.json({ error: 'Fout bij verwijderen nieuwsbericht.' }, { status: 500 });
   }
 }

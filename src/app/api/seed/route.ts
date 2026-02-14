@@ -43,7 +43,7 @@ export async function POST() {
   } catch (error) {
     console.error('[SEED] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to seed data' },
+      { error: 'Fout bij initialiseren testdata.' },
       { status: 500 }
     );
   }

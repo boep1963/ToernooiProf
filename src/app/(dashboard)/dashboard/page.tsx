@@ -60,6 +60,10 @@ export default function DashboardPage() {
   const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<string | null>(null);
 
+  // Delete comment state
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<{ articleId: string; commentId: string } | null>(null);
+  const [deletingComment, setDeletingComment] = useState(false);
+
   // Fetch stats
   useEffect(() => {
     if (!orgNummer) return;
@@ -197,8 +201,63 @@ export default function DashboardPage() {
     }
   };
 
+  // Delete comment
+  const handleDeleteComment = async () => {
+    if (!deleteCommentTarget) return;
+
+    setDeletingComment(true);
+    try {
+      const res = await fetch(
+        `/api/news/${deleteCommentTarget.articleId}/comments/${deleteCommentTarget.commentId}`,
+        { method: 'DELETE' }
+      );
+
+      if (res.ok) {
+        // Refresh comments for this article
+        await fetchComments(deleteCommentTarget.articleId);
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    } finally {
+      setDeletingComment(false);
+      setDeleteCommentTarget(null);
+    }
+  };
+
   return (
     <div>
+      {/* Delete comment confirmation dialog */}
+      {deleteCommentTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Reactie verwijderen
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Weet u zeker dat u deze reactie wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteCommentTarget(null)}
+                disabled={deletingComment}
+                className="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 text-sm font-medium rounded-lg transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteComment}
+                disabled={deletingComment}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {deletingComment ? 'Verwijderen...' : 'Verwijderen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Dashboard
       </h1>
@@ -527,7 +586,7 @@ export default function DashboardPage() {
                         {article.comments.map((comment) => (
                           <div
                             key={comment.id}
-                            className="flex gap-3"
+                            className="flex gap-3 group"
                           >
                             <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-xs font-bold text-green-700 dark:text-green-400">
@@ -542,6 +601,18 @@ export default function DashboardPage() {
                                 <span className="text-xs text-slate-400 dark:text-slate-500">
                                   {formatDateTime(comment.tijd)}
                                 </span>
+                                {comment.org_nummer === orgNummer && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteCommentTarget({ articleId: article.id, commentId: comment.id })}
+                                    className="opacity-0 group-hover:opacity-100 ml-auto text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400 transition-all"
+                                    title="Reactie verwijderen"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
                               <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
                                 {comment.tekst}
