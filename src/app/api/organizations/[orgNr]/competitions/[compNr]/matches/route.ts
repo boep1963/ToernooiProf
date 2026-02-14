@@ -237,6 +237,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         let isDuplicate = false;
         existingPairing.forEach((doc) => {
           const data = doc.data();
+          if (!data) return;
           const numA = Number(data.nummer_A);
           const numB = Number(data.nummer_B);
           // Check both directions: A vs B and B vs A

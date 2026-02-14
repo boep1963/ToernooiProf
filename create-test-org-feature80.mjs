@@ -4,9 +4,10 @@ import { readFileSync } from 'fs';
 
 // Load environment manually
 const envContent = readFileSync('.env.local', 'utf8');
-const serviceAccountMatch = envContent.match(/FIREBASE_SERVICE_ACCOUNT_KEY='(.+)'/s);
+const serviceAccountMatch = envContent.match(/FIREBASE_SERVICE_ACCOUNT_KEY=(.+)/s);
 if (!serviceAccountMatch) throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY not found');
-const serviceAccount = JSON.parse(serviceAccountMatch[1]);
+const jsonStr = serviceAccountMatch[1].split('\n')[0].trim();
+const serviceAccount = JSON.parse(jsonStr);
 
 initializeApp({
   credential: cert(serviceAccount)
