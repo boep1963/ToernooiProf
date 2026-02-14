@@ -732,3 +732,27 @@ NO CODE CHANGES (both features were already implemented by previous sessions)
 ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
 
 CURRENT STATUS: 72/150 features passing (48.0%)
+
+=== Session 17 - 2026-02-14 ===
+Agent: Real Data Verification Features (#29, #76, #102)
+
+COMPLETED:
+- Feature #29: Competition list displays from Firestore ✅
+  - Created test competition FIRESTORE_COMP_TEST via UI
+  - Verified competition appears in list with correct details
+  - Dashboard shows correct count (2 competitions)
+  - Data persists in Firestore across navigation
+  - Zero console errors
+
+CODE CHANGES:
+- Modified: src/app/(dashboard)/scoreborden/[tafelNr]/page.tsx
+  - Replaced <a> tags with Link components to fix ESLint errors
+
+SKIPPED:
+- Feature #76: Results persist (moved to end of queue - missing spelers page)
+
+CURRENT STATUS: 76/150 features passing (50.7%)
+
+NEXT STEPS:
+- Feature #102: Organization details persist
+- Address Next.js dev server stability issues
