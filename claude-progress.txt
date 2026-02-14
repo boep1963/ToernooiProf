@@ -756,3 +756,58 @@ CURRENT STATUS: 76/150 features passing (50.7%)
 NEXT STEPS:
 - Feature #102: Organization details persist
 - Address Next.js dev server stability issues
+
+=== Session 18 - 2026-02-14 ===
+Agent: Security & Access Control Features (#15, #16)
+
+COMPLETED:
+- Feature #15: Data isolation between organizations ✅
+  - Verified validateOrgAccess() helper in src/lib/auth-helper.ts
+  - Helper checks session orgNummer matches requested orgNr in URL
+  - Returns 403 Forbidden if mismatch, preventing cross-org data access
+  - Created test org B (1206) via registration and verification flow
+  - Tested via API with session cookies for orgs 1205 and 1206:
+    * Org 1205 accessing /api/organizations/1205/members → 200 OK (3 members)
+    * Org 1205 accessing /api/organizations/1206/members → 403 Forbidden
+    * Org 1206 accessing /api/organizations/1206/members → 200 OK (0 members)
+    * Org 1206 accessing /api/organizations/1205/members → 403 Forbidden
+  - Error message in Dutch: "Geen toegang tot deze organisatie."
+  - All API endpoints using validateOrgAccess are protected
+  - Cleaned up test member ISOLATION_TEST_A from org 1205
+
+- Feature #16: Invalid login code rejected with Dutch error ✅
+  - Tested login page with invalid codes: "9999_INVALID" and "INVALID_FORMAT"
+  - Dutch error message displayed: "Ongeldige inlogcode. Probeer het opnieuw."
+  - Error shown in red alert banner with dismissible X button
+  - User remains on /inloggen page after error (no redirect)
+  - Invalid code value remains in input field for correction
+  - Zero console errors during testing
+  - Screenshot captured showing error state
+
+IMPLEMENTATION DETAILS:
+- Authorization logic in src/lib/auth-helper.ts (validateOrgAccess function)
+- Parses session cookie to get orgNummer
+- Compares with requested orgNr from URL parameter
+- Returns NextResponse with 403 status if mismatch
+- Used by all protected API routes: members, competitions, results, etc.
+
+MINOR FIXES:
+- Replaced <a> tags with <Link> in src/app/(dashboard)/scoreborden/[tafelNr]/page.tsx
+  - Fixed ESLint errors preventing production build
+  - Lines 886 and 1221: changed to Next.js Link component
+
+CHALLENGES:
+- Next.js dev server had persistent build cache issues after restart
+- .next directory corruption required multiple rebuilds
+- Used direct API testing with curl instead of browser for isolation tests
+- Server eventually stabilized for browser testing of login errors
+
+ZERO CONSOLE ERRORS, NO MOCK DATA PATTERNS
+
+CURRENT STATUS: 76/150 features passing (50.7%)
+
+NEXT STEPS:
+- More security and access control features
+- Additional authentication flows
+- Member management features
+- Competition workflow features
