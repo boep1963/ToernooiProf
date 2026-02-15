@@ -280,20 +280,30 @@ export function scheduleRoundRobinOdd(
  * Format player name based on sort preference.
  * sorteren=1: "Voornaam Tussenvoegsel Achternaam"
  * sorteren=2: "Achternaam, Voornaam Tussenvoegsel"
+ *
+ * Defensive against undefined/null inputs - converts all to strings.
  */
 export function formatPlayerName(
-  voornaam: string,
-  tussenvoegsel: string,
-  achternaam: string,
+  voornaam: string | undefined | null,
+  tussenvoegsel: string | undefined | null,
+  achternaam: string | undefined | null,
   sorteren: number = 1
 ): string {
-  const tv = tussenvoegsel ? ` ${tussenvoegsel}` : '';
+  // Convert to strings defensively, treating undefined/null as empty string
+  const vn = voornaam ? String(voornaam) : '';
+  const tv = tussenvoegsel ? String(tussenvoegsel) : '';
+  const an = achternaam ? String(achternaam) : '';
+
+  // If all parts are empty, return empty string
+  if (!vn && !tv && !an) return '';
+
+  const tvFormatted = tv ? ` ${tv}` : '';
 
   if (sorteren === 2) {
-    return `${achternaam}, ${voornaam}${tv}`.trim();
+    return `${an}, ${vn}${tvFormatted}`.trim();
   }
 
-  return `${voornaam}${tv} ${achternaam}`.trim();
+  return `${vn}${tvFormatted} ${an}`.trim();
 }
 
 /**

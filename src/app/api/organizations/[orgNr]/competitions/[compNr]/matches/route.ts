@@ -123,24 +123,46 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       anaam: string;
     }> = [];
 
-    playersSnapshot.forEach((doc) => {
+    // Process each player with fallback to members collection
+    for (const doc of playersSnapshot.docs) {
       const data = doc.data();
-      if (data) {
-        players.push({
-          nummer: Number(data.spc_nummer) || 0,
-          naam: formatPlayerName(
-            String(data.spa_vnaam || ''),
-            String(data.spa_tv || ''),
-            String(data.spa_anaam || ''),
-            sorteren
-          ),
-          caramboles: Number(data[carKey]) || 0,
-          vnaam: String(data.spa_vnaam || ''),
-          tv: String(data.spa_tv || ''),
-          anaam: String(data.spa_anaam || ''),
-        });
+      if (!data) continue;
+
+      let vnaam = data.spa_vnaam;
+      let tv = data.spa_tv;
+      let anaam = data.spa_anaam;
+
+      // Check if name fields are missing or empty
+      const hasEmptyName = !vnaam || !anaam;
+      const nummer = Number(data.spc_nummer) || 0;
+
+      if (hasEmptyName && nummer) {
+        // Look up member name from members collection
+        console.log(`[MATCHES] Player ${nummer} has empty name, looking up from members...`);
+        const memberSnapshot = await db.collection('members')
+          .where('spa_org', '==', orgNummer)
+          .where('spa_nummer', '==', nummer)
+          .limit(1)
+          .get();
+
+        if (!memberSnapshot.empty) {
+          const memberData = memberSnapshot.docs[0].data();
+          vnaam = memberData?.spa_vnaam;
+          tv = memberData?.spa_tv;
+          anaam = memberData?.spa_anaam;
+          console.log(`[MATCHES] Enriched player ${nummer} with member name`);
+        }
       }
-    });
+
+      players.push({
+        nummer,
+        naam: formatPlayerName(vnaam, tv, anaam, sorteren),
+        caramboles: Number(data[carKey]) || 0,
+        vnaam: String(vnaam || ''),
+        tv: String(tv || ''),
+        anaam: String(anaam || ''),
+      });
+    }
 
     if (players.length < 2) {
       return NextResponse.json(

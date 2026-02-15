@@ -35,9 +35,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .get();
 
     const players: Record<string, unknown>[] = [];
-    snapshot.forEach((doc) => {
-      players.push({ id: doc.id, ...doc.data() });
-    });
+
+    // Process each player and enrich with member names if missing
+    for (const doc of snapshot.docs) {
+      const playerData = doc.data();
+
+      // Check if name fields are missing or empty
+      const hasEmptyName = !playerData?.spa_vnaam || !playerData?.spa_anaam;
+
+      if (hasEmptyName && playerData?.spc_nummer) {
+        // Look up member name from members collection
+        console.log(`[PLAYERS] Player ${playerData.spc_nummer} has empty name, looking up from members...`);
+        const memberSnapshot = await db.collection('members')
+          .where('spa_org', '==', orgNummer)
+          .where('spa_nummer', '==', playerData.spc_nummer)
+          .limit(1)
+          .get();
+
+        if (!memberSnapshot.empty) {
+          const memberData = memberSnapshot.docs[0].data();
+          playerData.spa_vnaam = String(memberData?.spa_vnaam || '');
+          playerData.spa_tv = String(memberData?.spa_tv || '');
+          playerData.spa_anaam = String(memberData?.spa_anaam || '');
+          console.log(`[PLAYERS] Enriched player ${playerData.spc_nummer} with member name`);
+        }
+      }
+
+      players.push({ id: doc.id, ...playerData });
+    }
 
     console.log(`[PLAYERS] Found ${players.length} players for competition ${compNumber}`);
     return NextResponse.json({
@@ -178,10 +203,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           spc_car_3,
           spc_car_4,
           spc_car_5,
-          // Store the member name for display purposes
-          spa_vnaam: memberData?.spa_vnaam || '',
-          spa_tv: memberData?.spa_tv || '',
-          spa_anaam: memberData?.spa_anaam || '',
+          // Store the member name for display purposes - use String() to ensure no undefined
+          spa_vnaam: String(memberData?.spa_vnaam || ''),
+          spa_tv: String(memberData?.spa_tv || ''),
+          spa_anaam: String(memberData?.spa_anaam || ''),
           created_at: new Date().toISOString(),
         };
 

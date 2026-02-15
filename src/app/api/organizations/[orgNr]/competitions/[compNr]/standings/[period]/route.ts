@@ -53,20 +53,42 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where('spc_competitie', '==', compNumber)
       .get();
 
-    // Build player name map
+    // Build player name map with fallback to members collection
     const playerMap: Record<number, { name: string; nr: number }> = {};
-    playersSnapshot.forEach((doc) => {
+
+    for (const doc of playersSnapshot.docs) {
       const data = doc.data();
-      if (!data) return;
+      if (!data) continue;
+
       const nr = Number(data.spc_nummer);
-      const name = formatPlayerName(
-        String(data.spa_vnaam || ''),
-        String(data.spa_tv || ''),
-        String(data.spa_anaam || ''),
-        sorteren
-      );
+      let vnaam = data.spa_vnaam;
+      let tv = data.spa_tv;
+      let anaam = data.spa_anaam;
+
+      // Check if name fields are missing or empty
+      const hasEmptyName = !vnaam || !anaam;
+
+      if (hasEmptyName && nr) {
+        // Look up member name from members collection
+        console.log(`[STANDINGS] Player ${nr} has empty name, looking up from members...`);
+        const memberSnapshot = await db.collection('members')
+          .where('spa_org', '==', orgNummer)
+          .where('spa_nummer', '==', nr)
+          .limit(1)
+          .get();
+
+        if (!memberSnapshot.empty) {
+          const memberData = memberSnapshot.docs[0].data();
+          vnaam = memberData?.spa_vnaam;
+          tv = memberData?.spa_tv;
+          anaam = memberData?.spa_anaam;
+          console.log(`[STANDINGS] Enriched player ${nr} with member name`);
+        }
+      }
+
+      const name = formatPlayerName(vnaam, tv, anaam, sorteren);
       playerMap[nr] = { name, nr };
-    });
+    }
 
     // Fetch all results for this competition and period
     const resultsSnapshot = await db.collection('results')
