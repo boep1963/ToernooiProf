@@ -28,6 +28,12 @@ interface CollectionResponse {
   searchTerm: string;
 }
 
+interface CollectionStats {
+  totalDocuments: number;
+  estimatedSize: string;
+  estimatedBytes: number;
+}
+
 export default function CollectionDetailPage() {
   const { isSuperAdmin } = useSuperAdmin();
   const router = useRouter();
@@ -41,6 +47,10 @@ export default function CollectionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [stats, setStats] = useState<CollectionStats | null>(null);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
@@ -80,6 +90,25 @@ export default function CollectionDetailPage() {
     fetchDocuments();
   }, [isSuperAdmin, collection, currentPage, searchTerm]);
 
+  // Fetch collection statistics
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`/api/admin/collections/${collection}/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data.stats);
+        }
+      } catch (err) {
+        console.error('[ADMIN] Error fetching stats:', err);
+      }
+    };
+
+    fetchStats();
+  }, [isSuperAdmin, collection]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -97,6 +126,133 @@ export default function CollectionDetailPage() {
       params.set('search', searchTerm);
     }
     router.push(`/admin/collections/${collection}?${params}`);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDocs(new Set(documents.map(d => d.id)));
+    } else {
+      setSelectedDocs(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedDocs);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedDocs(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedDocs.size === 0) return;
+
+    const confirmed = window.confirm(
+      `Weet u zeker dat u ${selectedDocs.size} document(en) wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setBulkLoading(true);
+      setBulkMessage(null);
+
+      const response = await fetch(`/api/admin/collections/${collection}/bulk-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedDocs) }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Fout bij verwijderen documenten');
+      }
+
+      const result = await response.json();
+      setBulkMessage({ type: 'success', text: `${result.deleted} document(en) succesvol verwijderd` });
+      setSelectedDocs(new Set());
+
+      // Refresh the list
+      window.location.reload();
+    } catch (err) {
+      console.error('[ADMIN] Error bulk deleting:', err);
+      setBulkMessage({ type: 'error', text: 'Fout bij verwijderen documenten' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setBulkLoading(true);
+      setBulkMessage(null);
+
+      const response = await fetch(`/api/admin/collections/${collection}/export`);
+      if (!response.ok) {
+        throw new Error('Fout bij exporteren');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${collection}-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setBulkMessage({ type: 'success', text: 'Export succesvol gedownload' });
+    } catch (err) {
+      console.error('[ADMIN] Error exporting:', err);
+      setBulkMessage({ type: 'error', text: 'Fout bij exporteren' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const confirmed = window.confirm(
+      `Weet u zeker dat u documenten wilt importeren uit ${file.name}? Bestaande documenten met dezelfde ID worden overschreven.`
+    );
+
+    if (!confirmed) {
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setBulkLoading(true);
+      setBulkMessage(null);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/admin/collections/${collection}/import`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Fout bij importeren');
+      }
+
+      const result = await response.json();
+      setBulkMessage({ type: 'success', text: `${result.imported} document(en) succesvol geïmporteerd` });
+
+      // Refresh the list
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error('[ADMIN] Error importing:', err);
+      setBulkMessage({ type: 'error', text: 'Fout bij importeren. Controleer of het bestand geldig JSON is.' });
+    } finally {
+      setBulkLoading(false);
+      e.target.value = '';
+    }
   };
 
   if (!isSuperAdmin) {
@@ -138,23 +294,92 @@ export default function CollectionDetailPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white capitalize">{collection}</h1>
-            {pagination && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {pagination.total.toLocaleString('nl-NL')} documenten
-              </p>
-            )}
+            <div className="flex items-center gap-4 mt-1">
+              {pagination && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {pagination.total.toLocaleString('nl-NL')} documenten
+                </p>
+              )}
+              {stats && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {stats.estimatedSize}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <Link
-          href={`/admin/collections/${collection}/nieuw`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nieuw document
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/collections/${collection}/nieuw`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nieuw document
+          </Link>
+        </div>
       </div>
+
+      {/* Bulk Operations Bar */}
+      {documents.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              {selectedDocs.size > 0 && (
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {selectedDocs.size} geselecteerd
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleExport}
+                disabled={bulkLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Exporteer als JSON
+              </button>
+              <label className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg transition-colors text-sm font-medium cursor-pointer">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Importeer JSON
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  disabled={bulkLoading}
+                  className="hidden"
+                />
+              </label>
+              {selectedDocs.size > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Verwijder geselecteerde
+                </button>
+              )}
+            </div>
+          </div>
+          {bulkMessage && (
+            <div className={`mt-3 p-3 rounded-lg ${bulkMessage.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
+              {bulkMessage.text}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
@@ -233,6 +458,14 @@ export default function CollectionDetailPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+                  <th className="text-left py-3 px-4 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedDocs.size === documents.length && documents.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-green-500"
+                    />
+                  </th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Document ID
                   </th>
@@ -250,6 +483,14 @@ export default function CollectionDetailPage() {
                     key={doc.id}
                     className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                   >
+                    <td className="py-3 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedDocs.has(doc.id)}
+                        onChange={(e) => handleSelectOne(doc.id, e.target.checked)}
+                        className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-green-500"
+                      />
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

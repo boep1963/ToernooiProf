@@ -3,6 +3,25 @@ import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
 
 /**
+ * Validate collection name against whitelist
+ */
+function isValidCollection(collection: string): boolean {
+  const validCollections = [
+    'organizations',
+    'members',
+    'competitions',
+    'competition_players',
+    'matches',
+    'results',
+    'tables',
+    'device_config',
+    'scoreboards',
+    'news',
+  ];
+  return validCollections.includes(collection);
+}
+
+/**
  * GET /api/admin/collections/[collection]
  * Returns paginated list of documents from a specific Firestore collection.
  * Protected by super admin check.
@@ -29,21 +48,8 @@ export async function GET(
     const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 100);
     const searchTerm = searchParams.get('search') || '';
 
-    // Validate collection name (whitelist approach for security)
-    const validCollections = [
-      'organizations',
-      'members',
-      'competitions',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'scoreboards',
-      'news',
-    ];
-
-    if (!validCollections.includes(collection)) {
+    // Validate collection name
+    if (!isValidCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }
@@ -92,7 +98,7 @@ export async function GET(
 
     // Map documents to a simplified structure
     const documents = paginatedDocs.map((doc) => {
-      const data = doc.data();
+      const data = doc.data() || {};
 
       // Auto-detect key fields to display in the list
       const keyFields: Record<string, any> = {};
@@ -143,6 +149,98 @@ export async function GET(
     console.error('[ADMIN] Error fetching collection documents:', error);
     return NextResponse.json(
       { error: 'Fout bij ophalen documenten.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/admin/collections/[collection]
+ * Creates a new document in the specified Firestore collection.
+ * Protected by super admin check.
+ *
+ * Request body:
+ * - data: Object with field name/value pairs
+ * - docId: Optional custom document ID (if not provided, auto-generated)
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ collection: string }> }
+) {
+  // Validate super admin access
+  const authResult = await validateSuperAdmin(request);
+  if (authResult instanceof NextResponse) {
+    return authResult; // Return 401/403 error response
+  }
+
+  try {
+    const { collection } = await params;
+
+    // Validate collection name
+    if (!isValidCollection(collection)) {
+      return NextResponse.json(
+        { error: 'Ongeldige collectie naam.' },
+        { status: 400 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const { data, docId } = body;
+
+    // Validate data
+    if (!data || typeof data !== 'object') {
+      return NextResponse.json(
+        { error: 'Document data is verplicht en moet een object zijn.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that data has at least one field
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        { error: 'Document moet minimaal één veld bevatten.' },
+        { status: 400 }
+      );
+    }
+
+    // Get collection reference
+    const collectionRef = db.collection(collection);
+
+    // Create document
+    let docRef;
+    if (docId && typeof docId === 'string' && docId.trim()) {
+      // Use custom document ID
+      const customDocId = docId.trim();
+
+      // Check if document already exists
+      const existingDoc = await collectionRef.doc(customDocId).get();
+      if (existingDoc.exists) {
+        return NextResponse.json(
+          { error: `Document met ID "${customDocId}" bestaat al.` },
+          { status: 409 }
+        );
+      }
+
+      docRef = collectionRef.doc(customDocId);
+      await docRef.set(data);
+    } else {
+      // Auto-generate document ID
+      docRef = await collectionRef.add(data);
+    }
+
+    console.log(`[ADMIN] Created document ${docRef.id} in collection ${collection}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Document succesvol aangemaakt.',
+      docId: docRef.id,
+      collection,
+    });
+  } catch (error: any) {
+    console.error('[ADMIN] Error creating document:', error);
+    return NextResponse.json(
+      { error: error.message || 'Fout bij aanmaken document.' },
       { status: 500 }
     );
   }
