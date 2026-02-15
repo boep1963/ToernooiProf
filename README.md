@@ -81,23 +81,56 @@ src/
 - **10-punten**: punten = floor(gemaakte caramboles / te maken caramboles * 10)
 - **Belgisch**: zoals 10-punten maar winnaar krijgt 12, gelijk = 11 elk
 
-## Firebase Hosting
+## Firebase – server app deploy (App Hosting)
 
-De app is geconfigureerd voor Firebase Hosting met site **clubmatch**.
+De app draait als **serverapplicatie** op **Firebase App Hosting** (Next.js op Cloud Run).
 
-- **Config**: `firebase.json` (hosting site: `clubmatch`), `.firebaserc` (Firebase project).
-- Pas in `.firebaserc` het project `default` aan naar je eigen Firebase project-id als die afwijkt.
+### Configuratie
 
-**Deploy (na installatie Firebase CLI: `npm i -g firebase-tools`):**
+- **`apphosting.yaml`** – Cloud Run-instellingen (CPU, geheugen, concurrency). Omgevingsvariabelen en secrets stel je in de [Firebase Console](https://console.firebase.google.com) in (App Hosting → backend → Environment) of via `firebase apphosting:secrets:set`.
+- **`firebase.json`** – Bevat een `apphosting`-entry met `backendId: "clubmatch"`. Maak eerst een backend in de Console of met de CLI; pas daarna eventueel `backendId` aan.
+
+### Backend aanmaken (eenmalig)
+
+1. Firebase Console → [App Hosting](https://console.firebase.google.com/project/_/apphosting) → **Get started** (Blaze-plan nodig).
+2. Kies **Create backend**, koppel je GitHub-repo en zet de app root op de projectmap (waar `package.json` staat). Of via CLI:
+   ```bash
+   firebase apphosting:backends:create --project JOUW_PROJECT_ID
+   ```
+3. Noteer de **backend-id** en zet die in `firebase.json` onder `apphosting[0].backendId` (of hernoem de bestaande "clubmatch" naar je backend-id).
+
+### Omgevingsvariabelen en secrets
+
+- In de Console: App Hosting → jouw backend → **Environment**. Vul o.a. `NEXT_PUBLIC_FIREBASE_*` in (zoals in `.env.local`).
+- Voor de service account (server):  
+  `firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY`  
+  en plak de inhoud van je service account JSON. Voeg in `apphosting.yaml` onder `env:` toe:
+  ```yaml
+  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+    secret: FIREBASE_SERVICE_ACCOUNT_KEY
+  ```
+
+### Deploy
+
+**Via GitHub (aanbevolen):** push naar je live branch (bijv. `main`); App Hosting bouwt en rolt automatisch uit.
+
+**Via CLI (lokaal):**
 
 ```bash
 firebase login
-firebase use clubmatch   # of je project-id
-npm run build:hosting    # maakt de map 'out' met een minimale pagina
-firebase deploy
+firebase use JOUW_PROJECT_ID
+firebase deploy --only apphosting
+# Of alleen deze backend: firebase deploy --only apphosting:clubmatch
 ```
 
-Let op: deze app gebruikt API routes en server-side logica en kan niet als statische export worden gebouwd. `build:hosting` zet alleen een minimale `out`-map voor Firebase Hosting. Voor de **volledige app** (inloggen, API’s, scoreborden) gebruik **Firebase App Hosting** (Next.js) of Hosting + **Cloud Functions**.
+### Alleen statische Hosting (optioneel)
+
+Voor alleen een statische placeholder op Firebase Hosting (geen API’s):
+
+```bash
+npm run build:hosting
+firebase deploy --only hosting
+```
 
 ## Licentie
 

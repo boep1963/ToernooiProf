@@ -1,0 +1,23 @@
+# Firebase App Hosting – Next.js server app
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+
+# Cloud Run service (server)
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Environment variables: set in Firebase Console (App Hosting → backend → Environment)
+# or add below. Required: NEXT_PUBLIC_FIREBASE_* (same as .env.local).
+# For the service account JSON (server): create secret then uncomment:
+#   firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY
+# env:
+#   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+#     secret: FIREBASE_SERVICE_ACCOUNT_KEY
+
+# Optional: override build/run (defaults work for Next.js)
+# scripts:
+#   buildCommand: npm run build
+#   runCommand: npm start
