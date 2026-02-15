@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { isSuperAdmin as checkSuperAdmin } from '@/lib/admin';
+import { isSuperAdmin as checkSuperAdmin } from '@/lib/admin-shared';
 
 /**
  * React hook that checks if the currently logged-in user is a super admin.

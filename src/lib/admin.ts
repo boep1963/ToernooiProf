@@ -1,35 +1,17 @@
+/**
+ * Server-side admin utilities.
+ *
+ * Re-exports the client-safe helpers from admin-shared.ts and adds
+ * server-only validation that depends on database access (Firestore / local).
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 
-/**
- * Configurable list of admin emails.
- * - Entries starting with '@' are treated as domain patterns (matched with .includes())
- * - Full email addresses are matched exactly (case-insensitive)
- */
-export const ADMIN_EMAILS: string[] = [
-  '@de-boer.net',
-  'hanseekels@gmail.com',
-];
+// Re-export client-safe helpers so existing server-side imports keep working
+export { ADMIN_EMAILS, isSuperAdmin } from '@/lib/admin-shared';
 
-/**
- * Check if an email address belongs to a super admin.
- * Super admins are users whose organization email (org_wl_email) matches
- * any entry in ADMIN_EMAILS — domain patterns use .includes(), full
- * email addresses use exact (case-insensitive) match.
- */
-export function isSuperAdmin(email: string | null | undefined): boolean {
-  if (!email || typeof email !== 'string') return false;
-  const normalizedEmail = email.toLowerCase().trim();
-  return ADMIN_EMAILS.some((entry) => {
-    const normalizedEntry = entry.toLowerCase().trim();
-    if (normalizedEntry.startsWith('@')) {
-      // Domain pattern: check if the email contains this domain
-      return normalizedEmail.includes(normalizedEntry);
-    }
-    // Full email address: exact match
-    return normalizedEmail === normalizedEntry;
-  });
-}
+import { isSuperAdmin } from '@/lib/admin-shared';
 
 /**
  * Server-side validation of super admin access.

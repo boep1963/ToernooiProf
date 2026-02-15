@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
 interface NavItem {
   label: string;
@@ -11,7 +12,7 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   {
     label: 'Dashboard',
     href: '/dashboard',
@@ -58,6 +59,19 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+];
+
+const adminNavItem: NavItem = {
+  label: 'Admin',
+  href: '/admin',
+  icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
+};
+
+const trailingNavItems: NavItem[] = [
   {
     label: 'Help',
     href: '/help',
@@ -85,6 +99,17 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { isSuperAdmin } = useSuperAdmin();
+
+  // Build nav items: base items + conditional admin item + trailing items
+  const navItems = useMemo(() => {
+    const items = [...baseNavItems];
+    if (isSuperAdmin) {
+      items.push(adminNavItem);
+    }
+    items.push(...trailingNavItems);
+    return items;
+  }, [isSuperAdmin]);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
