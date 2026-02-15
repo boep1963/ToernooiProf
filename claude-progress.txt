@@ -1960,3 +1960,48 @@ Verification:
 
 CURRENT STATUS: 152/152 features passing (100.0%)
 
+=== Session 35 - 2026-02-15 ===
+Agent: Feature #153 - Fix date display for DD-MM-YYYY Firestore strings
+
+COMPLETED:
+- Feature #153: Fix date display for DD-MM-YYYY Firestore strings
+
+IMPLEMENTATION SUMMARY:
+
+Created shared date utility: /src/lib/dateUtils.ts
+- parseDutchDate(dateStr): Parses DD-MM-YYYY, YYYY-MM-DD, and ISO datetime strings
+- formatDate(dateStr): Formats any date string to DD-MM-YYYY using nl-NL locale
+- formatDateTime(dateStr): Formats with day-month-year and time
+- toInputDate(dateStr): Converts DD-MM-YYYY to YYYY-MM-DD for HTML date inputs
+- fromInputDate(dateStr): Converts YYYY-MM-DD back to DD-MM-YYYY for Firestore
+
+Fixed files:
+1. /src/app/(dashboard)/competities/page.tsx
+   - Replaced local formatDate with shared import
+   - Fixed date sorting to use parseDutchDate instead of new Date()
+2. /src/app/(dashboard)/competities/[id]/page.tsx
+   - Added formatDate import for competition detail date display
+3. /src/app/(dashboard)/competities/[id]/bewerken/page.tsx
+   - Added toInputDate/fromInputDate for form date conversion
+   - Dates converted to YYYY-MM-DD when loading into form
+   - Dates converted back to DD-MM-YYYY when saving to Firestore
+4. /src/app/(dashboard)/competities/[id]/uitslagen/page.tsx
+   - Replaced local formatDateTime with shared import
+   - Fixed result date sorting to use parseDutchDate
+5. /src/app/(dashboard)/dashboard/page.tsx
+   - Replaced local formatDateTime with shared import
+6. /src/app/(dashboard)/competities/nieuw/page.tsx
+   - Added fromInputDate to convert dates on creation
+
+Verification:
+- Competities list: dates display as DD-MM-YYYY (14-02-2026) - VERIFIED
+- Competition detail: Datum shows 14-02-2026 - VERIFIED
+- Competition edit: date input populated correctly (YYYY-MM-DD for HTML) - VERIFIED
+- Zero console errors
+- No mock data patterns in codebase
+- All local formatDate/formatDateTime functions removed (only shared utility remains)
+
+Git Commit: 7aa1e86 - feat: fix date display for DD-MM-YYYY Firestore strings (feature #153)
+
+CURRENT STATUS: 153/153 features passing (100.0%)
+
