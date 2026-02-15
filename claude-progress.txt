@@ -2005,3 +2005,74 @@ Git Commit: 7aa1e86 - feat: fix date display for DD-MM-YYYY Firestore strings (f
 
 CURRENT STATUS: 153/153 features passing (100.0%)
 
+=== Session - 2026-02-15 ===
+Agent: Feature #154 - Super Admin Access Control (@de-boer.net)
+
+COMPLETED:
+- Feature #154: Super Admin Access Control ✅
+
+IMPLEMENTATION SUMMARY:
+
+**Files Created:**
+1. src/lib/admin.ts
+   - Configurable ADMIN_EMAILS array (domain patterns + exact emails)
+   - `isSuperAdmin(email)`: checks email against whitelist (case-insensitive)
+   - `validateSuperAdmin(request)`: server-side middleware that reads session cookie,
+     looks up org email from Firestore, checks against ADMIN_EMAILS
+   - Returns 401/403/404 NextResponse or { isSuperAdmin: true, orgNummer }
+
+2. src/hooks/useSuperAdmin.ts
+   - `useSuperAdmin()` React hook
+   - Uses useAuth() to get org_wl_email from AuthContext
+   - Returns { isSuperAdmin: boolean }
+
+3. src/app/api/admin/check/route.ts
+   - GET /api/admin/check endpoint
+   - Returns { isSuperAdmin: true/false, orgNummer? }
+   - Uses validateSuperAdmin() server-side
+
+**ADMIN_EMAILS Configuration:**
+- '@de-boer.net' (domain pattern - any email at this domain)
+- 'hanseekels@gmail.com' (exact email match)
+
+**Verification:**
+- @de-boer.net org (1205, email p@de-boer.net): isSuperAdmin = true ✅
+- Unauthenticated users: isSuperAdmin = false ✅
+- Logic tests: null/empty/non-admin emails all return false ✅
+- Case insensitive: P@DE-BOER.NET returns true ✅
+- Zero console errors ✅
+- No mock data patterns in codebase ✅
+
+Git Commit: 5577670 - feat: implement super admin access control (feature #154)
+
+CURRENT STATUS: 154/160 features passing (96.25%)
+
+=== Session 35 - 2026-02-15 ===
+Agent: Feature #161 - Super Admin Access Control (multi-user)
+
+COMPLETED:
+- Feature #161: Super Admin Access Control (multi-user) ✅
+
+IMPLEMENTATION SUMMARY:
+Feature #161 replaces the old feature #154 which only had @de-boer.net.
+Most of the implementation was already done in a previous session (commit 5577670).
+
+This session verified the implementation and fixed a minor TypeScript issue:
+- Fixed TypeScript error in validateSuperAdmin: wrapped orgEmail with String()
+  to resolve TS2345 (argument of type '{}' not assignable to 'string')
+
+VERIFICATION:
+- Unit tests: 13/13 tests passed (domain patterns, exact emails, edge cases)
+- Integration tests via API:
+  * p@de-boer.net → isSuperAdmin: true ✅ (domain pattern match)
+  * hanseekels@gmail.com → isSuperAdmin: true ✅ (exact email match)
+  * jan@test.nl → isSuperAdmin: false ✅ (non-admin)
+  * Restored p@de-boer.net → isSuperAdmin: true ✅
+- Zero console errors ✅
+- No mock data patterns in codebase ✅
+- TypeScript compiles without errors in modified files ✅
+
+FILES MODIFIED:
+- src/lib/admin.ts (TypeScript fix: String() cast for orgEmail)
+
+CURRENT STATUS: 153/161 features passing (95.0%)

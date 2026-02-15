@@ -82,7 +82,7 @@ export async function validateSuperAdmin(
   }
 
   const orgData = orgSnapshot.docs[0].data();
-  const orgEmail = orgData?.org_wl_email || '';
+  const orgEmail = String(orgData?.org_wl_email || '');
 
   if (!isSuperAdmin(orgEmail)) {
     return NextResponse.json(
