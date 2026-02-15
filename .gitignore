@@ -41,6 +41,7 @@ features.db
 # Firebase
 firebase-debug.log
 .firebase/
+service-account.json
 
 # Local database
 .data/

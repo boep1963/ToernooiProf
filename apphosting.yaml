@@ -9,13 +9,33 @@ runConfig:
   cpu: 1
   memoryMiB: 512
 
-# Environment variables: set in Firebase Console (App Hosting → backend → Environment)
-# or add below. Required: NEXT_PUBLIC_FIREBASE_* (same as .env.local).
-# For the service account JSON (server): create secret then uncomment:
-#   firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY
-# env:
-#   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-#     secret: FIREBASE_SERVICE_ACCOUNT_KEY
+# Environment variables (converted from .env.local).
+# Fill values in Firebase Console (App Hosting → backend → Environment) or replace "" below.
+# For FIREBASE_SERVICE_ACCOUNT_KEY: run firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY and paste the service account JSON.
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBWHWHKvX_L3i8FVs4w1QelhF_F22pJszw"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "scoreboard-35372.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "scoreboard-35372"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "scoreboard-35372.appspot.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "436218732725"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:436218732725:web:bbe0aa65a9cc7662e95efc"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_APP_URL
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+    secret: FIREBASE_SERVICE_ACCOUNT_KEY
 
 # Optional: override build/run (defaults work for Next.js)
 # scripts:

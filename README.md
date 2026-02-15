@@ -102,13 +102,11 @@ De app draait als **serverapplicatie** op **Firebase App Hosting** (Next.js op C
 ### Omgevingsvariabelen en secrets
 
 - In de Console: App Hosting → jouw backend → **Environment**. Vul o.a. `NEXT_PUBLIC_FIREBASE_*` in (zoals in `.env.local`).
-- Voor de service account (server):  
-  `firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY`  
-  en plak de inhoud van je service account JSON. Voeg in `apphosting.yaml` onder `env:` toe:
-  ```yaml
-  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-    secret: FIREBASE_SERVICE_ACCOUNT_KEY
-  ```
+- **Service account (FIREBASE_SERVICE_ACCOUNT_KEY):** plakken in de terminal geeft vaak `parse error near }` omdat de shell `{` en `}` interpreteert. Gebruik een bestand:
+  1. Maak het bestand: `node scripts/set-apphosting-secret.js` (leest `.env.local` en schrijft `service-account.json`).
+  2. Zet het secret: `firebase apphosting:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY < service-account.json`
+  3. Als de CLI geen stdin accepteert: [Google Cloud Secret Manager](https://console.cloud.google.com/security/secret-manager) → Create secret → naam `FIREBASE_SERVICE_ACCOUNT_KEY` → plak de inhoud van `service-account.json`. Daarna: `firebase apphosting:secrets:grantaccess FIREBASE_SERVICE_ACCOUNT_KEY --backend clubmatch`
+  4. Verwijder `service-account.json` lokaal (staat al in `.gitignore`).
 
 ### Deploy
 
