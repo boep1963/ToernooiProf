@@ -10,6 +10,11 @@ interface RouteParams {
 /**
  * GET /api/organizations/:orgNr/competitions/:compNr/results
  * List all results in a competition
+ *
+ * Query params:
+ * - startDate (optional): ISO date string for filtering results from this date onwards
+ * - endDate (optional): ISO date string for filtering results up to this date
+ * - gespeeld (optional): filter by gespeeld status (1 = played, 0 = not played)
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -28,28 +33,71 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const gespeeldParam = searchParams.get('gespeeld');
+
     console.log('[RESULTS] Querying database for results of competition:', compNumber, 'in org:', orgNummer);
-    const snapshot = await db.collection('results')
+    console.log('[RESULTS] Filters - startDate:', startDate, 'endDate:', endDate, 'gespeeld:', gespeeldParam);
+
+    // Build query
+    let query = db.collection('results')
       .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
+      .where('comp_nr', '==', compNumber);
+
+    // Add gespeeld filter if provided
+    if (gespeeldParam !== null) {
+      const gespeeld = parseInt(gespeeldParam, 10);
+      if (!isNaN(gespeeld)) {
+        query = query.where('gespeeld', '==', gespeeld);
+      }
+    }
+
+    const snapshot = await query.get();
 
     const results: Record<string, unknown>[] = [];
     snapshot.forEach((doc) => {
       results.push({ id: doc.id, ...doc.data() });
     });
 
+    // Filter by date range if provided (client-side filtering since Firestore date comparison is complex)
+    let filteredResults = results;
+    if (startDate || endDate) {
+      filteredResults = results.filter((result) => {
+        const speeldatum = result.speeldatum as string;
+        if (!speeldatum) return false;
+
+        const resultDate = new Date(speeldatum);
+
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (resultDate < start) return false;
+        }
+
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (resultDate > end) return false;
+        }
+
+        return true;
+      });
+    }
+
     // Sort by uitslag_code
-    results.sort((a, b) => {
+    filteredResults.sort((a, b) => {
       const codeA = (a.uitslag_code as string) || '';
       const codeB = (b.uitslag_code as string) || '';
       return codeA.localeCompare(codeB);
     });
 
-    console.log(`[RESULTS] Found ${results.length} results for competition ${compNumber}`);
+    console.log(`[RESULTS] Found ${filteredResults.length} results for competition ${compNumber} (after filters)`);
     return NextResponse.json({
-      results,
-      count: results.length,
+      results: filteredResults,
+      count: filteredResults.length,
     });
   } catch (error) {
     console.error('[RESULTS] Error fetching results:', error);
