@@ -22,7 +22,7 @@ export async function GET(
     const { collection } = await params;
 
     // Fetch all documents from the collection
-    const snapshot = await db.collection(`ClubMatch/data/${collection}`).get();
+    const snapshot = await db.collection(collection).get();
 
     // Calculate statistics
     const totalDocuments = snapshot.size;

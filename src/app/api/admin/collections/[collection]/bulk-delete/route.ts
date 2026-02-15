@@ -39,7 +39,7 @@ export async function POST(
       const batchIds = ids.slice(i, i + batchSize);
 
       for (const id of batchIds) {
-        const docRef = db.collection(`ClubMatch/data/${collection}`).doc(id);
+        const docRef = db.collection(collection).doc(id);
         batch.delete(docRef);
       }
 

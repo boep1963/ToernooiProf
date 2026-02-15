@@ -80,7 +80,7 @@ export async function POST(
 
       for (const doc of batchDocs) {
         const { id, ...data } = doc;
-        const docRef = db.collection(`ClubMatch/data/${collection}`).doc(id);
+        const docRef = db.collection(collection).doc(id);
         batch.set(docRef, data, { merge: true }); // merge: true allows updating existing docs
       }
 
