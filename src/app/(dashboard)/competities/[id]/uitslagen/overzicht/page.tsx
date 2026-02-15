@@ -70,6 +70,55 @@ export default function ResultsOverviewPage() {
   const [endDate, setEndDate] = useState('');
   const [dateError, setDateError] = useState('');
 
+  // Add print styles on mount
+  useEffect(() => {
+    // Add print media styles dynamically
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 1.5cm;
+        }
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        /* Hide navigation and UI elements */
+        nav, aside, header, footer, .print\\:hidden {
+          display: none !important;
+        }
+        /* Show only the main content */
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        /* Table styling */
+        table {
+          page-break-inside: auto;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        /* Preserve colors in print */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
@@ -206,17 +255,51 @@ export default function ResultsOverviewPage() {
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
 
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Overzicht uitslagen - {competition.comp_naam}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="mb-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Overzicht uitslagen - {competition.comp_naam}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+          </p>
+        </div>
+        {results.length > 0 && (
+          <button
+            onClick={() => window.print()}
+            className="print:hidden px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Afdrukken
+          </button>
+        )}
+      </div>
+
+      {/* Print-only header */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-2xl font-bold mb-2">{competition.comp_naam}</h1>
+        <div className="text-sm mb-2">
           {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
-        </p>
+        </div>
+        {(startDate || endDate) && (
+          <div className="text-sm mb-2">
+            <strong>Periode:</strong>{' '}
+            {startDate && formatDate(startDate)}
+            {startDate && endDate && ' t/m '}
+            {endDate && formatDate(endDate)}
+          </div>
+        )}
+        <div className="text-sm text-gray-600">
+          Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
+          {new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className="border-b-2 border-gray-300 mt-3 mb-4"></div>
       </div>
 
       {/* Date Range Filter */}
-      <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+      <div className="print:hidden mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Filters
         </h2>
@@ -275,7 +358,7 @@ export default function ResultsOverviewPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="print:hidden mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
