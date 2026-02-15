@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { toInputDate, fromInputDate } from '@/lib/dateUtils';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
@@ -62,7 +63,7 @@ export default function CompetitieBewerkenPage() {
         setCompetition(data);
         setFormData({
           comp_naam: data.comp_naam || '',
-          comp_datum: data.comp_datum || '',
+          comp_datum: toInputDate(data.comp_datum || ''),
           discipline: data.discipline || 1,
           punten_sys: data.punten_sys || 1,
           moy_form: data.moy_form || 3,
@@ -129,10 +130,15 @@ export default function CompetitieBewerkenPage() {
     setFieldErrors({});
 
     try {
+      // Convert date back to DD-MM-YYYY for Firestore storage
+      const submitData = {
+        ...formData,
+        comp_datum: fromInputDate(formData.comp_datum),
+      };
       const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (res.ok) {

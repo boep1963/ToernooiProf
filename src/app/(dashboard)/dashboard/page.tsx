@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { formatDateTime } from '@/lib/dateUtils';
 
 interface NewsArticle {
   id: string;
@@ -22,21 +23,6 @@ interface NewsComment {
   tijd: string;
   news_id: string;
   org_nummer: number;
-}
-
-function formatDateTime(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('nl-NL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return dateStr;
-  }
 }
 
 export default function DashboardPage() {

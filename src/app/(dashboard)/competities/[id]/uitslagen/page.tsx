@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDateTime, parseDutchDate } from '@/lib/dateUtils';
 
 interface CompetitionData {
   id: string;
@@ -60,21 +61,6 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   2: '10-punten',
   3: 'Belgisch (12-punten)',
 };
-
-function formatDateTime(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('nl-NL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return dateStr;
-  }
-}
 
 export default function CompetiteUitslagenPage() {
   const params = useParams();
@@ -327,8 +313,11 @@ export default function CompetiteUitslagenPage() {
       if (!resultB) return -1;
 
       // Sort by date (newest first)
-      const dateA = new Date(resultA.speeldatum);
-      const dateB = new Date(resultB.speeldatum);
+      const dateA = parseDutchDate(resultA.speeldatum);
+      const dateB = parseDutchDate(resultB.speeldatum);
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
       return dateB.getTime() - dateA.getTime();
     });
   });

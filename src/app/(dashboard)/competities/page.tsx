@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useCompetition } from '@/context/CompetitionContext';
 import { DISCIPLINES } from '@/types';
+import { formatDate, parseDutchDate } from '@/lib/dateUtils';
 
 interface CompetitionItem {
   id: string;
@@ -20,19 +21,6 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   2: '10-punten',
   3: 'Belgisch',
 };
-
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('nl-NL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
-}
 
 export default function CompetitiesPage() {
   const { orgNummer } = useAuth();
@@ -54,8 +42,11 @@ export default function CompetitiesPage() {
         const data = await res.json();
         // Sort competitions by date (newest first)
         const sorted = data.sort((a: CompetitionItem, b: CompetitionItem) => {
-          const dateA = new Date(a.comp_datum);
-          const dateB = new Date(b.comp_datum);
+          const dateA = parseDutchDate(a.comp_datum);
+          const dateB = parseDutchDate(b.comp_datum);
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
           return dateB.getTime() - dateA.getTime();
         });
         setCompetitions(sorted);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
+import { fromInputDate } from '@/lib/dateUtils';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
@@ -85,10 +86,15 @@ export default function NieuweCompetitie() {
     setFieldErrors({});
 
     try {
+      // Convert date to DD-MM-YYYY for Firestore storage
+      const submitData = {
+        ...formData,
+        comp_datum: fromInputDate(formData.comp_datum),
+      };
       const res = await fetch(`/api/organizations/${orgNummer}/competitions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (res.ok) {

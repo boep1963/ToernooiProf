@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDate } from '@/lib/dateUtils';
 
 interface CompetitionData {
   id: string;
@@ -111,7 +112,7 @@ export default function CompetitieDetailPage() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Datum</p>
-            <p className="text-sm text-slate-900 dark:text-white">{competition.comp_datum}</p>
+            <p className="text-sm text-slate-900 dark:text-white">{formatDate(competition.comp_datum)}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Discipline</p>
