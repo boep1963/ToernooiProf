@@ -2139,3 +2139,44 @@ VERIFICATION:
 - All API calls return 200 OK
 
 CURRENT STATUS: 163/165 features passing (98.8%)
+
+=== Session 39 - 2026-02-15 ===
+Agent: Features #164, #165 (Results Overview Batch)
+
+COMPLETED:
+- Feature #164: Results overview page with date range filter ✅
+- Feature #165: Add print functionality to results overview ✅
+
+Feature #164: Created results overview page at /competities/[id]/uitslagen/overzicht with date filtering
+Feature #165: Added print button and @media print CSS for professional printing
+
+CURRENT STATUS: 165/166 features passing (99.4%)
+
+🎉 Only 1 feature remaining to reach 100% completion\!
+
+
+
+=== Session 40 - 2026-02-15 ===
+Agent: Feature #166 - Uitslagen page display with results but no matches
+
+COMPLETED:
+- Feature #166: Uitslagen page should display results even when matches collection is empty
+
+IMPLEMENTATION SUMMARY:
+Modified src/app/(dashboard)/competities/[id]/uitslagen/page.tsx to handle three states:
+1. No matches AND no results -> Show generate planning message
+2. No matches BUT results exist -> Show ResultsOnlyView component (NEW)
+3. Matches exist -> Show normal match-based UI
+
+Created ResultsOnlyView component that:
+- Fetches player names from competition_players API
+- Maps sp_1_nr and sp_2_nr to actual names
+- Shows simplified results table with dates, players, scores
+- Includes delete functionality with confirmation
+- Shows info banner explaining the situation
+- Link to create new planning
+
+Git Commit: e15d2c8 - 228 lines added
+
+CURRENT STATUS: 165/166 features passing (99.4%)
+
