@@ -15,6 +15,7 @@ export interface Organization {
   nieuwsbrief: number;
   reminder_send: number;
   firebase_uid?: string;
+  theme_preference?: 'light' | 'dark';
 }
 
 // Member (mapped from bj_spelers_algemeen)

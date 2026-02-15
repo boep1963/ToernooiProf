@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CompetitionProvider } from '@/context/CompetitionContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
 
@@ -113,6 +114,18 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
+  const { organization } = useAuth();
+
+  return (
+    <ThemeProvider initialTheme={organization?.theme_preference}>
+      <CompetitionProvider>
+        <AuthenticatedLayout>{children}</AuthenticatedLayout>
+      </CompetitionProvider>
+    </ThemeProvider>
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -120,9 +133,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <CompetitionProvider>
-        <AuthenticatedLayout>{children}</AuthenticatedLayout>
-      </CompetitionProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
     </AuthProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
     const sessionCookie = request.cookies.get('clubmatch-session');
 
@@ -29,8 +29,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch fresh organization data from database
-    console.log('[SESSION] Querying database for organization:', session.orgNummer);
+    const { theme } = await request.json();
+
+    if (!theme || (theme !== 'light' && theme !== 'dark')) {
+      return NextResponse.json(
+        { error: 'Ongeldig thema. Gebruik "light" of "dark".' },
+        { status: 400 }
+      );
+    }
+
+    // Update theme preference in Firestore
     const orgSnapshot = await db.collection('organizations')
       .where('org_nummer', '==', session.orgNummer)
       .limit(1)
@@ -43,25 +51,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orgData = orgSnapshot.docs[0].data();
+    const orgDoc = orgSnapshot.docs[0];
+    await orgDoc.ref.update({
+      theme_preference: theme,
+    });
 
     return NextResponse.json({
-      orgNummer: session.orgNummer,
-      verified: orgData?.verified === true || orgData?.verified === undefined,
-      organization: {
-        org_nummer: orgData?.org_nummer,
-        org_naam: orgData?.org_naam,
-        org_wl_naam: orgData?.org_wl_naam,
-        org_wl_email: orgData?.org_wl_email,
-        org_logo: orgData?.org_logo || '',
-        aantal_tafels: orgData?.aantal_tafels || 4,
-        theme_preference: orgData?.theme_preference,
-      },
+      success: true,
+      theme,
     });
   } catch (error) {
-    console.error('[SESSION] Error checking session:', error);
+    console.error('[THEME] Error updating theme:', error);
     return NextResponse.json(
-      { error: 'Sessiefout.' },
+      { error: 'Fout bij het opslaan van thema.' },
       { status: 500 }
     );
   }
