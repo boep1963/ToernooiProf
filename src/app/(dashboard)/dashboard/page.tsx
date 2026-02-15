@@ -62,11 +62,13 @@ export default function DashboardPage() {
         ]);
 
         if (membersRes.ok) {
-          const members = await membersRes.json();
-          setMemberCount(Array.isArray(members) ? members.length : 0);
+          const membersData = await membersRes.json();
+          // Members API returns { members: [...], count: N, org_nummer: X }
+          setMemberCount(membersData.count || 0);
         }
         if (compsRes.ok) {
           const comps = await compsRes.json();
+          // Competitions API returns raw array
           setCompetitionCount(Array.isArray(comps) ? comps.length : 0);
         }
       } catch (error) {
