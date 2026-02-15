@@ -32,7 +32,7 @@ env:
     value: "1:436218732725:web:bbe0aa65a9cc7662e95efc"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_APP_URL
-    value: ""
+    value: "clubmatch--scoreboard-35372.europe-west4.hosted.app"
     availability: [BUILD, RUNTIME]
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
