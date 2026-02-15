@@ -1920,3 +1920,43 @@ NOTES:
 - Logo successfully represents "club tournament system" as requested
 - Dutch alt text maintains language consistency
 
+=== Session 34 - 2026-02-15 ===
+Agent: Feature #152 - Import existing data into Firestore
+
+COMPLETED:
+- Feature #152: Import SQL data from legacy PHP/MariaDB database into Firestore
+
+IMPLEMENTATION SUMMARY:
+
+Import Script Created: scripts/import-sql-to-firestore.mjs
+- Fully automated SQL parser that reads mysqldump format
+- Maps 8 SQL tables to Firestore collections:
+  bj_organisaties -> organizations (173 docs)
+  bj_spelers_algemeen -> members (2,220 docs)
+  bj_competities -> competitions (268 docs)
+  bj_spelers_comp -> competition_players (2,826 docs)
+  bj_partijen -> matches (256 docs)
+  bj_uitslagen -> results (6,379 docs)
+  bj_tafel -> tables (5 docs)
+  bj_bediening -> device_config (477 docs)
+- Total: 12,604 documents imported
+
+Script Features:
+- Auto-discovers SQL files in importdata/ directory
+- Handles MySQL escape sequences and HTML entities
+- Parses complex INSERT INTO statements with multi-line values
+- Uses Firestore batch writes (450 per batch) for efficiency
+- Deduplicates by document ID
+- Generates deterministic document IDs based on business keys
+- Respects the ClubMatch/data/ Firestore namespace prefix
+
+Verification:
+- Org 1000 (BV 't Groene Laken): 14 members, 4 competitions visible
+- Competition standings calculated correctly from imported results
+- Org 1005 (B.C. Delfia): 9 members, 3 competitions visible
+- Data isolation confirmed between organizations
+- Zero console errors
+- No mock data patterns in codebase
+
+CURRENT STATUS: 152/152 features passing (100.0%)
+
