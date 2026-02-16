@@ -143,18 +143,24 @@ export async function GET(
 
     const matchCodes = matches.map((m: any) => m.uitslag_code);
 
-    // 7. Verify all results reference valid matches
+    // 7. Count results with and without corresponding matches
+    // Note: Results without matches are NORMAL - matches are a temporary queue
+    // that gets removed after a game is played. Only the result remains.
+    const resultsWithoutMatch = results.filter(
+      (r: any) => !matchCodes.includes(r.uitslag_code)
+    );
+
+    if (resultsWithoutMatch.length > 0) {
+      issues.push({
+        type: 'info',
+        category: 'Uitslagen',
+        message: `${resultsWithoutMatch.length} uitslag(en) correct verwerkt (wedstrijden gespeeld)`,
+        details: 'Deze uitslagen hebben geen openstaande wedstrijd meer, wat normaal is na het spelen.',
+      });
+    }
+
     for (const result of results) {
       const r = result as any;
-
-      if (!matchCodes.includes(r.uitslag_code)) {
-        issues.push({
-          type: 'error',
-          category: 'Uitslagen',
-          message: `Uitslag ${r.uitslag_code} verwijst naar onbekende wedstrijd`,
-          details: 'Deze uitslag heeft geen bijbehorende wedstrijd.',
-        });
-      }
 
       // Validate result data consistency
       if (r.sp_1_cargem < 0 || r.sp_2_cargem < 0) {
@@ -186,10 +192,10 @@ export async function GET(
       }
     }
 
-    // 8. Check for matches without results
+    // 8. Check for matches without results (upcoming/unplayed matches)
     const resultMatchCodes = results.map((r: any) => r.uitslag_code);
     const matchesWithoutResults = matches.filter(
-      (m: any) => !resultMatchCodes.includes(m.partij_code)
+      (m: any) => !resultMatchCodes.includes(m.uitslag_code)
     );
 
     if (matchesWithoutResults.length > 0) {
