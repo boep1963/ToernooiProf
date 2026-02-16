@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
@@ -67,8 +67,10 @@ export default function CompetitieMatrixPage() {
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [results, setResults] = useState<ResultData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPeriode, setIsLoadingPeriode] = useState(false);
   const [error, setError] = useState('');
   const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
+  const latestPeriodeRef = useRef<number | null>(null);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -127,12 +129,19 @@ export default function CompetitieMatrixPage() {
   useEffect(() => {
     if (!orgNummer || isNaN(compNr) || selectedPeriode === null) return;
 
+    // Track the latest requested periode to prevent race conditions
+    latestPeriodeRef.current = selectedPeriode;
+
     const loadMatchesAndResults = async () => {
+      setIsLoadingPeriode(true);
       try {
         const [matchesRes, resultsRes] = await Promise.all([
           fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${selectedPeriode}`),
           fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`),
         ]);
+
+        // If user switched to a different periode while loading, discard stale results
+        if (latestPeriodeRef.current !== selectedPeriode) return;
 
         if (matchesRes.ok) {
           const matchesData = await matchesRes.json();
@@ -144,9 +153,16 @@ export default function CompetitieMatrixPage() {
           setResults(resultsData.results || []);
         }
       } catch {
-        setError('Er is een fout opgetreden bij het laden van wedstrijden.');
+        // Only show error if this is still the current request
+        if (latestPeriodeRef.current === selectedPeriode) {
+          setError('Er is een fout opgetreden bij het laden van wedstrijden.');
+        }
       } finally {
-        setIsLoading(false);
+        // Only clear loading if this is still the current request
+        if (latestPeriodeRef.current === selectedPeriode) {
+          setIsLoading(false);
+          setIsLoadingPeriode(false);
+        }
       }
     };
 
@@ -270,6 +286,7 @@ export default function CompetitieMatrixPage() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {DISCIPLINES[competition.discipline]} | Wie speelt tegen wie | Periode {selectedPeriode}
+            {isLoadingPeriode && <span className="ml-2 text-green-600 dark:text-green-400">⟳ Laden...</span>}
           </p>
         </div>
         <button
@@ -315,7 +332,15 @@ export default function CompetitieMatrixPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+          {isLoadingPeriode && (
+            <div className="absolute inset-0 bg-white/60 dark:bg-slate-800/60 z-20 flex items-center justify-center backdrop-blur-[1px]">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-500 dark:text-slate-400">Periode laden...</p>
+              </div>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
