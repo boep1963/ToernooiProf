@@ -124,13 +124,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       // Collect unique player numbers that need names
       const playerNrsNeeded = new Set<number>();
       for (const result of resultsToEnrich) {
-        if (!result.sp_1_naam) playerNrsNeeded.add(result.sp_1_nr as number);
-        if (!result.sp_2_naam) playerNrsNeeded.add(result.sp_2_nr as number);
+        if (!result.sp_1_naam) playerNrsNeeded.add(Number(result.sp_1_nr)); // FIX #190: Convert to number
+        if (!result.sp_2_naam) playerNrsNeeded.add(Number(result.sp_2_nr)); // FIX #190: Convert to number
       }
 
       // Batch fetch player data from competition_players
       const playerMap = new Map<number, string>();
       const playerNrsArray = Array.from(playerNrsNeeded);
+
+      // First pass: get data from competition_players and identify players needing member lookup
+      const playersNeedingMemberLookup = new Set<number>();
+      const compPlayerData = new Map<number, { vnaam: string; tv: string; anaam: string }>();
 
       for (let i = 0; i < playerNrsArray.length; i += 30) {
         const batch = playerNrsArray.slice(i, i + 30);
@@ -145,41 +149,80 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         for (const doc of playersSnapshot.docs) {
           const data = doc.data();
-          const nummer = data.spc_nummer;
-          let vnaam = data.spa_vnaam;
-          let tv = data.spa_tv;
-          let anaam = data.spa_anaam;
+          const nummer = Number(data.spc_nummer);
+          const vnaam = data.spa_vnaam;
+          const tv = data.spa_tv;
+          const anaam = data.spa_anaam;
           const hasEmptyName = !vnaam && !tv && !anaam;
 
-          // Fallback to members if name is empty
           if (hasEmptyName) {
-            const memberSnapshot = await queryWithOrgComp(
-              db.collection('members'),
-              orgNummer,
-              null,
-              [{ field: 'spa_nummer', op: '==', value: nummer }],
-              'spa_org'
-            );
-            if (!memberSnapshot.empty) {
-              const memberData = memberSnapshot.docs[0].data();
-              vnaam = memberData.spa_vnaam;
-              tv = memberData.spa_tv;
-              anaam = memberData.spa_anaam;
-            }
+            playersNeedingMemberLookup.add(nummer);
+          } else {
+            compPlayerData.set(nummer, { vnaam, tv, anaam });
           }
-
-          const naam = formatPlayerName(vnaam, tv, anaam, sorteren);
-          if (naam) playerMap.set(nummer, naam);
         }
       }
 
+      // Second pass: batch fetch members for players with empty names (OPTIMIZATION: single batch query instead of N sequential queries)
+      const memberDataMap = new Map<number, { vnaam: string; tv: string; anaam: string }>();
+      if (playersNeedingMemberLookup.size > 0) {
+        const membersArray = Array.from(playersNeedingMemberLookup);
+        console.log(`[RESULTS] Batch fetching ${membersArray.length} members for name lookup`);
+
+        for (let i = 0; i < membersArray.length; i += 30) {
+          const batch = membersArray.slice(i, i + 30);
+          const membersSnapshot = await queryWithOrgComp(
+            db.collection('members'),
+            orgNummer,
+            null,
+            [{ field: 'spa_nummer', op: 'in', value: batch }],
+            'spa_org'
+          );
+
+          for (const doc of membersSnapshot.docs) {
+            const memberData = doc.data();
+            const nummer = Number(memberData.spa_nummer);
+            memberDataMap.set(nummer, {
+              vnaam: memberData.spa_vnaam,
+              tv: memberData.spa_tv,
+              anaam: memberData.spa_anaam
+            });
+          }
+        }
+      }
+
+      // Third pass: build playerMap with formatted names
+      for (const nummer of playerNrsArray) {
+        let vnaam: string | undefined;
+        let tv: string | undefined;
+        let anaam: string | undefined;
+
+        // Use competition_players data if available, otherwise use member data
+        const compData = compPlayerData.get(nummer);
+        const memberData = memberDataMap.get(nummer);
+
+        if (compData) {
+          vnaam = compData.vnaam;
+          tv = compData.tv;
+          anaam = compData.anaam;
+        } else if (memberData) {
+          vnaam = memberData.vnaam;
+          tv = memberData.tv;
+          anaam = memberData.anaam;
+        }
+
+        const naam = formatPlayerName(vnaam, tv, anaam, sorteren);
+        if (naam) playerMap.set(nummer, naam); // nummer is already a number from playerNrsArray
+      }
+
       // Update results in Firestore and in-memory
-      const batch = db.batch();
+      let batch = db.batch(); // FIX #189: Changed const to let for batch recreation
       let batchCount = 0;
 
       for (const result of resultsToEnrich) {
-        const sp1Name = playerMap.get(result.sp_1_nr as number);
-        const sp2Name = playerMap.get(result.sp_2_nr as number);
+        // FIX #190: Cast to Number for Map lookup (Map uses strict equality)
+        const sp1Name = playerMap.get(Number(result.sp_1_nr));
+        const sp2Name = playerMap.get(Number(result.sp_2_nr));
 
         if (sp1Name || sp2Name) {
           const updateData: Record<string, unknown> = {};
@@ -192,14 +235,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             result.sp_2_naam = sp2Name; // Update in-memory
           }
 
-          const docRef = db.collection('results').doc(result.id as string);
-          batch.update(docRef, updateData);
-          batchCount++;
+          // FIX #189: Only update if there's actual data to write
+          if (Object.keys(updateData).length > 0) {
+            const docRef = db.collection('results').doc(result.id as string);
+            batch.update(docRef, updateData);
+            batchCount++;
 
-          // Firestore has a 500 operation limit per batch
-          if (batchCount >= 450) {
-            await batch.commit();
-            batchCount = 0;
+            // Firestore has a 500 operation limit per batch
+            if (batchCount >= 450) {
+              await batch.commit();
+              batch = db.batch(); // FIX #189: Create new batch after commit
+              batchCount = 0;
+            }
           }
         }
       }
