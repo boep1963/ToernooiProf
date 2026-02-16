@@ -558,17 +558,17 @@ export default function CompetiteUitslagenPage() {
             </svg>
           </div>
           <p className="text-slate-600 dark:text-slate-400 mb-2">
-            Er zijn nog geen wedstrijden gepland.
+            Geen geplande wedstrijden.
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">
-            Deze competitie heeft wel {results.length} uitslag{results.length !== 1 ? 'en' : ''}. Bekijk deze op de overzichtspagina.
+            Maak wedstrijden aan via de planning of bekijk bestaande uitslagen op de overzichtspagina.
           </p>
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => router.push(`/competities/${compNr}/planning`)}
               className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm"
             >
-              Planning aanmaken
+              Naar planning
             </button>
             <button
               onClick={() => router.push(`/competities/${compNr}/uitslagen/overzicht`)}
