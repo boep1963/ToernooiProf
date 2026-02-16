@@ -140,6 +140,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       'spc_competitie'
     );
 
+    // Prepare players for batch enrichment
+    const playersToEnrich = playersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ref: doc.ref,
+      ...doc.data()
+    }));
+
+    // Use batch enrichment to fetch all missing names efficiently
+    const enrichedPlayers = await batchEnrichPlayerNames(
+      orgNummer,
+      playersToEnrich,
+      true // persist to Firestore
+    );
+
+    // Convert to match generation format
     const players: Array<{
       nummer: number;
       naam: string;
@@ -147,50 +162,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       vnaam: string;
       tv: string;
       anaam: string;
-    }> = [];
-
-    // Process each player with fallback to members collection
-    for (const doc of playersSnapshot.docs) {
-      const data = doc.data();
-      if (!data) continue;
-
-      let vnaam = data.spa_vnaam;
-      let tv = data.spa_tv;
-      let anaam = data.spa_anaam;
-
-      // Check if name fields are missing or empty
-      const hasEmptyName = !vnaam || !anaam;
-      const nummer = Number(data.spc_nummer) || 0;
-
-      if (hasEmptyName && nummer) {
-        // Look up member name from members collection
-        console.log(`[MATCHES] Player ${nummer} has empty name, looking up from members...`);
-        const memberSnapshot = await queryWithOrgComp(
-          db.collection('members'),
-          orgNummer,
-          null,
-          [{ field: 'spa_nummer', op: '==', value: nummer }],
-          'spa_org'
-        );
-
-        if (!memberSnapshot.empty) {
-          const memberData = memberSnapshot.docs[0].data();
-          vnaam = memberData?.spa_vnaam;
-          tv = memberData?.spa_tv;
-          anaam = memberData?.spa_anaam;
-          console.log(`[MATCHES] Enriched player ${nummer} with member name`);
-        }
-      }
-
-      players.push({
-        nummer,
-        naam: formatPlayerName(vnaam, tv, anaam, sorteren),
-        caramboles: Number(data[carKey]) || 0,
-        vnaam: String(vnaam || ''),
-        tv: String(tv || ''),
-        anaam: String(anaam || ''),
-      });
-    }
+    }> = enrichedPlayers.map(player => ({
+      nummer: Number(player.spc_nummer) || 0,
+      naam: formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren),
+      caramboles: Number(player[carKey]) || 0,
+      vnaam: player.spa_vnaam,
+      tv: player.spa_tv,
+      anaam: player.spa_anaam,
+    }));
 
     if (players.length < 2) {
       return NextResponse.json(
