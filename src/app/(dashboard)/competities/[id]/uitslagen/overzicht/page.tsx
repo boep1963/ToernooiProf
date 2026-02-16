@@ -72,10 +72,14 @@ export default function ResultsOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Date range filters
+  // Date range filters (input values)
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [dateError, setDateError] = useState('');
+
+  // Applied date filters (only updated when user clicks "Toepassen")
+  const [appliedStartDate, setAppliedStartDate] = useState('');
+  const [appliedEndDate, setAppliedEndDate] = useState('');
 
   // Add print styles on mount
   useEffect(() => {
@@ -133,10 +137,10 @@ export default function ResultsOverviewPage() {
     setDateError('');
 
     try {
-      // Validate date range
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+      // Validate date range (use applied dates, not input dates)
+      if (appliedStartDate && appliedEndDate) {
+        const start = new Date(appliedStartDate);
+        const end = new Date(appliedEndDate);
         if (end < start) {
           setDateError('Einddatum kan niet voor de startdatum liggen.');
           setIsLoading(false);
@@ -175,14 +179,14 @@ export default function ResultsOverviewPage() {
         setMatches(matchesData);
       }
 
-      // Build query params for results
+      // Build query params for results (use applied dates, not input dates)
       const queryParams = new URLSearchParams();
       queryParams.set('gespeeld', '1'); // Only show played matches
-      if (startDate) {
-        queryParams.set('startDate', startDate);
+      if (appliedStartDate) {
+        queryParams.set('startDate', appliedStartDate);
       }
-      if (endDate) {
-        queryParams.set('endDate', endDate);
+      if (appliedEndDate) {
+        queryParams.set('endDate', appliedEndDate);
       }
 
       // Fetch results with filters
@@ -238,7 +242,7 @@ export default function ResultsOverviewPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [orgNummer, compNr, startDate, endDate]);
+  }, [orgNummer, compNr, appliedStartDate, appliedEndDate]);
 
   useEffect(() => {
     fetchData();
@@ -246,12 +250,26 @@ export default function ResultsOverviewPage() {
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchData();
+    // Validate date range before applying
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end < start) {
+        setDateError('Einddatum kan niet voor de startdatum liggen.');
+        return;
+      }
+    }
+    // Apply the date filters (this will trigger fetchData via useEffect)
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateError('');
   };
 
   const handleClearFilters = () => {
     setStartDate('');
     setEndDate('');
+    setAppliedStartDate('');
+    setAppliedEndDate('');
     setDateError('');
   };
 
@@ -310,12 +328,12 @@ export default function ResultsOverviewPage() {
         <div className="text-sm mb-2">
           {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
         </div>
-        {(startDate || endDate) && (
+        {(appliedStartDate || appliedEndDate) && (
           <div className="text-sm mb-2">
             <strong>Periode:</strong>{' '}
-            {startDate && formatDate(startDate)}
-            {startDate && endDate && ' t/m '}
-            {endDate && formatDate(endDate)}
+            {appliedStartDate && formatDate(appliedStartDate)}
+            {appliedStartDate && appliedEndDate && ' t/m '}
+            {appliedEndDate && formatDate(appliedEndDate)}
           </div>
         )}
         <div className="text-sm text-gray-600">

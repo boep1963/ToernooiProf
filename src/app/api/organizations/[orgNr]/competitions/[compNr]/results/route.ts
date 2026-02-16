@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore } from '@/lib/billiards';
+import { parseDutchDate } from '@/lib/dateUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -69,16 +70,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         const speeldatum = result.speeldatum as string;
         if (!speeldatum) return false;
 
-        const resultDate = new Date(speeldatum);
+        // Use parseDutchDate to handle DD-MM-YYYY format from Firestore
+        const resultDate = parseDutchDate(speeldatum);
+        if (!resultDate) return false;
 
         if (startDate) {
-          const start = new Date(startDate);
+          // parseDutchDate also handles YYYY-MM-DD from HTML date inputs
+          const start = parseDutchDate(startDate);
+          if (!start) return false;
           start.setHours(0, 0, 0, 0);
           if (resultDate < start) return false;
         }
 
         if (endDate) {
-          const end = new Date(endDate);
+          const end = parseDutchDate(endDate);
+          if (!end) return false;
           end.setHours(23, 59, 59, 999);
           if (resultDate > end) return false;
         }
