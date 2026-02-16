@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateCaramboles, getMoyenneField } from '@/lib/billiards';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
+import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -39,56 +40,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       'spc_competitie'
     );
 
-    const players: Record<string, unknown>[] = [];
+    // Prepare players with document references for batch enrichment
+    const playersToEnrich = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ref: doc.ref,
+      ...doc.data()
+    }));
 
-    // Process each player and enrich with member names if missing
-    for (const doc of snapshot.docs) {
-      const playerData = doc.data();
+    // Use batch enrichment to fetch all missing names efficiently
+    // persistToFirestore=true ensures names are cached for future requests
+    const enrichedPlayers = await batchEnrichPlayerNames(
+      orgNummer,
+      playersToEnrich,
+      true // persist to Firestore
+    );
 
-      // Check if name fields are missing or empty
-      const hasEmptyName = !playerData?.spa_vnaam || !playerData?.spa_anaam;
-
-      if (hasEmptyName && playerData?.spc_nummer) {
-        // Look up member name from members collection
-        console.log(`[PLAYERS] Player ${playerData.spc_nummer} has empty name, looking up from members...`);
-        const memberSnapshot = await queryWithOrgComp(
-          db.collection('members'),
-          orgNummer,
-          null,
-          [{ field: 'spa_nummer', op: '==', value: playerData.spc_nummer }],
-          'spa_org'
-        );
-
-        if (!memberSnapshot.empty) {
-          const memberData = memberSnapshot.docs[0].data();
-
-          // Prepare enriched name fields
-          const enrichedNames = {
-            spa_vnaam: String(memberData?.spa_vnaam || ''),
-            spa_tv: String(memberData?.spa_tv || ''),
-            spa_anaam: String(memberData?.spa_anaam || ''),
-          };
-
-          // Update in-memory data for this response
-          playerData.spa_vnaam = enrichedNames.spa_vnaam;
-          playerData.spa_tv = enrichedNames.spa_tv;
-          playerData.spa_anaam = enrichedNames.spa_anaam;
-
-          // Persist enriched names back to Firestore (Feature #186)
-          // This ensures the lookup only happens ONCE per player
-          await doc.ref.update(enrichedNames);
-
-          console.log(`[PLAYERS] Persisted enriched name for player ${playerData.spc_nummer}`);
-        }
-      }
-
-      players.push({ id: doc.id, ...playerData });
-    }
-
-    console.log(`[PLAYERS] Found ${players.length} players for competition ${compNumber}`);
+    console.log(`[PLAYERS] Found ${enrichedPlayers.length} players for competition ${compNumber}`);
     return NextResponse.json({
-      players,
-      count: players.length,
+      players: enrichedPlayers,
+      count: enrichedPlayers.length,
     });
   } catch (error) {
     console.error('[PLAYERS] Error fetching players:', error);

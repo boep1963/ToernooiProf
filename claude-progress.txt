@@ -2458,3 +2458,12 @@ File: src/app/(dashboard)/competities/[id]/matrix/page.tsx (lines 108-109)
 **Git Commit:** f773ee8
 
 CURRENT STATUS: 185/188 features passing (98.4%)
+
+=== Session 52 - 2026-02-16 ===
+Agent: Features #183, #184
+
+ASSIGNED FEATURES: #183, #184
+
+COMPLETED:
+- Feature #183: Denormaliseer spelersnamen in results documenten ✅
+- Feature #184: Matrix pagina debug (already fixed by #186/#187) ✅

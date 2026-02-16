@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, formatPlayerName } from '@/lib/billiards';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
+import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;

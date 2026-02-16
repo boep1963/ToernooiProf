@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { formatPlayerName } from '@/lib/billiards';
+import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; period: string }>;
@@ -53,40 +54,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where('spc_competitie', '==', compNumber)
       .get();
 
-    // Build player name map with fallback to members collection
+    // Prepare players for batch enrichment
+    const playersToEnrich = playersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ref: doc.ref,
+      ...doc.data()
+    }));
+
+    // Use batch enrichment to fetch all missing names efficiently
+    const enrichedPlayers = await batchEnrichPlayerNames(
+      orgNummer,
+      playersToEnrich,
+      true // persist to Firestore
+    );
+
+    // Build player name map from enriched players
     const playerMap: Record<number, { name: string; nr: number }> = {};
 
-    for (const doc of playersSnapshot.docs) {
-      const data = doc.data();
-      if (!data) continue;
-
-      const nr = Number(data.spc_nummer);
-      let vnaam = data.spa_vnaam;
-      let tv = data.spa_tv;
-      let anaam = data.spa_anaam;
-
-      // Check if name fields are missing or empty
-      const hasEmptyName = !vnaam || !anaam;
-
-      if (hasEmptyName && nr) {
-        // Look up member name from members collection
-        console.log(`[STANDINGS] Player ${nr} has empty name, looking up from members...`);
-        const memberSnapshot = await db.collection('members')
-          .where('spa_org', '==', orgNummer)
-          .where('spa_nummer', '==', nr)
-          .limit(1)
-          .get();
-
-        if (!memberSnapshot.empty) {
-          const memberData = memberSnapshot.docs[0].data();
-          vnaam = memberData?.spa_vnaam;
-          tv = memberData?.spa_tv;
-          anaam = memberData?.spa_anaam;
-          console.log(`[STANDINGS] Enriched player ${nr} with member name`);
-        }
-      }
-
-      const name = formatPlayerName(vnaam, tv, anaam, sorteren);
+    for (const player of enrichedPlayers) {
+      const nr = Number(player.spc_nummer);
+      const name = formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren);
       playerMap[nr] = { name, nr };
     }
 
