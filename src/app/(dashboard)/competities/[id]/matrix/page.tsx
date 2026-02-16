@@ -62,63 +62,91 @@ export default function CompetitieMatrixPage() {
   const [results, setResults] = useState<ResultData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedPeriode, setSelectedPeriode] = useState<number>(1);
+  const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
   };
 
-  const fetchData = useCallback(async () => {
-    if (!orgNummer || isNaN(compNr)) return;
-    setIsLoading(true);
+  // Retry function for error recovery
+  const handleRetry = () => {
     setError('');
-    try {
-      const [compRes, playersRes, matchesRes, resultsRes] = await Promise.all([
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${selectedPeriode}`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`),
-      ]);
+    setSelectedPeriode(null);
+    setCompetition(null);
+    setPlayers([]);
+    setMatches([]);
+    setResults([]);
+    // Setting selectedPeriode to null will trigger the first useEffect to reload everything
+  };
 
-      if (!compRes.ok) {
-        setError('Competitie niet gevonden.');
-        setIsLoading(false);
-        return;
-      }
+  // Phase 1: Load competition data and initialize periode
+  useEffect(() => {
+    if (!orgNummer || isNaN(compNr)) return;
 
-      const compData = await compRes.json();
-      setCompetition(compData);
+    const loadCompetition = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const [compRes, playersRes] = await Promise.all([
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
+        ]);
 
-      // Initialize selectedPeriode to current/last periode if not already set
-      if (!selectedPeriode || selectedPeriode === 1) {
+        if (!compRes.ok) {
+          setError('Competitie niet gevonden.');
+          setIsLoading(false);
+          return;
+        }
+
+        const compData = await compRes.json();
+        setCompetition(compData);
+
+        // Initialize selectedPeriode to current periode
         const currentPeriode = compData.periode || 1;
         setSelectedPeriode(currentPeriode);
-      }
 
-      if (playersRes.ok) {
-        const playersData = await playersRes.json();
-        setPlayers(playersData.players || []);
+        if (playersRes.ok) {
+          const playersData = await playersRes.json();
+          setPlayers(playersData.players || []);
+        }
+      } catch {
+        setError('Er is een fout opgetreden bij het laden.');
+        setIsLoading(false);
       }
+    };
 
-      if (matchesRes.ok) {
-        const matchesData = await matchesRes.json();
-        setMatches(matchesData.matches || []);
-      }
+    loadCompetition();
+  }, [orgNummer, compNr]);
 
-      if (resultsRes.ok) {
-        const resultsData = await resultsRes.json();
-        setResults(resultsData.results || []);
-      }
-    } catch {
-      setError('Er is een fout opgetreden bij het laden.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orgNummer, compNr, selectedPeriode]);
-
+  // Phase 2: Load matches and results once periode is determined
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!orgNummer || isNaN(compNr) || selectedPeriode === null) return;
+
+    const loadMatchesAndResults = async () => {
+      try {
+        const [matchesRes, resultsRes] = await Promise.all([
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${selectedPeriode}`),
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`),
+        ]);
+
+        if (matchesRes.ok) {
+          const matchesData = await matchesRes.json();
+          setMatches(matchesData.matches || []);
+        }
+
+        if (resultsRes.ok) {
+          const resultsData = await resultsRes.json();
+          setResults(resultsData.results || []);
+        }
+      } catch {
+        setError('Er is een fout opgetreden bij het laden van wedstrijden.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMatchesAndResults();
+  }, [orgNummer, compNr, selectedPeriode]);
 
   // Build matrix data
   const getMatchResult = (playerANr: number, playerBNr: number): { played: boolean; pointsA: number; pointsB: number } | null => {
@@ -235,7 +263,7 @@ export default function CompetitieMatrixPage() {
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
-            <button onClick={fetchData} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium flex-shrink-0">
+            <button onClick={handleRetry} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium flex-shrink-0">
               Opnieuw proberen
             </button>
             <button onClick={() => setError('')} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
