@@ -2687,3 +2687,36 @@ VERIFICATION:
 ✅ No mock data patterns in component
 
 CURRENT STATUS: 197/197 features passing (100.0%)
+
+=== Session - 2026-02-16 (evening late) ===
+Agent: Bug Fix #198 - Fix controle page: results without matches is not an error
+
+COMPLETED:
+- Feature #198: Fix controle page: results without matches is not an error ✅
+  - ROOT CAUSE 1 (Check #7): validate/route.ts reported an 'error' for every result
+    that had no corresponding match entry. But matches are a temporary queue — once a
+    game is played, the match is removed and only the result remains. So a result without
+    a match is NORMAL behavior, not an error.
+  - ROOT CAUSE 2 (Check #8): Field name mismatch — code used m.partij_code but the
+    Match type uses uitslag_code. This caused the "matches without results" check to
+    never correctly match, since partij_code doesn't exist on match documents.
+  - FIX 1: Changed check #7 from individual 'error' per result to a single 'info'
+    message: "N uitslag(en) correct verwerkt (wedstrijden gespeeld)" with detail
+    "Deze uitslagen hebben geen openstaande wedstrijd meer, wat normaal is na het spelen."
+  - FIX 2: Changed check #8 to use m.uitslag_code instead of m.partij_code.
+  - Commit: 5b27372
+
+FILES MODIFIED:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/validate/route.ts
+  - Check #7: Replaced per-result error loop with single info-level summary message
+  - Check #8: Fixed field name from partij_code to uitslag_code
+
+VERIFICATION:
+✅ Competition 3 (2 results, 0 matches): Shows info "2 uitslag(en) correct verwerkt" — was 2 errors
+✅ Competition 1 (0 results, 1 match): Shows info "1 wedstrijd(en) nog niet gespeeld" — check #8 works
+✅ Competition 2 (1 player, 0 moyenne): Shows warning "heeft geen moyenne" — legitimate warning preserved
+✅ All legitimate error checks preserved (negative caramboles, invalid turns, duplicates, unknown players)
+✅ Zero console errors
+✅ No mock data patterns in validate route
+
+CURRENT STATUS: 198/198 features passing (100.0%)
