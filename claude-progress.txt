@@ -2180,3 +2180,30 @@ Git Commit: e15d2c8 - 228 lines added
 
 CURRENT STATUS: 165/166 features passing (99.4%)
 
+
+
+=== Session 42 - 2026-02-16 ===
+Agent: Feature #168 - Fix 'Onbekend' player names on overzicht page
+
+COMPLETED:
+- Feature #168: Fix 'Onbekend' player names on uitslagen/overzicht page ✅
+
+IMPLEMENTATION SUMMARY:
+
+Root Cause:
+The overzicht page was attempting to resolve player names via the matches collection, which failed when matches didn't exist (only results). This caused all player names to display as "Onbekend" (Unknown).
+
+Fixes Applied:
+1. API Field Name Bug Fixed (results/route.ts lines 208, 215)
+2. Overzicht Page Refactored (overzicht/page.tsx)
+3. Name Resolution Logic Updated
+
+Files Modified:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/results/route.ts
+- src/app/(dashboard)/competities/[id]/uitslagen/overzicht/page.tsx
+- test-feature-168-overzicht.mjs (NEW)
+
+Git Commit: c074f52
+
+CURRENT STATUS: 168/169 features passing (99.4%)
+
