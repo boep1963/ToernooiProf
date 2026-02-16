@@ -115,7 +115,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       db.collection('competition_players'),
       orgNummer,
       compNumber,
-      []
+      [],
+      'spc_org',
+      'spc_competitie'
     );
 
     const players: Array<{
@@ -147,7 +149,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           db.collection('members'),
           orgNummer,
           null,
-          [{ field: 'spa_nummer', op: '==', value: nummer }]
+          [{ field: 'spa_nummer', op: '==', value: nummer }],
+          'spa_org'
         );
 
         if (!memberSnapshot.empty) {

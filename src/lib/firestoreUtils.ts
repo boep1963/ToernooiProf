@@ -102,20 +102,24 @@ export async function dualTypeQuery(
  * @param orgNummer - Organization number (will query both as number and string)
  * @param compNr - Competition number (will query both as number and string)
  * @param additionalFilters - Additional filters to apply
+ * @param orgField - Custom field name for organization (default: 'org_nummer')
+ * @param compField - Custom field name for competition (default: 'comp_nr')
  * @returns Merged query snapshot
  */
 export async function queryWithOrgComp(
   baseQuery: CollectionReference | Query,
   orgNummer: number,
   compNr: number | null = null,
-  additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = []
+  additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [],
+  orgField: string = 'org_nummer',
+  compField: string = 'comp_nr'
 ): Promise<{ docs: FirebaseFirestore.DocumentSnapshot[]; size: number; empty: boolean }> {
   const filters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [
-    { field: 'org_nummer', op: '==', value: orgNummer }
+    { field: orgField, op: '==', value: orgNummer }
   ];
 
   if (compNr !== null) {
-    filters.push({ field: 'comp_nr', op: '==', value: compNr });
+    filters.push({ field: compField, op: '==', value: compNr });
   }
 
   filters.push(...additionalFilters);

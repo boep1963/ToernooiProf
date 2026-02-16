@@ -47,24 +47,6 @@
       ]
     },
     {
-      "collectionGroup": "competition_players",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "spa_nr",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "results",
       "queryScope": "COLLECTION",
       "fields": [

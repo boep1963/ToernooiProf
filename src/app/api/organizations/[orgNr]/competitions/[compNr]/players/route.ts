@@ -33,7 +33,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const snapshot = await queryWithOrgComp(
       db.collection('competition_players'),
       orgNummer,
-      compNumber
+      compNumber,
+      [],
+      'spc_org',
+      'spc_competitie'
     );
 
     const players: Record<string, unknown>[] = [];
@@ -52,7 +55,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           db.collection('members'),
           orgNummer,
           null,
-          [{ field: 'spa_nummer', op: '==', value: playerData.spc_nummer }]
+          [{ field: 'spa_nummer', op: '==', value: playerData.spc_nummer }],
+          'spa_org'
         );
 
         if (!memberSnapshot.empty) {
@@ -148,7 +152,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           db.collection('competition_players'),
           orgNummer,
           compNumber,
-          [{ field: 'spc_nummer', op: '==', value: memberNummer }]
+          [{ field: 'spc_nummer', op: '==', value: memberNummer }],
+          'spc_org',
+          'spc_competitie'
         );
 
         if (!existingCheck.empty) {
@@ -162,7 +168,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           db.collection('members'),
           orgNummer,
           null,
-          [{ field: 'spa_nummer', op: '==', value: memberNummer }]
+          [{ field: 'spa_nummer', op: '==', value: memberNummer }],
+          'spa_org'
         );
 
         if (memberSnapshot.empty) {
@@ -301,7 +308,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       db.collection('competition_players'),
       orgNummer,
       compNumber,
-      [{ field: 'spc_nummer', op: '==', value: memberNummer }]
+      [{ field: 'spc_nummer', op: '==', value: memberNummer }],
+      'spc_org',
+      'spc_competitie'
     );
 
     if (playerSnapshot.empty) {

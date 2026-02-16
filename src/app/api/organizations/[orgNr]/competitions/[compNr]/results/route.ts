@@ -216,14 +216,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         db.collection('competition_players'),
         orgNummer,
         compNumber,
-        [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }]
+        [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }],
+        'spc_org',
+        'spc_competitie'
       );
 
       const player2Snapshot = await queryWithOrgComp(
         db.collection('competition_players'),
         orgNummer,
         compNumber,
-        [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }]
+        [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }],
+        'spc_org',
+        'spc_competitie'
       );
 
       if (!player1Snapshot.empty) {
