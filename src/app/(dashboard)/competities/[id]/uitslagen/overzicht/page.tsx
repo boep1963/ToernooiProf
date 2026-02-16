@@ -29,9 +29,13 @@ interface ResultData {
   uitslag_code: string;
   speeldatum: string;
   periode: number;
+  sp_1_nr: number;
+  sp_1_naam?: string;
   sp_1_cargem: number;
   sp_1_hs: number;
   sp_1_punt: number;
+  sp_2_nr: number;
+  sp_2_naam?: string;
   sp_2_cargem: number;
   sp_2_hs: number;
   sp_2_punt: number;
@@ -200,15 +204,25 @@ export default function ResultsOverviewPage() {
 
         // Enrich results with player names and calculated moyenne
         const enriched: EnrichedResult[] = resultsData.map((result: ResultData) => {
-          // Resolve player names using competition_players lookup map
-          const player1 = playerLookup[result.sp_1_nr];
-          const player2 = playerLookup[result.sp_2_nr];
+          // Use denormalized names from result (feature #183) for performance
+          let naam_A = result.sp_1_naam || '';
+          let naam_B = result.sp_2_naam || '';
 
-          // Format names: 'voornaam tussenvoegsel achternaam'.trim()
-          let naam_A = `${player1?.spa_vnaam || ''} ${player1?.spa_tv || ''} ${player1?.spa_anaam || ''}`.trim();
-          let naam_B = `${player2?.spa_vnaam || ''} ${player2?.spa_tv || ''} ${player2?.spa_anaam || ''}`.trim();
+          // Fallback to competition_players lookup if names not denormalized yet
+          if (!naam_A || !naam_B) {
+            const player1 = playerLookup[result.sp_1_nr];
+            const player2 = playerLookup[result.sp_2_nr];
 
-          // Fallback to 'Speler {nummer}' if player not found (never 'Onbekend')
+            // Format names: 'voornaam tussenvoegsel achternaam'.trim()
+            if (!naam_A) {
+              naam_A = `${player1?.spa_vnaam || ''} ${player1?.spa_tv || ''} ${player1?.spa_anaam || ''}`.trim();
+            }
+            if (!naam_B) {
+              naam_B = `${player2?.spa_vnaam || ''} ${player2?.spa_tv || ''} ${player2?.spa_anaam || ''}`.trim();
+            }
+          }
+
+          // Final fallback to 'Speler {nummer}' if still not found
           if (!naam_A) naam_A = `Speler ${result.sp_1_nr}`;
           if (!naam_B) naam_B = `Speler ${result.sp_2_nr}`;
 

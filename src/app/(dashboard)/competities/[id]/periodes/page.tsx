@@ -52,8 +52,10 @@ interface PlayerPeriodInfo {
 
 interface ResultData {
   sp_1_nr: number;
+  sp_1_naam?: string;
   sp_1_cargem: number;
   sp_2_nr: number;
+  sp_2_naam?: string;
   sp_2_cargem: number;
   brt: number;
   periode: number;
