@@ -2207,3 +2207,9 @@ Git Commit: c074f52
 
 CURRENT STATUS: 168/169 features passing (99.4%)
 
+
+=== Session 43 - 2026-02-16 ===
+Agent: Feature #170 - Dashboard Dynamic Counts
+
+COMPLETED:
+- Feature #170: Dashboard shows correct counts for wedstrijden and tafels/scoreborden ✅
