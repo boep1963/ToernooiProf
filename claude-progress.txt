@@ -2657,3 +2657,33 @@ VERIFICATION:
 ✅ Temporary test delay added and removed cleanly
 
 CURRENT STATUS: 196/196 features passing (100.0%)
+
+=== Session - 2026-02-16 (evening) ===
+Agent: Bug Fix #197 - CompetitionSubNav double highlight on nested routes
+
+COMPLETED:
+- Feature #197: CompetitionSubNav: fix dubbele highlight bij geneste routes ✅
+  - ROOT CAUSE: In CompetitionSubNav.tsx, isActive was determined using
+    pathname.startsWith(href + '/') which caused parent routes to match child routes.
+    E.g., navigating to /competities/3/uitslagen/overzicht would highlight BOTH
+    'Uitslagen' (/uitslagen) AND 'Overzicht uitslagen' (/uitslagen/overzicht).
+  - FIX: Added logic to check if a more specific (longer segment) nav item also matches
+    the current pathname. If so, the parent item is NOT marked active. The most specific
+    matching nav item wins.
+  - Commit: 792e21c
+
+FILES MODIFIED:
+- src/components/CompetitionSubNav.tsx
+  - Replaced simple startsWith check with specificity-aware isActive logic
+  - For startsWith matches, checks if any other navItem has a longer segment that also matches
+  - If a more specific match exists, the current (parent) item is not active
+
+VERIFICATION:
+✅ /competities/3 → "Overzicht" tab highlighted (correct)
+✅ /competities/3/uitslagen → "Uitslagen" tab highlighted (correct)
+✅ /competities/3/uitslagen/overzicht → "Overzicht uitslagen" highlighted, "Uitslagen" NOT highlighted (BUG FIXED)
+✅ /competities/3/stand → "Stand" tab highlighted (correct)
+✅ Zero console errors
+✅ No mock data patterns in component
+
+CURRENT STATUS: 197/197 features passing (100.0%)
