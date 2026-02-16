@@ -343,6 +343,9 @@ function createLocalDb(): DbInstance {
  */
 const FIRESTORE_PREFIX = 'ClubMatch/data';
 
+// Symbol to store the underlying Firestore document reference on wrapped DocumentRefs
+const FIRESTORE_REF_SYMBOL = Symbol('firestoreRef');
+
 function createFirestoreAdapter(firestore: Firestore): DbInstance {
   function wrapDocRef(firestoreDocRef: FirebaseFirestore.DocumentReference): DocumentRef {
     const self: DocumentRef = {
@@ -370,6 +373,8 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
         await firestoreDocRef.delete();
       },
     };
+    // Attach the underlying Firestore ref so batch operations can use it
+    (self as any)[FIRESTORE_REF_SYMBOL] = firestoreDocRef;
     return self;
   }
 
@@ -429,17 +434,23 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
     },
     batch(): BatchRef {
       const firestoreBatch = firestore.batch();
+
+      function getFirestoreRef(ref: DocumentRef): FirebaseFirestore.DocumentReference {
+        const fsRef = (ref as any)[FIRESTORE_REF_SYMBOL];
+        if (fsRef) return fsRef;
+        // Fallback: should not happen if refs are always created via wrapDocRef
+        throw new Error(`Batch operation failed: DocumentRef "${ref.id}" has no underlying Firestore reference. Ensure refs are obtained via db.collection().doc().`);
+      }
+
       return {
         set(ref: DocumentRef, data: Record<string, unknown>) {
-          // We need the underlying Firestore ref - use collection path
-          // This is a simplified approach
-          firestoreBatch.set(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id), data);
+          firestoreBatch.set(getFirestoreRef(ref), data);
         },
         update(ref: DocumentRef, data: Record<string, unknown>) {
-          firestoreBatch.update(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id), data);
+          firestoreBatch.update(getFirestoreRef(ref), data);
         },
         delete(ref: DocumentRef) {
-          firestoreBatch.delete(firestore.collection(`${FIRESTORE_PREFIX}/_batch`).doc(ref.id));
+          firestoreBatch.delete(getFirestoreRef(ref));
         },
         async commit() {
           await firestoreBatch.commit();

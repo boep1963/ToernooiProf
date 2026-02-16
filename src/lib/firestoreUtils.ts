@@ -37,13 +37,16 @@ export async function dualTypeQuery(
   baseQuery: CollectionReference | Query,
   filters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }>
 ): Promise<{ docs: FirebaseFirestore.DocumentSnapshot[]; size: number; empty: boolean }> {
-  // For each numeric filter value, we need to query both as number and as string
-  const numericFilters = filters.filter(f =>
-    typeof f.value === 'number' && f.op === '=='
+  // Identify filters that need dual-type treatment:
+  // 1. '==' operator with a numeric value
+  // 2. 'in' operator with an array containing at least one number
+  const dualTypeFilters = filters.filter(f =>
+    (typeof f.value === 'number' && f.op === '==') ||
+    (f.op === 'in' && Array.isArray(f.value) && f.value.some((v: any) => typeof v === 'number'))
   );
 
-  // If no numeric filters, just apply all filters normally
-  if (numericFilters.length === 0) {
+  // If no dual-type filters, just apply all filters normally
+  if (dualTypeFilters.length === 0) {
     let query: any = baseQuery;
     for (const filter of filters) {
       query = query.where(filter.field, filter.op, filter.value);
@@ -51,9 +54,9 @@ export async function dualTypeQuery(
     return await query.get();
   }
 
-  // Generate all combinations: for each numeric filter, try both number and string
-  // This creates 2^n queries where n = number of numeric filters
-  const combinations = Math.pow(2, numericFilters.length);
+  // Generate all combinations: for each dual-type filter, try both number and string variants
+  // This creates 2^n queries where n = number of dual-type filters
+  const combinations = Math.pow(2, dualTypeFilters.length);
   const allDocs = new Map<string, FirebaseFirestore.DocumentSnapshot>();
 
   for (let i = 0; i < combinations; i++) {
@@ -61,15 +64,24 @@ export async function dualTypeQuery(
 
     // Apply all filters
     for (const filter of filters) {
-      const numericIndex = numericFilters.findIndex(nf => nf.field === filter.field);
+      const dualIndex = dualTypeFilters.findIndex(nf => nf.field === filter.field && nf.op === filter.op);
 
-      if (numericIndex >= 0) {
-        // This is a numeric filter - use number or string based on bit pattern
-        const useString = (i & (1 << numericIndex)) !== 0;
-        const value = useString ? String(filter.value) : filter.value;
-        query = query.where(filter.field, filter.op, value);
+      if (dualIndex >= 0) {
+        const useString = (i & (1 << dualIndex)) !== 0;
+
+        if (filter.op === 'in' && Array.isArray(filter.value)) {
+          // For 'in' operator: convert entire array to strings or keep as numbers
+          const value = useString
+            ? filter.value.map((v: any) => typeof v === 'number' ? String(v) : v)
+            : filter.value;
+          query = query.where(filter.field, filter.op, value);
+        } else {
+          // For '==' operator: convert single value
+          const value = useString ? String(filter.value) : filter.value;
+          query = query.where(filter.field, filter.op, value);
+        }
       } else {
-        // Non-numeric filter - apply as-is
+        // Non-dual-type filter - apply as-is
         query = query.where(filter.field, filter.op, filter.value);
       }
     }
