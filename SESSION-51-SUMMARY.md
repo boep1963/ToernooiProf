@@ -1,10 +1,23 @@
-# Session 51 - Features #186 & #187 Complete
+# Session 51 Summary - Features 183 and 185 (WIP)
 
-## Summary
-Successfully implemented 2 performance/data features
-- Feature #186: Persist enriched player names (performance)
-- Feature #187: Matrix shows results without matches (legacy data)
+## Status  
+- Feature 183: Implementation complete, debugging required (500 error)
+- Feature 185: Not started (depends on 183)
 
-## Status: 184/188 features passing (97.9%)
+## Work Completed
+- Added sp_1_naam and sp_2_naam fields to Result interface
+- Modified Results POST route to fetch and save player names
+- Modified Results GET route with lazy denormalization
+- Created test match and attempted submission (500 error encountered)
 
-Git commits: 92d1458, 4d31967
+## Files Modified
+- src/types/index.ts
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/results/route.ts
+- session-51-progress.txt (new)
+
+## Next Session Priority
+1. Debug and fix 500 error in Results POST route
+2. Complete feature 183 testing
+3. Implement feature 185 batch enrichment
+
+CURRENT STATUS: 180/188 features passing (95.7%)
