@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeOrgNummer } from './orgNumberUtils';
 
 /**
  * Validates that the authenticated user's organization matches the requested orgNr.
@@ -34,16 +35,16 @@ export function validateOrgAccess(
     );
   }
 
-  const requestedOrgNumber = typeof requestedOrgNr === 'string'
-    ? parseInt(requestedOrgNr, 10)
-    : requestedOrgNr;
+  // Normalize both values to ensure consistent comparison
+  const requestedOrgNumber = normalizeOrgNummer(requestedOrgNr);
+  const sessionOrgNumber = normalizeOrgNummer(session.orgNummer);
 
-  if (session.orgNummer !== requestedOrgNumber) {
+  if (sessionOrgNumber !== requestedOrgNumber) {
     return NextResponse.json(
       { error: 'Geen toegang tot deze organisatie.' },
       { status: 403 }
     );
   }
 
-  return { orgNummer: session.orgNummer };
+  return { orgNummer: sessionOrgNumber };
 }

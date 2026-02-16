@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
-    const orgNummer = authResult.orgNummer;
+    const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
     console.log('[COMPETITIONS] Querying database for competitions of org:', orgNummer);
     const snapshot = await db.collection('competitions')
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       ...doc.data(),
     }));
 
+    logQueryResult('competitions', orgNummer, competitions.length);
     console.log(`[COMPETITIONS] Found ${competitions.length} competitions`);
     return NextResponse.json(competitions);
   } catch (error) {
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
-    const orgNummer = authResult.orgNummer;
+    const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
     const body = await request.json();
 

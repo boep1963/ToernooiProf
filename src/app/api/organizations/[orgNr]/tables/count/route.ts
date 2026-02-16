@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
-    const orgNummer = authResult.orgNummer;
+    const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
     console.log('[TABLES_COUNT] Counting tables for org:', orgNummer);
 
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .get();
 
     const count = snapshot.size;
+    logQueryResult('tables', orgNummer, count);
 
     console.log(`[TABLES_COUNT] Found ${count} tables for org ${orgNummer}`);
     return NextResponse.json({ count });

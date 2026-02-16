@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
-    const orgNummer = authResult.orgNummer;
+    const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
     console.log('[MATCHES_COUNT] Counting matches for org:', orgNummer);
 
@@ -26,10 +27,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where('org_nummer', '==', orgNummer)
       .get();
 
-    const count = snapshot.size;
+    let count = snapshot.size;
+    let source = 'matches';
+    logQueryResult('matches', orgNummer, count);
 
-    console.log(`[MATCHES_COUNT] Found ${count} matches for org ${orgNummer}`);
-    return NextResponse.json({ count });
+    // Fallback: If no matches found, count unique results (uitslag_code)
+    if (count === 0) {
+      console.log('[MATCHES_COUNT] No matches found, falling back to results collection');
+      const resultsSnapshot = await db.collection('results')
+        .where('org_nummer', '==', orgNummer)
+        .get();
+
+      // Count unique uitslag_code values
+      const uniqueCodes = new Set<string>();
+      resultsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.uitslag_code) {
+          uniqueCodes.add(String(data.uitslag_code));
+        }
+      });
+
+      count = uniqueCodes.size;
+      source = 'results';
+      logQueryResult('results', orgNummer, resultsSnapshot.size);
+      console.log(`[MATCHES_COUNT] Found ${resultsSnapshot.size} results with ${count} unique match codes`);
+    }
+
+    console.log(`[MATCHES_COUNT] Final count: ${count} from ${source} for org ${orgNummer}`);
+    return NextResponse.json({ count, source });
   } catch (error) {
     console.error('[MATCHES_COUNT] Error counting matches:', error);
     return NextResponse.json(
