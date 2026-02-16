@@ -24,6 +24,11 @@ interface PlayerData {
   spa_vnaam: string;
   spa_tv: string;
   spa_anaam: string;
+  spc_car_1?: number;
+  spc_car_2?: number;
+  spc_car_3?: number;
+  spc_car_4?: number;
+  spc_car_5?: number;
 }
 
 interface MatchData {
@@ -57,6 +62,7 @@ export default function CompetitieMatrixPage() {
   const [results, setResults] = useState<ResultData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedPeriode, setSelectedPeriode] = useState<number>(1);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -70,8 +76,8 @@ export default function CompetitieMatrixPage() {
       const [compRes, playersRes, matchesRes, resultsRes] = await Promise.all([
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${selectedPeriode}`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`),
       ]);
 
       if (!compRes.ok) {
@@ -82,6 +88,12 @@ export default function CompetitieMatrixPage() {
 
       const compData = await compRes.json();
       setCompetition(compData);
+
+      // Initialize selectedPeriode to current/last periode if not already set
+      if (!selectedPeriode || selectedPeriode === 1) {
+        const currentPeriode = compData.periode || 1;
+        setSelectedPeriode(currentPeriode);
+      }
 
       if (playersRes.ok) {
         const playersData = await playersRes.json();
@@ -102,7 +114,7 @@ export default function CompetitieMatrixPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [orgNummer, compNr]);
+  }, [orgNummer, compNr, selectedPeriode]);
 
   useEffect(() => {
     fetchData();
@@ -169,17 +181,54 @@ export default function CompetitieMatrixPage() {
   // Sort players by number
   const sortedPlayers = [...players].sort((a, b) => a.spc_nummer - b.spc_nummer);
 
+  // Get caramboles field key based on discipline
+  const getCarambolesKey = (discipline: number): keyof PlayerData => {
+    const keys: Record<number, keyof PlayerData> = {
+      1: 'spc_car_1',
+      2: 'spc_car_2',
+      3: 'spc_car_3',
+      4: 'spc_car_4',
+      5: 'spc_car_5',
+    };
+    return keys[discipline] || 'spc_car_1';
+  };
+
+  const carKey = getCarambolesKey(competition.discipline);
+
+  // Function to get player name with caramboles
+  const getPlayerNameWithCar = (player: PlayerData): string => {
+    const name = formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam);
+    const car = player[carKey] || 0;
+    return `${name} (${car})`;
+  };
+
+  // Handle print
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
 
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Matrix - {competition.comp_naam}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | Wie speelt tegen wie
-        </p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Matrix - {competition.comp_naam}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {DISCIPLINES[competition.discipline]} | Wie speelt tegen wie | Periode {selectedPeriode}
+          </p>
+        </div>
+        <button
+          onClick={handlePrint}
+          className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2 print:hidden"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Printen
+        </button>
       </div>
 
       {error && (
@@ -219,22 +268,26 @@ export default function CompetitieMatrixPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 dark:bg-slate-700/50 z-10 min-w-[120px]">
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 dark:bg-slate-700/50 z-10 min-w-[180px]">
                     Speler
                   </th>
                   {sortedPlayers.map((player) => (
                     <th
                       key={player.spc_nummer}
-                      className="text-center px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 min-w-[60px]"
-                      title={formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)}
+                      className="text-center px-2 py-8 text-xs font-semibold text-slate-500 dark:text-slate-400 min-w-[40px] h-32 align-bottom"
+                      title={getPlayerNameWithCar(player)}
                     >
-                      <div className="truncate max-w-[60px]">
-                        {player.spa_vnaam?.charAt(0)}.{player.spa_tv ? ` ${player.spa_tv}` : ''} {player.spa_anaam}
+                      <div className="flex justify-center items-end h-full">
+                        <span style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }} className="whitespace-nowrap">
+                          {player.spa_vnaam?.charAt(0)}.{player.spa_tv ? ` ${player.spa_tv}` : ''} {player.spa_anaam}
+                        </span>
                       </div>
                     </th>
                   ))}
-                  <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Totaal
+                  <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider align-bottom">
+                    <div style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }} className="mx-auto">
+                      Totaal
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -245,8 +298,8 @@ export default function CompetitieMatrixPage() {
                   return (
                     <tr key={playerRow.spc_nummer} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                       <td className="px-3 py-2 text-sm font-medium text-slate-900 dark:text-white sticky left-0 bg-white dark:bg-slate-800 z-10 border-r border-slate-200 dark:border-slate-700">
-                        <div className="truncate max-w-[140px]">
-                          {formatName(playerRow.spa_vnaam, playerRow.spa_tv, playerRow.spa_anaam)}
+                        <div className="truncate max-w-[170px]">
+                          {getPlayerNameWithCar(playerRow)}
                         </div>
                       </td>
                       {sortedPlayers.map((playerCol) => {
@@ -312,23 +365,45 @@ export default function CompetitieMatrixPage() {
             </table>
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-4 h-4 rounded bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800" />
-                Gewonnen
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-4 h-4 rounded bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800" />
-                Gelijk
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-4 h-4 rounded bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />
-                Verloren
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-center text-[10px] leading-4">?</span>
-                Nog niet gespeeld
-              </span>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-4 h-4 rounded bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800" />
+                  Gewonnen
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-4 h-4 rounded bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800" />
+                  Gelijk
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-4 h-4 rounded bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />
+                  Verloren
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-center text-[10px] leading-4">?</span>
+                  Nog niet gespeeld
+                </span>
+              </div>
+
+              {/* Periode selector */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-600 print:hidden">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Periode:</span>
+                <div className="flex gap-1">
+                  {Array.from({ length: competition.periode }, (_, i) => i + 1).map((periodeNr) => (
+                    <button
+                      key={periodeNr}
+                      onClick={() => setSelectedPeriode(periodeNr)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                        selectedPeriode === periodeNr
+                          ? 'bg-slate-800 dark:bg-slate-600 text-white'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      Periode {periodeNr}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>

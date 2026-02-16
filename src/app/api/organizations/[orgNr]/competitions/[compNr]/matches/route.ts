@@ -11,6 +11,9 @@ interface RouteParams {
 /**
  * GET /api/organizations/:orgNr/competitions/:compNr/matches
  * List all matches in a competition
+ *
+ * Query params:
+ * - periode (optional): filter by periode number (1, 2, 3, etc.)
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -29,11 +32,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const periodeParam = searchParams.get('periode');
+
+    // Build additional filters
+    const additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [];
+
+    if (periodeParam !== null) {
+      const periode = parseInt(periodeParam, 10);
+      if (!isNaN(periode)) {
+        additionalFilters.push({ field: 'periode', op: '==', value: periode });
+        console.log('[MATCHES] Filtering by periode:', periode);
+      }
+    }
+
     console.log('[MATCHES] Querying database for matches of competition:', compNumber, 'in org:', orgNummer);
     const snapshot = await queryWithOrgComp(
       db.collection('matches'),
       orgNummer,
-      compNumber
+      compNumber,
+      additionalFilters
     );
 
     const matches: Record<string, unknown>[] = [];

@@ -17,6 +17,7 @@ interface RouteParams {
  * - startDate (optional): ISO date string for filtering results from this date onwards
  * - endDate (optional): ISO date string for filtering results up to this date
  * - gespeeld (optional): filter by gespeeld status (1 = played, 0 = not played)
+ * - periode (optional): filter by periode number (1, 2, 3, etc.)
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -40,17 +41,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const gespeeldParam = searchParams.get('gespeeld');
+    const periodeParam = searchParams.get('periode');
 
     console.log('[RESULTS] Querying database for results of competition:', compNumber, 'in org:', orgNummer);
-    console.log('[RESULTS] Filters - startDate:', startDate, 'endDate:', endDate, 'gespeeld:', gespeeldParam);
+    console.log('[RESULTS] Filters - startDate:', startDate, 'endDate:', endDate, 'gespeeld:', gespeeldParam, 'periode:', periodeParam);
 
-    // Build additional filters (gespeeld)
+    // Build additional filters (gespeeld, periode)
     const additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [];
 
     if (gespeeldParam !== null) {
       const gespeeld = parseInt(gespeeldParam, 10);
       if (!isNaN(gespeeld)) {
         additionalFilters.push({ field: 'gespeeld', op: '==', value: gespeeld });
+      }
+    }
+
+    if (periodeParam !== null) {
+      const periode = parseInt(periodeParam, 10);
+      if (!isNaN(periode)) {
+        additionalFilters.push({ field: 'periode', op: '==', value: periode });
+        console.log('[RESULTS] Filtering by periode:', periode);
       }
     }
 
