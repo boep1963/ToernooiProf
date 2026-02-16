@@ -31,6 +31,8 @@ export default function DashboardPage() {
   // Stats state
   const [memberCount, setMemberCount] = useState<number>(0);
   const [competitionCount, setCompetitionCount] = useState<number>(0);
+  const [matchCount, setMatchCount] = useState<number>(0);
+  const [tableCount, setTableCount] = useState<number>(0);
 
   // News state
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -56,9 +58,11 @@ export default function DashboardPage() {
 
     const fetchStats = async () => {
       try {
-        const [membersRes, compsRes] = await Promise.all([
+        const [membersRes, compsRes, matchesRes, tablesRes] = await Promise.all([
           fetch(`/api/organizations/${orgNummer}/members`),
           fetch(`/api/organizations/${orgNummer}/competitions`),
+          fetch(`/api/organizations/${orgNummer}/matches/count`),
+          fetch(`/api/organizations/${orgNummer}/tables/count`),
         ]);
 
         if (membersRes.ok) {
@@ -70,6 +74,16 @@ export default function DashboardPage() {
           const comps = await compsRes.json();
           // Competitions API returns raw array
           setCompetitionCount(Array.isArray(comps) ? comps.length : 0);
+        }
+        if (matchesRes.ok) {
+          const matchesData = await matchesRes.json();
+          // Matches count API returns { count: N }
+          setMatchCount(matchesData.count || 0);
+        }
+        if (tablesRes.ok) {
+          const tablesData = await tablesRes.json();
+          // Tables count API returns { count: N }
+          setTableCount(tablesData.count || 0);
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -326,7 +340,7 @@ export default function DashboardPage() {
                 Wedstrijden
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                0
+                {matchCount}
               </p>
             </div>
             <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
@@ -354,7 +368,7 @@ export default function DashboardPage() {
                 Scoreborden
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                0
+                {tableCount}
               </p>
             </div>
             <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
