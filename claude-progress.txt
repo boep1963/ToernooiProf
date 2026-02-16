@@ -2213,3 +2213,10 @@ Agent: Feature #170 - Dashboard Dynamic Counts
 
 COMPLETED:
 - Feature #170: Dashboard shows correct counts for wedstrijden and tafels/scoreborden ✅
+
+=== Session 44 - 2026-02-16 ===
+Agent: Features #173, #171 (Batch Assignment)
+
+COMPLETED: All 2 assigned features
+- Feature #173: Type-safety voor org_nummer in alle Firestore queries ✅
+- Feature #171: Dashboard wedstrijden teller: tel results als fallback voor matches ✅
