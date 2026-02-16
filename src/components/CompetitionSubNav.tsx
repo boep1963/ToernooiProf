@@ -58,9 +58,27 @@ export default function CompetitionSubNav({ compNr, compNaam }: CompetitionSubNa
           <nav className="flex min-w-max" aria-label="Competitie navigatie">
             {navItems.map((item) => {
               const href = `${basePath}${item.segment}`;
-              const isActive = item.segment === ''
-                ? pathname === basePath
-                : pathname === href || pathname.startsWith(href + '/');
+              // Determine if this item is active, ensuring the most specific match wins.
+              // A parent route (e.g. /uitslagen) should NOT be active if a child route
+              // (e.g. /uitslagen/overzicht) is a better match for the current pathname.
+              let isActive: boolean;
+              if (item.segment === '') {
+                isActive = pathname === basePath;
+              } else if (pathname === href) {
+                isActive = true;
+              } else if (pathname.startsWith(href + '/')) {
+                // Only mark active if no other nav item has a longer segment that also matches
+                const hasMoreSpecificMatch = navItems.some(
+                  (other) =>
+                    other.segment !== item.segment &&
+                    other.segment.length > item.segment.length &&
+                    (pathname === `${basePath}${other.segment}` ||
+                      pathname.startsWith(`${basePath}${other.segment}/`))
+                );
+                isActive = !hasMoreSpecificMatch;
+              } else {
+                isActive = false;
+              }
 
               return (
                 <Link
