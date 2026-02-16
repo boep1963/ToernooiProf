@@ -91,15 +91,34 @@ export default function CompetiteUitslagenPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Fetch results separately - non-blocking, runs after page is already displayed
+  // The results API can be slow (denormalization) or fail with 500
+  // Page works without results: matches show with gespeeld status from matches API
+  const fetchResults = useCallback(async () => {
+    if (!orgNummer || isNaN(compNr)) return;
+    try {
+      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`);
+      if (resultsRes.ok) {
+        const resultsData = await resultsRes.json();
+        setResults(resultsData.results || []);
+      }
+    } catch {
+      // Silently ignore results fetch errors - page works without results
+      console.log('[Uitslagen] Results fetch failed, continuing without results data');
+    }
+  }, [orgNummer, compNr]);
+
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
     setError('');
     try {
-      const [compRes, matchesRes, resultsRes] = await Promise.all([
+      // Only fetch competition and matches - these are essential for the page
+      // This page shows matches (planned games) for result entry
+      // Results are fetched separately (non-blocking) after the page renders
+      const [compRes, matchesRes] = await Promise.all([
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
       ]);
 
       if (!compRes.ok) {
@@ -115,11 +134,6 @@ export default function CompetiteUitslagenPage() {
         const matchesData = await matchesRes.json();
         setMatches(matchesData.matches || []);
       }
-
-      if (resultsRes.ok) {
-        const resultsData = await resultsRes.json();
-        setResults(resultsData.results || []);
-      }
     } catch {
       setError('Er is een fout opgetreden bij het laden.');
     } finally {
@@ -130,6 +144,14 @@ export default function CompetiteUitslagenPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Fetch results in the background after the page has loaded
+  // This is non-blocking: the page displays matches immediately
+  useEffect(() => {
+    if (!isLoading && competition) {
+      fetchResults();
+    }
+  }, [isLoading, competition, fetchResults]);
 
   // Get result for a match by uitslag_code
   const getResultForMatch = (uitslagCode: string): ResultData | undefined => {
