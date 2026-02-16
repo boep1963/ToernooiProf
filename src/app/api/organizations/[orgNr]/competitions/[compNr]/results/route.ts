@@ -320,7 +320,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Determine scoring system (first digit)
     const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
 
-    // Fetch player data from competition_players (for moyennes and names)
+    // Fetch player data from competition_players (for moyennes) and members (for names)
     let p1Moyenne: number | undefined;
     let p2Moyenne: number | undefined;
     let sp_1_naam: string | undefined;
@@ -350,58 +350,37 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const p1Data = player1Snapshot.docs[0].data();
       const moyenneField = `spc_moyenne_${discipline}`;
       p1Moyenne = Number(p1Data?.[moyenneField] as number) || 0;
-
-      // Get player name (try from competition_players, fallback to members)
-      const vnaam = p1Data?.spa_vnaam;
-      const tv = p1Data?.spa_tv;
-      const anaam = p1Data?.spa_anaam;
-      const hasEmptyName = !vnaam && !tv && !anaam;
-
-      if (hasEmptyName) {
-        // Fallback to members collection
-        const memberSnapshot = await queryWithOrgComp(
-          db.collection('members'),
-          orgNummer,
-          null,
-          [{ field: 'spa_nummer', op: '==', value: Number(sp_1_nr) }],
-          'spa_org'
-        );
-        if (!memberSnapshot.empty) {
-          const memberData = memberSnapshot.docs[0].data();
-          sp_1_naam = formatPlayerName(memberData.spa_vnaam, memberData.spa_tv, memberData.spa_anaam, sorteren);
-        }
-      } else {
-        sp_1_naam = formatPlayerName(vnaam, tv, anaam, sorteren);
-      }
     }
 
     if (!player2Snapshot.empty) {
       const p2Data = player2Snapshot.docs[0].data();
       const moyenneField = `spc_moyenne_${discipline}`;
       p2Moyenne = Number(p2Data?.[moyenneField] as number) || 0;
+    }
 
-      // Get player name (try from competition_players, fallback to members)
-      const vnaam = p2Data?.spa_vnaam;
-      const tv = p2Data?.spa_tv;
-      const anaam = p2Data?.spa_anaam;
-      const hasEmptyName = !vnaam && !tv && !anaam;
+    // Fetch player names from members collection
+    const member1Snapshot = await queryWithOrgComp(
+      db.collection('members'),
+      orgNummer,
+      null,
+      [{ field: 'spa_nummer', op: '==', value: Number(sp_1_nr) }],
+      'spa_org'
+    );
+    if (!member1Snapshot.empty) {
+      const m1Data = member1Snapshot.docs[0].data();
+      sp_1_naam = formatPlayerName(m1Data.spa_vnaam, m1Data.spa_tv, m1Data.spa_anaam, sorteren);
+    }
 
-      if (hasEmptyName) {
-        // Fallback to members collection
-        const memberSnapshot = await queryWithOrgComp(
-          db.collection('members'),
-          orgNummer,
-          null,
-          [{ field: 'spa_nummer', op: '==', value: Number(sp_2_nr) }],
-          'spa_org'
-        );
-        if (!memberSnapshot.empty) {
-          const memberData = memberSnapshot.docs[0].data();
-          sp_2_naam = formatPlayerName(memberData.spa_vnaam, memberData.spa_tv, memberData.spa_anaam, sorteren);
-        }
-      } else {
-        sp_2_naam = formatPlayerName(vnaam, tv, anaam, sorteren);
-      }
+    const member2Snapshot = await queryWithOrgComp(
+      db.collection('members'),
+      orgNummer,
+      null,
+      [{ field: 'spa_nummer', op: '==', value: Number(sp_2_nr) }],
+      'spa_org'
+    );
+    if (!member2Snapshot.empty) {
+      const m2Data = member2Snapshot.docs[0].data();
+      sp_2_naam = formatPlayerName(m2Data.spa_vnaam, m2Data.spa_tv, m2Data.spa_anaam, sorteren);
     }
 
     if (sysType === 1 || puntenSys >= 10) {

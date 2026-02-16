@@ -45,8 +45,12 @@ interface ResultData {
   uitslag_code: string;
   sp_1_nr: number;
   sp_1_punt: number;
+  sp_1_cartem?: number;
+  sp_1_cargem?: number;
   sp_2_nr: number;
   sp_2_punt: number;
+  sp_2_cartem?: number;
+  sp_2_cargem?: number;
 }
 
 export default function CompetitieMatrixPage() {
@@ -157,8 +161,6 @@ export default function CompetitieMatrixPage() {
         (m.nummer_A === playerBNr && m.nummer_B === playerANr)
     );
 
-    if (!match) return null;
-
     // Find the result
     const result = results.find(
       (r) =>
@@ -166,6 +168,27 @@ export default function CompetitieMatrixPage() {
         (r.sp_1_nr === playerBNr && r.sp_2_nr === playerANr)
     );
 
+    // Feature #187: Fall back to results when no match exists (for imported/legacy data)
+    if (!match) {
+      // If no match but result exists, use result data directly
+      if (!result) return null;
+
+      // Determine points for player A and B from result
+      let pointsA: number;
+      let pointsB: number;
+
+      if (result.sp_1_nr === playerANr) {
+        pointsA = result.sp_1_punt;
+        pointsB = result.sp_2_punt;
+      } else {
+        pointsA = result.sp_2_punt;
+        pointsB = result.sp_1_punt;
+      }
+
+      return { played: true, pointsA, pointsB };
+    }
+
+    // Match exists - check if it's been played
     if (!result) return { played: false, pointsA: 0, pointsB: 0 };
 
     // Determine points for player A and B
