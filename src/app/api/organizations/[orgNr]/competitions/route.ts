@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
+import { queryWithOrgComp } from '@/lib/firestoreUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -21,9 +22,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
     console.log('[COMPETITIONS] Querying database for competitions of org:', orgNummer);
-    const snapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .get();
+    const snapshot = await queryWithOrgComp(
+      db.collection('competitions'),
+      orgNummer,
+      null
+    );
 
     const competitions = snapshot.docs.map(doc => ({
       id: doc.id,
@@ -81,9 +84,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Generate next competition number for this organization
     console.log('[COMPETITIONS] Generating next comp_nr for org:', orgNummer);
-    const existingSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .get();
+    const existingSnapshot = await queryWithOrgComp(
+      db.collection('competitions'),
+      orgNummer,
+      null
+    );
 
     let maxCompNr = 0;
     existingSnapshot.docs.forEach(doc => {

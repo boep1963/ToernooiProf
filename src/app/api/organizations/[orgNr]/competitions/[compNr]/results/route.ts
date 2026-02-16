@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore } from '@/lib/billiards';
 import { parseDutchDate } from '@/lib/dateUtils';
+import { queryWithOrgComp } from '@/lib/firestoreUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -43,23 +44,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log('[RESULTS] Querying database for results of competition:', compNumber, 'in org:', orgNummer);
     console.log('[RESULTS] Filters - startDate:', startDate, 'endDate:', endDate, 'gespeeld:', gespeeldParam);
 
-    // Build query
-    let query = db.collection('results')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber);
+    // Build additional filters (gespeeld)
+    const additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [];
 
-    // Add gespeeld filter if provided
     if (gespeeldParam !== null) {
       const gespeeld = parseInt(gespeeldParam, 10);
       if (!isNaN(gespeeld)) {
-        query = query.where('gespeeld', '==', gespeeld);
+        additionalFilters.push({ field: 'gespeeld', op: '==', value: gespeeld });
       }
     }
 
-    const snapshot = await query.get();
+    // Use dual-type query to handle both string and number variants
+    const snapshot = await queryWithOrgComp(
+      db.collection('results'),
+      orgNummer,
+      compNumber,
+      additionalFilters
+    );
 
     const results: Record<string, unknown>[] = [];
-    snapshot.forEach((doc) => {
+    snapshot.docs.forEach((doc) => {
       results.push({ id: doc.id, ...doc.data() });
     });
 
@@ -167,11 +171,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get competition details for point calculation
     console.log('[RESULTS] Fetching competition details...');
-    const compSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
+    const compSnapshot = await queryWithOrgComp(
+      db.collection('competitions'),
+      orgNummer,
+      compNumber
+    );
 
     if (compSnapshot.empty) {
       return NextResponse.json(
@@ -208,19 +212,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       let p2Moyenne: number | undefined;
 
       // Fetch player moyennes from competition_players
-      const player1Snapshot = await db.collection('competition_players')
-        .where('org_nummer', '==', orgNummer)
-        .where('comp_nr', '==', compNumber)
-        .where('spc_nummer', '==', Number(sp_1_nr))
-        .limit(1)
-        .get();
+      const player1Snapshot = await queryWithOrgComp(
+        db.collection('competition_players'),
+        orgNummer,
+        compNumber,
+        [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }]
+      );
 
-      const player2Snapshot = await db.collection('competition_players')
-        .where('org_nummer', '==', orgNummer)
-        .where('comp_nr', '==', compNumber)
-        .where('spc_nummer', '==', Number(sp_2_nr))
-        .limit(1)
-        .get();
+      const player2Snapshot = await queryWithOrgComp(
+        db.collection('competition_players'),
+        orgNummer,
+        compNumber,
+        [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }]
+      );
 
       if (!player1Snapshot.empty) {
         const p1Data = player1Snapshot.docs[0].data();
@@ -302,12 +306,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Mark the match as played (gespeeld=1)
     console.log('[RESULTS] Marking match as played...');
-    const matchSnapshot = await db.collection('matches')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .where('uitslag_code', '==', uitslag_code)
-      .limit(1)
-      .get();
+    const matchSnapshot = await queryWithOrgComp(
+      db.collection('matches'),
+      orgNummer,
+      compNumber,
+      [{ field: 'uitslag_code', op: '==', value: uitslag_code }]
+    );
 
     if (!matchSnapshot.empty) {
       await matchSnapshot.docs[0].ref.update({ gespeeld: 1 });

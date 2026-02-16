@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateCaramboles, getMoyenneField } from '@/lib/billiards';
+import { queryWithOrgComp } from '@/lib/firestoreUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -29,10 +30,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     console.log('[PLAYERS] Querying database for players of competition:', compNumber, 'in org:', orgNummer);
-    const snapshot = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
-      .get();
+    const snapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer,
+      compNumber
+    );
 
     const players: Record<string, unknown>[] = [];
 
@@ -46,11 +48,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       if (hasEmptyName && playerData?.spc_nummer) {
         // Look up member name from members collection
         console.log(`[PLAYERS] Player ${playerData.spc_nummer} has empty name, looking up from members...`);
-        const memberSnapshot = await db.collection('members')
-          .where('spa_org', '==', orgNummer)
-          .where('spa_nummer', '==', playerData.spc_nummer)
-          .limit(1)
-          .get();
+        const memberSnapshot = await queryWithOrgComp(
+          db.collection('members'),
+          orgNummer,
+          null,
+          [{ field: 'spa_nummer', op: '==', value: playerData.spc_nummer }]
+        );
 
         if (!memberSnapshot.empty) {
           const memberData = memberSnapshot.docs[0].data();
@@ -115,11 +118,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get competition details for caramboles calculation
     console.log('[PLAYERS] Fetching competition details for caramboles calculation...');
-    const compSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
+    const compSnapshot = await queryWithOrgComp(
+      db.collection('competitions'),
+      orgNummer,
+      compNumber
+    );
 
     if (compSnapshot.empty) {
       return NextResponse.json(
@@ -141,12 +144,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       try {
         // Check if player is already in this competition
         console.log(`[PLAYERS] Checking for duplicate player ${memberNummer}...`);
-        const existingCheck = await db.collection('competition_players')
-          .where('spc_org', '==', orgNummer)
-          .where('spc_competitie', '==', compNumber)
-          .where('spc_nummer', '==', memberNummer)
-          .limit(1)
-          .get();
+        const existingCheck = await queryWithOrgComp(
+          db.collection('competition_players'),
+          orgNummer,
+          compNumber,
+          [{ field: 'spc_nummer', op: '==', value: memberNummer }]
+        );
 
         if (!existingCheck.empty) {
           errors.push({ spc_nummer: memberNummer, error: 'Al toegevoegd' });
@@ -155,11 +158,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
         // Get member details for moyenne
         console.log(`[PLAYERS] Fetching member ${memberNummer} details for moyenne...`);
-        const memberSnapshot = await db.collection('members')
-          .where('spa_org', '==', orgNummer)
-          .where('spa_nummer', '==', memberNummer)
-          .limit(1)
-          .get();
+        const memberSnapshot = await queryWithOrgComp(
+          db.collection('members'),
+          orgNummer,
+          null,
+          [{ field: 'spa_nummer', op: '==', value: memberNummer }]
+        );
 
         if (memberSnapshot.empty) {
           errors.push({ spc_nummer: memberNummer, error: 'Lid niet gevonden' });
@@ -293,12 +297,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Find the player in this competition
     console.log(`[PLAYERS] Looking for player ${memberNummer} in competition ${compNumber}...`);
-    const playerSnapshot = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
-      .where('spc_nummer', '==', memberNummer)
-      .limit(1)
-      .get();
+    const playerSnapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer,
+      compNumber,
+      [{ field: 'spc_nummer', op: '==', value: memberNummer }]
+    );
 
     if (playerSnapshot.empty) {
       return NextResponse.json(

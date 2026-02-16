@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, formatPlayerName } from '@/lib/billiards';
+import { queryWithOrgComp } from '@/lib/firestoreUtils';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -29,13 +30,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     console.log('[MATCHES] Querying database for matches of competition:', compNumber, 'in org:', orgNummer);
-    const snapshot = await db.collection('matches')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
+    const snapshot = await queryWithOrgComp(
+      db.collection('matches'),
+      orgNummer,
+      compNumber
+    );
 
     const matches: Record<string, unknown>[] = [];
-    snapshot.forEach((doc) => {
+    snapshot.docs.forEach((doc) => {
       matches.push({ id: doc.id, ...doc.data() });
     });
 
@@ -83,11 +85,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get competition details
     console.log('[MATCHES] Fetching competition details...');
-    const compSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
+    const compSnapshot = await queryWithOrgComp(
+      db.collection('competitions'),
+      orgNummer,
+      compNumber
+    );
 
     if (compSnapshot.empty) {
       return NextResponse.json(
@@ -109,10 +111,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get all players in the competition
     console.log('[MATCHES] Fetching players...');
-    const playersSnapshot = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
-      .get();
+    const playersSnapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer,
+      compNumber,
+      []
+    );
 
     const players: Array<{
       nummer: number;
@@ -139,11 +143,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (hasEmptyName && nummer) {
         // Look up member name from members collection
         console.log(`[MATCHES] Player ${nummer} has empty name, looking up from members...`);
-        const memberSnapshot = await db.collection('members')
-          .where('spa_org', '==', orgNummer)
-          .where('spa_nummer', '==', nummer)
-          .limit(1)
-          .get();
+        const memberSnapshot = await queryWithOrgComp(
+          db.collection('members'),
+          orgNummer,
+          null,
+          [{ field: 'spa_nummer', op: '==', value: nummer }]
+        );
 
         if (!memberSnapshot.empty) {
           const memberData = memberSnapshot.docs[0].data();
@@ -172,11 +177,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check if matches already exist
-    const existingMatches = await db.collection('matches')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
+    const existingMatches = await queryWithOrgComp(
+      db.collection('matches'),
+      orgNummer,
+      compNumber
+    );
 
     // Parse optional body for regeneration flag
     let forceRegenerate = false;
@@ -197,10 +202,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Delete existing matches if regenerating
     if (!existingMatches.empty && forceRegenerate) {
       console.log('[MATCHES] Deleting existing matches...');
-      const allExisting = await db.collection('matches')
-        .where('org_nummer', '==', orgNummer)
-        .where('comp_nr', '==', compNumber)
-        .get();
+      const allExisting = await queryWithOrgComp(
+        db.collection('matches'),
+        orgNummer,
+        compNumber
+      );
 
       for (const doc of allExisting.docs) {
         await doc.ref.delete();
