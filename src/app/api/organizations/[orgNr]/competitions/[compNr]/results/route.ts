@@ -212,47 +212,58 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         }
 
         const naam = formatPlayerName(vnaam, tv, anaam, sorteren);
-        if (naam) playerMap.set(nummer, naam); // nummer is already a number from playerNrsArray
+        if (naam) {
+          playerMap.set(nummer, naam);
+        } else {
+          console.log(`[RESULTS] No name found for player ${nummer} (compData: ${!!compData}, memberData: ${!!memberData})`);
+        }
       }
 
       // Update results in Firestore and in-memory
+      // For players without names in any lookup table, use a fallback name
+      // to prevent repeated lookups on every request
       let batch = db.batch(); // FIX #189: Changed const to let for batch recreation
       let batchCount = 0;
 
       for (const result of resultsToEnrich) {
+        const updateData: Record<string, unknown> = {};
         // FIX #190: Cast to Number for Map lookup (Map uses strict equality)
-        const sp1Name = playerMap.get(Number(result.sp_1_nr));
-        const sp2Name = playerMap.get(Number(result.sp_2_nr));
+        const sp1Nr = Number(result.sp_1_nr);
+        const sp2Nr = Number(result.sp_2_nr);
+        const sp1Name = playerMap.get(sp1Nr);
+        const sp2Name = playerMap.get(sp2Nr);
 
-        if (sp1Name || sp2Name) {
-          const updateData: Record<string, unknown> = {};
-          if (sp1Name && !result.sp_1_naam) {
-            updateData.sp_1_naam = sp1Name;
-            result.sp_1_naam = sp1Name; // Update in-memory
-          }
-          if (sp2Name && !result.sp_2_naam) {
-            updateData.sp_2_naam = sp2Name;
-            result.sp_2_naam = sp2Name; // Update in-memory
-          }
+        if (!result.sp_1_naam) {
+          // Use found name or fallback to "Speler N" to prevent repeated lookups
+          const name = sp1Name || `Speler ${sp1Nr}`;
+          updateData.sp_1_naam = name;
+          result.sp_1_naam = name;
+        }
+        if (!result.sp_2_naam) {
+          const name = sp2Name || `Speler ${sp2Nr}`;
+          updateData.sp_2_naam = name;
+          result.sp_2_naam = name;
+        }
 
-          // FIX #189: Only update if there's actual data to write
-          if (Object.keys(updateData).length > 0) {
-            const docRef = db.collection('results').doc(result.id as string);
-            batch.update(docRef, updateData);
-            batchCount++;
+        if (Object.keys(updateData).length > 0) {
+          const docRef = db.collection('results').doc(result.id as string);
+          batch.update(docRef, updateData);
+          batchCount++;
 
-            // Firestore has a 500 operation limit per batch
-            if (batchCount >= 450) {
-              await batch.commit();
-              batch = db.batch(); // FIX #189: Create new batch after commit
-              batchCount = 0;
-            }
+          // Firestore has a 500 operation limit per batch
+          if (batchCount >= 450) {
+            await batch.commit();
+            batch = db.batch(); // FIX #189: Create new batch after commit
+            batchCount = 0;
           }
         }
       }
 
       if (batchCount > 0) {
         await batch.commit();
+        console.log(`[RESULTS] Batch committed ${batchCount} name updates to Firestore`);
+      } else {
+        console.log(`[RESULTS] No names to persist (all players missing name data)`);
       }
 
       console.log(`[RESULTS] Denormalized ${resultsToEnrich.length} results with player names`);
