@@ -2309,3 +2309,63 @@ Git Commits: a625494 (code), 3ca7689 (progress), e53cf8e (summary)
 
 CURRENT STATUS: 177/177 features passing (100.0%)
 🎉 ALL FEATURES COMPLETE\!
+
+=== Session 48 - 2026-02-16 ===
+Agent: Feature #179 - Remove ResultsOnlyView from uitslagen page
+
+COMPLETED:
+- Feature #179: Remove ResultsOnlyView from uitslagen page - results already shown in overzicht ✅
+
+IMPLEMENTATION SUMMARY:
+
+**Problem:**
+When a competition had results but no matches (e.g., imported data or deleted planning), the /uitslagen page displayed a redundant ResultsOnlyView component showing a table of all results. This was unnecessary because the /uitslagen/overzicht page already displays those same results.
+
+**Solution:**
+Replaced the ResultsOnlyView component with a clean, simple message directing users to the appropriate pages:
+- Message: "Er zijn nog geen wedstrijden gepland." (No matches planned yet)
+- Sub-message: "Deze competitie heeft wel X uitslagen. Bekijk deze op de overzichtspagina." (This competition has X results. View them on the overview page)
+- Two action buttons:
+  1. "Planning aanmaken" → navigates to /planning
+  2. "Bekijk uitslagen overzicht" → navigates to /uitslagen/overzicht
+
+**Code Changes:**
+1. **Removed (lines 65-279):**
+   - `PlayerInfo` interface (6 lines)
+   - `ResultsOnlyViewProps` interface (9 lines)
+   - `ResultsOnlyView` component function (198 lines)
+   
+2. **Replaced (lines 746-755):**
+   - Old: Rendered ResultsOnlyView component with all its complexity
+   - New: Simple centered card with icon, message, and two action buttons
+
+**File Changes:**
+- src/app/(dashboard)/competities/[id]/uitslagen/page.tsx
+  - Before: 907 lines
+  - After: 708 lines
+  - Net removal: 199 lines (~22% reduction)
+
+**Testing:**
+- Created test scenario: Competition 3 (org 1205) with 2 results but 0 matches
+- Verified /competities/3/uitslagen shows new message (not results table)
+- Verified "Bekijk uitslagen overzicht" button navigates to overzicht page
+- Verified /competities/3/uitslagen/overzicht still displays results correctly
+- Zero console errors (verified with browser automation)
+- Screenshots captured for both pages
+
+**Verification Results:**
+✅ Page shows clean message instead of results table
+✅ Message includes result count (2 uitslagen)
+✅ "Planning aanmaken" button links to /planning
+✅ "Bekijk uitslagen overzicht" button links to /overzicht
+✅ Overzicht page displays 2 results in table format
+✅ Zero console errors
+✅ No TypeScript errors
+✅ No references to ResultsOnlyView or PlayerInfo remain
+✅ File size reduced by 199 lines
+
+Git Commit: 6332be6
+
+CURRENT STATUS: 179/179 features passing (100.0%)
+
+🎉 PROJECT COMPLETE: ALL 179 FEATURES PASSING!
