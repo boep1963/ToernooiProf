@@ -205,14 +205,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const player1Snapshot = await db.collection('competition_players')
         .where('org_nummer', '==', orgNummer)
         .where('comp_nr', '==', compNumber)
-        .where('spa_nr', '==', Number(sp_1_nr))
+        .where('spc_nummer', '==', Number(sp_1_nr))
         .limit(1)
         .get();
 
       const player2Snapshot = await db.collection('competition_players')
         .where('org_nummer', '==', orgNummer)
         .where('comp_nr', '==', compNumber)
-        .where('spa_nr', '==', Number(sp_2_nr))
+        .where('spc_nummer', '==', Number(sp_2_nr))
         .limit(1)
         .get();
 

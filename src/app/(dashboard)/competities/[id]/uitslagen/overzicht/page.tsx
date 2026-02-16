@@ -46,6 +46,13 @@ interface EnrichedResult extends ResultData {
   moy_2: string;
 }
 
+interface PlayerData {
+  spc_nummer: number;
+  spa_vnaam: string;
+  spa_tv: string;
+  spa_anaam: string;
+}
+
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
   2: '10-punten',
@@ -147,7 +154,19 @@ export default function ResultsOverviewPage() {
       const compData = await compRes.json();
       setCompetition(compData);
 
-      // Fetch all matches to get player names
+      // Fetch competition_players to build player name lookup map
+      const playersRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`);
+      let playerLookup: Record<number, PlayerData> = {};
+      if (playersRes.ok) {
+        const playersData = await playersRes.json();
+        const players = playersData.players || [];
+        // Build lookup map by player number
+        players.forEach((player: PlayerData) => {
+          playerLookup[player.spc_nummer] = player;
+        });
+      }
+
+      // Fetch matches for secondary enrichment (optional)
       const matchesRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`);
       let matchesData: MatchData[] = [];
       if (matchesRes.ok) {
@@ -177,9 +196,17 @@ export default function ResultsOverviewPage() {
 
         // Enrich results with player names and calculated moyenne
         const enriched: EnrichedResult[] = resultsData.map((result: ResultData) => {
-          const match = matchesData.find((m) => m.uitslag_code === result.uitslag_code);
-          const naam_A = match?.naam_A || 'Onbekend';
-          const naam_B = match?.naam_B || 'Onbekend';
+          // Resolve player names using competition_players lookup map
+          const player1 = playerLookup[result.sp_1_nr];
+          const player2 = playerLookup[result.sp_2_nr];
+
+          // Format names: 'voornaam tussenvoegsel achternaam'.trim()
+          let naam_A = `${player1?.spa_vnaam || ''} ${player1?.spa_tv || ''} ${player1?.spa_anaam || ''}`.trim();
+          let naam_B = `${player2?.spa_vnaam || ''} ${player2?.spa_tv || ''} ${player2?.spa_anaam || ''}`.trim();
+
+          // Fallback to 'Speler {nummer}' if player not found (never 'Onbekend')
+          if (!naam_A) naam_A = `Speler ${result.sp_1_nr}`;
+          if (!naam_B) naam_B = `Speler ${result.sp_2_nr}`;
 
           // Calculate moyenne (caramboles / beurten) to 3 decimal places
           const moy_1 = result.brt > 0 ? (result.sp_1_cargem / result.brt).toFixed(3) : '0.000';
