@@ -89,12 +89,14 @@ export interface Result {
   periode: number;
   speeldatum: Date;
   sp_1_nr: number;
+  sp_1_naam?: string; // Denormalized player 1 name for performance
   sp_1_cartem: number;
   sp_1_cargem: number;
   sp_1_hs: number;
   sp_1_punt: number;
   brt: number;
   sp_2_nr: number;
+  sp_2_naam?: string; // Denormalized player 2 name for performance
   sp_2_cartem: number;
   sp_2_cargem: number;
   sp_2_hs: number;

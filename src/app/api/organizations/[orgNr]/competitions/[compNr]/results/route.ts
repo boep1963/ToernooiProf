@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
-import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore } from '@/lib/billiards';
+import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore, formatPlayerName } from '@/lib/billiards';
 import { parseDutchDate } from '@/lib/dateUtils';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
 
@@ -105,6 +105,110 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         return true;
       });
+    }
+
+    // Lazy denormalization: enrich results missing player names
+    const resultsToEnrich = filteredResults.filter(r => !r.sp_1_naam || !r.sp_2_naam);
+
+    if (resultsToEnrich.length > 0) {
+      console.log(`[RESULTS] Lazy denormalization: ${resultsToEnrich.length} results missing player names`);
+
+      // Get competition settings for name formatting
+      const compSnapshot = await queryWithOrgComp(
+        db.collection('competitions'),
+        orgNummer,
+        compNumber
+      );
+      const sorteren = compSnapshot.empty ? 1 : ((compSnapshot.docs[0].data()?.sorteren as number) || 1);
+
+      // Collect unique player numbers that need names
+      const playerNrsNeeded = new Set<number>();
+      for (const result of resultsToEnrich) {
+        if (!result.sp_1_naam) playerNrsNeeded.add(result.sp_1_nr as number);
+        if (!result.sp_2_naam) playerNrsNeeded.add(result.sp_2_nr as number);
+      }
+
+      // Batch fetch player data from competition_players
+      const playerMap = new Map<number, string>();
+      const playerNrsArray = Array.from(playerNrsNeeded);
+
+      for (let i = 0; i < playerNrsArray.length; i += 30) {
+        const batch = playerNrsArray.slice(i, i + 30);
+        const playersSnapshot = await queryWithOrgComp(
+          db.collection('competition_players'),
+          orgNummer,
+          compNumber,
+          [{ field: 'spc_nummer', op: 'in', value: batch }],
+          'spc_org',
+          'spc_competitie'
+        );
+
+        for (const doc of playersSnapshot.docs) {
+          const data = doc.data();
+          const nummer = data.spc_nummer;
+          let vnaam = data.spa_vnaam;
+          let tv = data.spa_tv;
+          let anaam = data.spa_anaam;
+          const hasEmptyName = !vnaam && !tv && !anaam;
+
+          // Fallback to members if name is empty
+          if (hasEmptyName) {
+            const memberSnapshot = await queryWithOrgComp(
+              db.collection('members'),
+              orgNummer,
+              null,
+              [{ field: 'spa_nummer', op: '==', value: nummer }],
+              'spa_org'
+            );
+            if (!memberSnapshot.empty) {
+              const memberData = memberSnapshot.docs[0].data();
+              vnaam = memberData.spa_vnaam;
+              tv = memberData.spa_tv;
+              anaam = memberData.spa_anaam;
+            }
+          }
+
+          const naam = formatPlayerName(vnaam, tv, anaam, sorteren);
+          if (naam) playerMap.set(nummer, naam);
+        }
+      }
+
+      // Update results in Firestore and in-memory
+      const batch = db.batch();
+      let batchCount = 0;
+
+      for (const result of resultsToEnrich) {
+        const sp1Name = playerMap.get(result.sp_1_nr as number);
+        const sp2Name = playerMap.get(result.sp_2_nr as number);
+
+        if (sp1Name || sp2Name) {
+          const updateData: Record<string, unknown> = {};
+          if (sp1Name && !result.sp_1_naam) {
+            updateData.sp_1_naam = sp1Name;
+            result.sp_1_naam = sp1Name; // Update in-memory
+          }
+          if (sp2Name && !result.sp_2_naam) {
+            updateData.sp_2_naam = sp2Name;
+            result.sp_2_naam = sp2Name; // Update in-memory
+          }
+
+          const docRef = db.collection('results').doc(result.id as string);
+          batch.update(docRef, updateData);
+          batchCount++;
+
+          // Firestore has a 500 operation limit per batch
+          if (batchCount >= 450) {
+            await batch.commit();
+            batchCount = 0;
+          }
+        }
+      }
+
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      console.log(`[RESULTS] Denormalized ${resultsToEnrich.length} results with player names`);
     }
 
     // Sort by uitslag_code
@@ -216,43 +320,92 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Determine scoring system (first digit)
     const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
 
+    // Fetch player data from competition_players (for moyennes and names)
+    let p1Moyenne: number | undefined;
+    let p2Moyenne: number | undefined;
+    let sp_1_naam: string | undefined;
+    let sp_2_naam: string | undefined;
+
+    const sorteren = (compData?.sorteren as number) || 1;
+
+    const player1Snapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer,
+      compNumber,
+      [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }],
+      'spc_org',
+      'spc_competitie'
+    );
+
+    const player2Snapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer,
+      compNumber,
+      [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }],
+      'spc_org',
+      'spc_competitie'
+    );
+
+    if (!player1Snapshot.empty) {
+      const p1Data = player1Snapshot.docs[0].data();
+      const moyenneField = `spc_moyenne_${discipline}`;
+      p1Moyenne = Number(p1Data?.[moyenneField] as number) || 0;
+
+      // Get player name (try from competition_players, fallback to members)
+      const vnaam = p1Data?.spa_vnaam;
+      const tv = p1Data?.spa_tv;
+      const anaam = p1Data?.spa_anaam;
+      const hasEmptyName = !vnaam && !tv && !anaam;
+
+      if (hasEmptyName) {
+        // Fallback to members collection
+        const memberSnapshot = await queryWithOrgComp(
+          db.collection('members'),
+          orgNummer,
+          null,
+          [{ field: 'spa_nummer', op: '==', value: Number(sp_1_nr) }],
+          'spa_org'
+        );
+        if (!memberSnapshot.empty) {
+          const memberData = memberSnapshot.docs[0].data();
+          sp_1_naam = formatPlayerName(memberData.spa_vnaam, memberData.spa_tv, memberData.spa_anaam, sorteren);
+        }
+      } else {
+        sp_1_naam = formatPlayerName(vnaam, tv, anaam, sorteren);
+      }
+    }
+
+    if (!player2Snapshot.empty) {
+      const p2Data = player2Snapshot.docs[0].data();
+      const moyenneField = `spc_moyenne_${discipline}`;
+      p2Moyenne = Number(p2Data?.[moyenneField] as number) || 0;
+
+      // Get player name (try from competition_players, fallback to members)
+      const vnaam = p2Data?.spa_vnaam;
+      const tv = p2Data?.spa_tv;
+      const anaam = p2Data?.spa_anaam;
+      const hasEmptyName = !vnaam && !tv && !anaam;
+
+      if (hasEmptyName) {
+        // Fallback to members collection
+        const memberSnapshot = await queryWithOrgComp(
+          db.collection('members'),
+          orgNummer,
+          null,
+          [{ field: 'spa_nummer', op: '==', value: Number(sp_2_nr) }],
+          'spa_org'
+        );
+        if (!memberSnapshot.empty) {
+          const memberData = memberSnapshot.docs[0].data();
+          sp_2_naam = formatPlayerName(memberData.spa_vnaam, memberData.spa_tv, memberData.spa_anaam, sorteren);
+        }
+      } else {
+        sp_2_naam = formatPlayerName(vnaam, tv, anaam, sorteren);
+      }
+    }
+
     if (sysType === 1 || puntenSys >= 10) {
-      // WRV system - need player moyennes for bonus calculation
-      let p1Moyenne: number | undefined;
-      let p2Moyenne: number | undefined;
-
-      // Fetch player moyennes from competition_players
-      const player1Snapshot = await queryWithOrgComp(
-        db.collection('competition_players'),
-        orgNummer,
-        compNumber,
-        [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }],
-        'spc_org',
-        'spc_competitie'
-      );
-
-      const player2Snapshot = await queryWithOrgComp(
-        db.collection('competition_players'),
-        orgNummer,
-        compNumber,
-        [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }],
-        'spc_org',
-        'spc_competitie'
-      );
-
-      if (!player1Snapshot.empty) {
-        const p1Data = player1Snapshot.docs[0].data();
-        // Get moyenne for the current discipline
-        const moyenneField = `spc_moyenne_${discipline}`;
-        p1Moyenne = Number(p1Data?.[moyenneField] as number) || 0;
-      }
-
-      if (!player2Snapshot.empty) {
-        const p2Data = player2Snapshot.docs[0].data();
-        const moyenneField = `spc_moyenne_${discipline}`;
-        p2Moyenne = Number(p2Data?.[moyenneField] as number) || 0;
-      }
-
+      // WRV system - use player moyennes for bonus calculation
       const wrv = calculateWRVPoints(p1Gem, p1Tem, p2Gem, p2Tem, maxBeurten, turns, vastBeurten, puntenSys, p1Moyenne, p2Moyenne);
       sp_1_punt = wrv.points1;
       sp_2_punt = wrv.points2;
@@ -271,7 +424,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Prepare result data outside transaction
-    const resultData = {
+    const resultData: Record<string, unknown> = {
       org_nummer: orgNummer,
       comp_nr: compNumber,
       uitslag_code: String(uitslag_code),
@@ -290,6 +443,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sp_2_punt: sp_2_punt,
       gespeeld: 1,
     };
+
+    // Add denormalized player names if available (for performance)
+    if (sp_1_naam) resultData.sp_1_naam = sp_1_naam;
+    if (sp_2_naam) resultData.sp_2_naam = sp_2_naam;
 
     // Use Firestore transaction to prevent race conditions from concurrent submissions
     // This ensures atomicity: only one result per uitslag_code will be created

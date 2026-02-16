@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const hasEmptyName = !playerData?.spa_vnaam || !playerData?.spa_anaam;
 
       if (hasEmptyName && playerData?.spc_nummer) {
-        // Look up member name from members collection
+        // Look up member name from members collection (in-memory enrichment only)
         console.log(`[PLAYERS] Player ${playerData.spc_nummer} has empty name, looking up from members...`);
         const memberSnapshot = await queryWithOrgComp(
           db.collection('members'),
@@ -61,10 +61,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         if (!memberSnapshot.empty) {
           const memberData = memberSnapshot.docs[0].data();
+
+          // Update in-memory data for this response only (no Firestore write)
           playerData.spa_vnaam = String(memberData?.spa_vnaam || '');
           playerData.spa_tv = String(memberData?.spa_tv || '');
           playerData.spa_anaam = String(memberData?.spa_anaam || '');
-          console.log(`[PLAYERS] Enriched player ${playerData.spc_nummer} with member name`);
+
+          console.log(`[PLAYERS] Enriched name for player ${playerData.spc_nummer} (in-memory only)`);
         }
       }
 
