@@ -196,11 +196,11 @@ export default function CompetiteUitslagenPage() {
 
     // Validate caramboles (cannot be negative)
     if (sp1Cargem < 0) {
-      setError('Caramboles voor speler 1 kunnen niet negatief zijn.');
+      setError('Caramboles gemaakt voor speler 1 kunnen niet negatief zijn.');
       return;
     }
     if (sp2Cargem < 0) {
-      setError('Caramboles voor speler 2 kunnen niet negatief zijn.');
+      setError('Caramboles gemaakt voor speler 2 kunnen niet negatief zijn.');
       return;
     }
 
@@ -214,9 +214,34 @@ export default function CompetiteUitslagenPage() {
       return;
     }
 
-    // Validate turns (must be greater than 0)
-    if (!brt || brt <= 0) {
-      setError('Aantal beurten moet groter zijn dan 0.');
+    // Validate turns (must be >= 1)
+    if (!brt || brt < 1) {
+      setError('Aantal beurten moet minimaal 1 zijn.');
+      return;
+    }
+
+    // Validate caramboles gemaakt <= te maken caramboles (unless vast_beurten)
+    // vast_beurten competitions allow unlimited caramboles (e.g., 20 beurten straight)
+    if (competition.vast_beurten === 0) {
+      // Only enforce this rule for non-fixed-turns competitions
+      if (sp1Cargem > selectedMatch.cartem_A) {
+        setError(`Speler 1: caramboles gemaakt (${sp1Cargem}) kan niet meer zijn dan te maken caramboles (${selectedMatch.cartem_A}).`);
+        return;
+      }
+      if (sp2Cargem > selectedMatch.cartem_B) {
+        setError(`Speler 2: caramboles gemaakt (${sp2Cargem}) kan niet meer zijn dan te maken caramboles (${selectedMatch.cartem_B}).`);
+        return;
+      }
+    }
+
+    // Validate logical consistency: hoogste serie × beurten must be at least caramboles gemaakt
+    // This ensures that the highest series is physically possible given the number of turns played
+    if (sp1Hs * brt < sp1Cargem) {
+      setError(`Speler 1: hoogste serie (${sp1Hs}) × beurten (${brt}) = ${sp1Hs * brt} is minder dan caramboles gemaakt (${sp1Cargem}). Dit is niet mogelijk.`);
+      return;
+    }
+    if (sp2Hs * brt < sp2Cargem) {
+      setError(`Speler 2: hoogste serie (${sp2Hs}) × beurten (${brt}) = ${sp2Hs * brt} is minder dan caramboles gemaakt (${sp2Cargem}). Dit is niet mogelijk.`);
       return;
     }
 

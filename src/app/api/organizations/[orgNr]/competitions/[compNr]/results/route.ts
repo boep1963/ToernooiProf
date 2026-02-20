@@ -334,9 +334,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    if (typeof brt !== 'number' || brt <= 0) {
+    if (typeof brt !== 'number' || brt < 1) {
       return NextResponse.json(
-        { error: 'Aantal beurten moet groter zijn dan 0' },
+        { error: 'Aantal beurten moet minimaal 1 zijn' },
+        { status: 400 }
+      );
+    }
+
+    // Validate caramboles and highest series (cannot be negative)
+    const p1Cargem = Number(sp_1_cargem) || 0;
+    const p1Hs = Number(sp_1_hs) || 0;
+    const p2Cargem = Number(sp_2_cargem) || 0;
+    const p2Hs = Number(sp_2_hs) || 0;
+
+    if (p1Cargem < 0) {
+      return NextResponse.json(
+        { error: 'Caramboles gemaakt voor speler 1 kunnen niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p2Cargem < 0) {
+      return NextResponse.json(
+        { error: 'Caramboles gemaakt voor speler 2 kunnen niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p1Hs < 0) {
+      return NextResponse.json(
+        { error: 'Hoogste serie voor speler 1 kan niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p2Hs < 0) {
+      return NextResponse.json(
+        { error: 'Hoogste serie voor speler 2 kan niet negatief zijn' },
         { status: 400 }
       );
     }
@@ -363,17 +394,52 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const periode = (compData?.periode as number) || 1;
     const discipline = (compData?.discipline as number) || 1;
 
+    // Additional validation after fetching competition data
+    // Validate caramboles gemaakt <= te maken caramboles (unless vast_beurten)
+    // For fixed-turns competitions, players can make unlimited caramboles
+    const p1Cartem = Number(sp_1_cartem) || 0;
+    const p2Cartem = Number(sp_2_cartem) || 0;
+
+    if (!vastBeurten) {
+      if (p1Cargem > p1Cartem) {
+        return NextResponse.json(
+          { error: `Speler 1: caramboles gemaakt (${p1Cargem}) kan niet meer zijn dan te maken caramboles (${p1Cartem})` },
+          { status: 400 }
+        );
+      }
+      if (p2Cargem > p2Cartem) {
+        return NextResponse.json(
+          { error: `Speler 2: caramboles gemaakt (${p2Cargem}) kan niet meer zijn dan te maken caramboles (${p2Cartem})` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate logical consistency: hoogste serie × beurten >= caramboles gemaakt
+    // This ensures the highest series is physically possible given the number of turns
+    if (p1Hs * brt < p1Cargem) {
+      return NextResponse.json(
+        { error: `Speler 1: hoogste serie (${p1Hs}) × beurten (${brt}) = ${p1Hs * brt} is minder dan caramboles gemaakt (${p1Cargem}). Dit is niet mogelijk.` },
+        { status: 400 }
+      );
+    }
+    if (p2Hs * brt < p2Cargem) {
+      return NextResponse.json(
+        { error: `Speler 2: hoogste serie (${p2Hs}) × beurten (${brt}) = ${p2Hs * brt} is minder dan caramboles gemaakt (${p2Cargem}). Dit is niet mogelijk.` },
+        { status: 400 }
+      );
+    }
+
     // Calculate points based on scoring system
     let sp_1_punt = 0;
     let sp_2_punt = 0;
 
-    const p1Gem = Number(sp_1_cargem) || 0; // caramboles made by player 1
-    const p1Tem = Number(sp_1_cartem) || 0;  // target caramboles for player 1
-    const p2Gem = Number(sp_2_cargem) || 0;  // caramboles made by player 2
-    const p2Tem = Number(sp_2_cartem) || 0;  // target caramboles for player 2
-    const turns = Number(brt) || 0;
-    const p1Hs = Number(sp_1_hs) || 0;
-    const p2Hs = Number(sp_2_hs) || 0;
+    // Use variables already defined above for validation
+    const p1Gem = p1Cargem; // caramboles made by player 1
+    const p1Tem = p1Cartem; // target caramboles for player 1
+    const p2Gem = p2Cargem; // caramboles made by player 2
+    const p2Tem = p2Cartem; // target caramboles for player 2
+    const turns = brt;
 
     // Determine scoring system (first digit)
     const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;

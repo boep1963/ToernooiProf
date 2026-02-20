@@ -2735,3 +2735,12 @@ CURRENT STATUS: 202/249 features passing (81.1%)
 FEATURE #201: NOT a code bug - corrupted Next.js cache. Cleared .next directory.
 FEATURE #202: Implemented search API and dashboard UI. Already committed in cdf6968.
 
+
+=== Session - 2026-02-20 ===
+Agent: Features #203, #204 - Dashboard UX improvements
+
+COMPLETED:
+- Feature #203: Dashboard scoreborden teller verduidelijken (PASSED)
+- Feature #204: Puntensysteem kolom always displayed (PASSED)
+
+CURRENT STATUS: 200/249 features passing (80.3%)
