@@ -123,7 +123,7 @@ export default function CompetitieDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">{PUNTEN_SYSTEMEN[competition.punten_sys] || '-'}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Formule</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Moyenne-formule</p>
             <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
           </div>
           <div>

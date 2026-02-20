@@ -551,7 +551,6 @@ export default function CompetitieSpelersPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nr</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Caramboles</th>
@@ -561,7 +560,6 @@ export default function CompetitieSpelersPage() {
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {players.map((player) => (
                   <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{player.spc_nummer}</td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
                         {formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)} ({getPlayerDisciplineCar(player)})

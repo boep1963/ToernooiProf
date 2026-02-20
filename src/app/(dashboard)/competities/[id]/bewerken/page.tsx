@@ -320,7 +320,7 @@ export default function CompetitieBewerkenPage() {
             </div>
             <div>
               <label htmlFor="moy_form" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Moyenne formule
+                Moyenne-formule
               </label>
               <select
                 id="moy_form"
@@ -345,14 +345,14 @@ export default function CompetitieBewerkenPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label htmlFor="min_car" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Minimale caramboles
+                Minimaal aantal te maken caramboles
               </label>
               <input
                 id="min_car"
                 name="min_car"
                 type="number"
                 min="1"
-                max="999"
+                max="10"
                 value={formData.min_car}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
