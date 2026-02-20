@@ -205,15 +205,14 @@ export default function CompetitieStandPage() {
             <tr>
               <th class="center">#</th>
               <th>Naam</th>
-              <th class="center">P</th>
+              <th class="right">Pnt</th>
+              <th class="center">Part</th>
               <th class="right">Car.</th>
-              <th class="right">Doel</th>
-              <th class="right">%</th>
+              <th class="right">% Car</th>
               <th class="right">Brt</th>
               <th class="right">Moy</th>
               <th class="right">P.moy</th>
               <th class="right">HS</th>
-              <th class="right">Pnt</th>
               ${sortByPercentage ? '<th class="right">% Pnt</th>' : ''}
             </tr>
           </thead>
@@ -222,15 +221,14 @@ export default function CompetitieStandPage() {
               <tr>
                 <td class="center rank">${entry.rank}</td>
                 <td>${entry.playerName}</td>
+                <td class="right points">${entry.punten}</td>
                 <td class="center">${entry.matchesPlayed}</td>
                 <td class="right">${entry.carambolesGemaakt}</td>
-                <td class="right">${entry.carambolesTeMaken}</td>
                 <td class="right">${entry.percentage.toFixed(2)}</td>
                 <td class="right">${entry.beurten}</td>
                 <td class="right">${entry.moyenne.toFixed(3)}</td>
                 <td class="right">${entry.partijMoyenne.toFixed(2)}</td>
                 <td class="right">${entry.hoogsteSerie}</td>
-                <td class="right points">${entry.punten}</td>
                 ${sortByPercentage ? `<td class="right points">${entry.percentagePunten?.toFixed(2) || '0.00'}%</td>` : ''}
               </tr>
             `).join('')}
@@ -415,15 +413,14 @@ export default function CompetitieStandPage() {
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                   <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">P</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">Part</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles gemaakt">Car.</th>
-                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles te maken">Doel</th>
-                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage">%</th>
+                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage caramboles">% Car</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Beurten">Brt</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Moyenne">Moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partij Moyenne">P.moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Hoogste serie">HS</th>
-                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
                   {sortByPercentage && (
                     <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
                   )}
@@ -449,14 +446,14 @@ export default function CompetitieStandPage() {
                     <td className="px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white">
                       {entry.playerName}
                     </td>
+                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
+                      {entry.punten}
+                    </td>
                     <td className="text-center px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.matchesPlayed}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.carambolesGemaakt}
-                    </td>
-                    <td className="text-right px-2 py-2.5 text-sm text-slate-500 dark:text-slate-500 tabular-nums">
-                      {entry.carambolesTeMaken}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.percentage.toFixed(2)}
@@ -472,9 +469,6 @@ export default function CompetitieStandPage() {
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}
-                    </td>
-                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
-                      {entry.punten}
                     </td>
                     {sortByPercentage && (
                       <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
