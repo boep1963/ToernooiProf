@@ -445,7 +445,6 @@ export default function CompetiteUitslagenPage() {
               <span className="font-medium text-slate-900 dark:text-white">{selectedMatch.naam_A}</span>
               {' '}vs{' '}
               <span className="font-medium text-slate-900 dark:text-white">{selectedMatch.naam_B}</span>
-              <span className="ml-2 text-xs text-slate-400">({selectedMatch.uitslag_code})</span>
             </p>
           </div>
 
@@ -454,7 +453,7 @@ export default function CompetiteUitslagenPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-1">
                 {selectedMatch.naam_A}
-                <span className="ml-2 text-xs font-normal text-slate-400">(doel: {selectedMatch.cartem_A})</span>
+                <span className="ml-2 text-xs font-normal text-slate-400">(Aantal te maken car: {selectedMatch.cartem_A})</span>
               </h3>
               <div>
                 <label htmlFor="sp1-cargem" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -490,7 +489,7 @@ export default function CompetiteUitslagenPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-1">
                 {selectedMatch.naam_B}
-                <span className="ml-2 text-xs font-normal text-slate-400">(doel: {selectedMatch.cartem_B})</span>
+                <span className="ml-2 text-xs font-normal text-slate-400">(Aantal te maken car: {selectedMatch.cartem_B})</span>
               </h3>
               <div>
                 <label htmlFor="sp2-cargem" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -643,7 +642,7 @@ export default function CompetiteUitslagenPage() {
                             <div className="text-sm font-medium text-slate-900 dark:text-white">
                               {match.naam_A}
                             </div>
-                            <div className="text-xs text-slate-400">doel: {match.cartem_A}</div>
+                            <div className="text-xs text-slate-400">Aantal te maken car: {match.cartem_A}</div>
                           </td>
                           <td className="px-2 py-2.5 text-center text-sm tabular-nums">
                             {result ? (
@@ -688,7 +687,7 @@ export default function CompetiteUitslagenPage() {
                             <div className="text-sm font-medium text-slate-900 dark:text-white">
                               {match.naam_B}
                             </div>
-                            <div className="text-xs text-slate-400">doel: {match.cartem_B}</div>
+                            <div className="text-xs text-slate-400">Aantal te maken car: {match.cartem_B}</div>
                           </td>
                           <td className="px-4 py-2.5">
                             {result && result.speeldatum ? (

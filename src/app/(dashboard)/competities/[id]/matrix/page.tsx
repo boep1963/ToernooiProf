@@ -363,7 +363,7 @@ export default function CompetitieMatrixPage() {
                   ))}
                   <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider align-bottom">
                     <div style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }} className="mx-auto">
-                      Totaal
+                      Totaal punten
                     </div>
                   </th>
                 </tr>
