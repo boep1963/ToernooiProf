@@ -31,6 +31,7 @@ interface StandingEntry {
   percentage: number;
   beurten: number;
   moyenne: number;
+  partijMoyenne: number;
   hoogsteSerie: number;
   punten: number;
 }
@@ -158,6 +159,7 @@ export default function CompetitieStandPage() {
               <th class="right">%</th>
               <th class="right">Brt</th>
               <th class="right">Moy</th>
+              <th class="right">P.moy</th>
               <th class="right">HS</th>
               <th class="right">Pnt</th>
             </tr>
@@ -173,6 +175,7 @@ export default function CompetitieStandPage() {
                 <td class="right">${entry.percentage.toFixed(2)}</td>
                 <td class="right">${entry.beurten}</td>
                 <td class="right">${entry.moyenne.toFixed(3)}</td>
+                <td class="right">${entry.partijMoyenne.toFixed(2)}</td>
                 <td class="right">${entry.hoogsteSerie}</td>
                 <td class="right points">${entry.punten}</td>
               </tr>
@@ -335,6 +338,7 @@ export default function CompetitieStandPage() {
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage">%</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Beurten">Brt</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Moyenne">Moy</th>
+                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partij Moyenne">P.moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Hoogste serie">HS</th>
                   <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
                 </tr>
@@ -376,6 +380,9 @@ export default function CompetitieStandPage() {
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.moyenne.toFixed(3)}
+                    </td>
+                    <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
+                      {entry.partijMoyenne.toFixed(2)}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}
