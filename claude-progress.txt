@@ -2772,3 +2772,29 @@ Feature #206: Fixed db.runTransaction() error - replaced with sequential check-t
 Git Commit: 1dcd69c
 CURRENT STATUS: 206/249 features passing (82.7%)
 
+
+
+=== Session - 2026-02-20 ===
+Agent: Features #210, #211
+
+COMPLETED:
+- Feature #210: Fix cascade delete for member removal ✅
+- Feature #211: Add P.moy (partij-moyenne) column to standings ✅
+
+IMPLEMENTATION SUMMARY:
+
+Feature #210: Cascade Delete
+- Added cascade delete for results (sp_1_nr, sp_2_nr)
+- Added cascade delete for matches (nummer_A, nummer_B)
+- Prevents 'Speler X' from appearing in standings after member deletion
+- Returns cascade counts in API response
+
+Feature #211: P.moy Column
+- Calculate: carambolesGemaakt / matchesPlayed
+- Display format: 2 decimal places
+- Position: after Moy, before HS columns
+- Included in both screen and print views
+
+Git Commit: a44deeb
+
+CURRENT STATUS: 211/249 features passing (84.7%)
