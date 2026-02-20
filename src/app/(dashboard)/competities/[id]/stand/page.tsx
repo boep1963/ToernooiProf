@@ -199,7 +199,7 @@ export default function CompetitieStandPage() {
       </head>
       <body>
         <h1>${orgName} - ${compName}</h1>
-        <h2>${discipline} | ${PUNTEN_SYSTEMEN[competition?.punten_sys || 1] || ''} | Periode ${selectedPeriod}</h2>
+        <h2>${discipline} | ${PUNTEN_SYSTEMEN[competition?.punten_sys || 1] || ''} | ${selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}</h2>
         <table>
           <thead>
             <tr>
@@ -321,6 +321,17 @@ export default function CompetitieStandPage() {
                 {p}
               </button>
             ))}
+            <button
+              onClick={() => handlePeriodChange(0)}
+              disabled={isLoading}
+              className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
+                selectedPeriod === 0
+                  ? 'bg-green-700 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+              }`}
+            >
+              Totaal
+            </button>
           </div>
         </div>
 
@@ -482,7 +493,7 @@ export default function CompetitieStandPage() {
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | Periode {selectedPeriod}
+              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {sortByPercentage

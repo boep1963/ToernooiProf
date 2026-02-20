@@ -20,6 +20,12 @@ export default function TafelsInstellingenPage() {
   const [error, setError] = useState<string | null>(null);
   const [aantalTafels, setAantalTafels] = useState<number>(4);
   const [savingAantalTafels, setSavingAantalTafels] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean;
+    tafelNr: number;
+    soort: number;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!orgNummer || !organization) return;
@@ -126,7 +132,7 @@ export default function TafelsInstellingenPage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (force: boolean = false) => {
     if (!orgNummer) return;
 
     setSaving(true);
@@ -141,9 +147,22 @@ export default function TafelsInstellingenPage() {
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ soort: config.soort }),
+            body: JSON.stringify({ soort: config.soort, force }),
           }
         );
+
+        if (res.status === 409 && !force) {
+          // Scoreboard is active - show confirmation dialog
+          const data = await res.json();
+          setConfirmDialog({
+            show: true,
+            tafelNr: config.tafel_nr,
+            soort: config.soort,
+            message: data.message || 'Het scorebord is momenteel in gebruik.',
+          });
+          setSaving(false);
+          return;
+        }
 
         if (!res.ok) {
           throw new Error(`Fout bij opslaan tafel ${config.tafel_nr}`);
@@ -151,6 +170,7 @@ export default function TafelsInstellingenPage() {
       }
 
       setSaved(true);
+      setConfirmDialog(null);
       // Clear success message after 3 seconds
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -159,6 +179,28 @@ export default function TafelsInstellingenPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleConfirmChange = async () => {
+    if (!confirmDialog) return;
+
+    // Close dialog and save with force=true
+    setConfirmDialog(null);
+    await handleSave(true);
+  };
+
+  const handleCancelChange = () => {
+    if (!confirmDialog) return;
+
+    // Revert the change in the UI
+    setConfigs(prev =>
+      prev.map(c =>
+        c.tafel_nr === confirmDialog.tafelNr
+          ? { ...c, soort: confirmDialog.soort === 1 ? 2 : 1 } // Revert to previous value
+          : c
+      )
+    );
+    setConfirmDialog(null);
   };
 
   if (loading) {
@@ -343,7 +385,7 @@ export default function TafelsInstellingenPage() {
       {/* Save button */}
       <div className="flex items-center gap-4">
         <button
-          onClick={handleSave}
+          onClick={() => handleSave(false)}
           disabled={saving}
           className="bg-green-700 hover:bg-green-600 disabled:bg-green-800 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors min-h-[44px] min-w-[200px]"
         >
@@ -363,6 +405,44 @@ export default function TafelsInstellingenPage() {
           Annuleren
         </Link>
       </div>
+
+      {/* Confirmation Dialog */}
+      {confirmDialog?.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                  Scorebord in gebruik
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {confirmDialog.message}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
+                  Tafel {confirmDialog.tafelNr} heeft momenteel een actieve partij.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-end mt-6">
+              <button
+                onClick={handleCancelChange}
+                className="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors min-h-[44px]"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleConfirmChange}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors min-h-[44px]"
+              >
+                Toch wijzigen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
