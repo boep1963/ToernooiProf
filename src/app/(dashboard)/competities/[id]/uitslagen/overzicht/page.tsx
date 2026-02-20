@@ -612,12 +612,16 @@ export default function ResultsOverviewPage() {
                 ⚠️ Waarschuwing: Dit kan niet ongedaan gemaakt worden!
               </p>
               <p className="text-sm text-red-700 dark:text-red-300">
-                Bij het verwijderen van deze uitslag wordt:
+                Bij het verwijderen van deze uitslag:
               </p>
               <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
-                <li>De uitslag permanent verwijderd uit de database</li>
-                <li>De stand automatisch herberekend</li>
+                <li>Wordt de uitslag permanent verwijderd uit de database</li>
+                <li>Wordt de stand automatisch aangepast voor <strong>beide spelers</strong></li>
+                <li>Verliezen beide spelers hun punten, caramboles en beurtentelling van deze partij</li>
               </ul>
+              <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400">
+                Dit heeft consequenties voor de rangschikking in de stand.
+              </p>
             </div>
             <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
               <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">

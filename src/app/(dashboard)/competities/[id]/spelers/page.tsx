@@ -81,6 +81,8 @@ export default function CompetitieSpelersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [playerToRemove, setPlayerToRemove] = useState<PlayerData | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [resultCount, setResultCount] = useState<number>(0);
+  const [loadingResultCount, setLoadingResultCount] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -238,6 +240,25 @@ export default function CompetitieSpelersPage() {
       setSelectedMembers([]);
     } else {
       setSelectedMembers(availableMembers.map((m) => m.spa_nummer));
+    }
+  };
+
+  const fetchResultCount = async (playerNummer: number) => {
+    if (!orgNummer) return;
+    setLoadingResultCount(true);
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`);
+      if (res.ok) {
+        const data = await res.json();
+        const results = data.results || [];
+        // Count results where this player is sp_1_nr or sp_2_nr
+        const count = results.filter((r: any) => r.sp_1_nr === playerNummer || r.sp_2_nr === playerNummer).length;
+        setResultCount(count);
+      }
+    } catch {
+      setResultCount(0);
+    } finally {
+      setLoadingResultCount(false);
     }
   };
 
@@ -554,7 +575,11 @@ export default function CompetitieSpelersPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => { setPlayerToRemove(player); setShowRemoveDialog(true); }}
+                        onClick={() => {
+                          setPlayerToRemove(player);
+                          setShowRemoveDialog(true);
+                          fetchResultCount(player.spc_nummer);
+                        }}
                         className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
                       >
                         Verwijderen
@@ -588,10 +613,18 @@ export default function CompetitieSpelersPage() {
                 Bij het verwijderen van <strong>{formatName(playerToRemove.spa_vnaam, playerToRemove.spa_tv, playerToRemove.spa_anaam)}</strong> worden ook verwijderd:
               </p>
               <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
-                <li>Alle uitslagen van deze speler in alle perioden</li>
+                {loadingResultCount ? (
+                  <li>Uitslagen controleren...</li>
+                ) : (
+                  <li><strong>{resultCount} uitslag{resultCount !== 1 ? 'en' : ''}</strong> {resultCount > 0 ? 'worden verwijderd (zowel van deze speler als van tegenstanders)' : '(deze speler heeft nog geen uitslagen)'}</li>
+                )}
                 <li>Alle wedstrijden waar deze speler aan deelneemt</li>
-                <li>Uitslagen van tegenstanders tegen deze speler</li>
               </ul>
+              {!loadingResultCount && resultCount > 0 && (
+                <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400">
+                  Dit heeft consequenties voor de stand van {resultCount > 1 ? 'alle betrokken spelers' : 'de tegenstander'}.
+                </p>
+              )}
               <p className="mt-3 text-xs text-red-600 dark:text-red-400 font-medium">
                 De speler kan wel opnieuw worden toegevoegd aan de competitie.
               </p>

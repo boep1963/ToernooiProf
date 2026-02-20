@@ -94,6 +94,7 @@ export default function ScoreboardPage() {
   // Match assignment state
   const [availableMatches, setAvailableMatches] = useState<AvailableMatch[]>([]);
   const [showMatchSelector, setShowMatchSelector] = useState(false);
+  const [loadingMatches, setLoadingMatches] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -262,6 +263,7 @@ export default function ScoreboardPage() {
   // Load available matches from competitions
   const loadAvailableMatches = useCallback(async () => {
     if (!orgNummer) return;
+    setLoadingMatches(true);
     try {
       // Get competitions
       const compRes = await fetch(`/api/organizations/${orgNummer}/competitions`);
@@ -295,6 +297,8 @@ export default function ScoreboardPage() {
       setAvailableMatches(allMatches);
     } catch (err) {
       console.error('Error loading matches:', err);
+    } finally {
+      setLoadingMatches(false);
     }
   }, [orgNummer]);
 
@@ -495,7 +499,12 @@ export default function ScoreboardPage() {
                 {showMatchSelector ? (
                   <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
                     <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
-                    {availableMatches.length === 0 ? (
+                    {loadingMatches ? (
+                      <div className="text-center py-8">
+                        <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-green-300">Wedstrijden laden...</p>
+                      </div>
+                    ) : availableMatches.length === 0 ? (
                       <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
                     ) : (
                       <div className="space-y-2 max-h-[60vh] overflow-y-auto">
@@ -1010,7 +1019,12 @@ export default function ScoreboardPage() {
               {showMatchSelector ? (
                 <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
                   <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
-                  {availableMatches.length === 0 ? (
+                  {loadingMatches ? (
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                      <p className="text-green-300">Wedstrijden laden...</p>
+                    </div>
+                  ) : availableMatches.length === 0 ? (
                     <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
                   ) : (
                     <div className="space-y-2 max-h-[60vh] overflow-y-auto">

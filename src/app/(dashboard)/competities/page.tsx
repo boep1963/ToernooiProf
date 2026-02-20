@@ -51,6 +51,8 @@ export default function CompetitiesPage() {
   const [success, setSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteStats, setDeleteStats] = useState<{players: number, results: number, matches: number} | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const fetchCompetitions = useCallback(async () => {
     if (!orgNummer) return;
@@ -84,6 +86,39 @@ export default function CompetitiesPage() {
     fetchCompetitions();
   }, [fetchCompetitions]);
 
+  const fetchDeleteStats = async (compNr: number) => {
+    if (!orgNummer) return;
+    setLoadingStats(true);
+    try {
+      const [playersRes, resultsRes, matchesRes] = await Promise.all([
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
+      ]);
+
+      let players = 0, results = 0, matches = 0;
+
+      if (playersRes.ok) {
+        const data = await playersRes.json();
+        players = data.players?.length || 0;
+      }
+      if (resultsRes.ok) {
+        const data = await resultsRes.json();
+        results = data.results?.length || 0;
+      }
+      if (matchesRes.ok) {
+        const data = await matchesRes.json();
+        matches = data.matches?.length || 0;
+      }
+
+      setDeleteStats({ players, results, matches });
+    } catch {
+      setDeleteStats({ players: 0, results: 0, matches: 0 });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   const handleDelete = async (compNr: number) => {
     if (!orgNummer) return;
     setDeleteLoading(true);
@@ -98,6 +133,7 @@ export default function CompetitiesPage() {
         const naam = deletedComp?.comp_naam || `#${compNr}`;
         setCompetitions(prev => prev.filter(c => c.comp_nr !== compNr));
         setDeleteConfirm(null);
+        setDeleteStats(null);
         setSuccess(`Competitie "${naam}" is succesvol verwijderd.`);
         setTimeout(() => setSuccess(''), 4000);
       } else {
@@ -243,30 +279,15 @@ export default function CompetitiesPage() {
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.max_beurten || 0}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.vast_beurten || 0}</td>
                     <td className="px-4 py-3 text-right">
-                      {deleteConfirm === comp.comp_nr ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleDelete(comp.comp_nr)}
-                            disabled={deleteLoading}
-                            className="text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md transition-colors"
-                          >
-                            {deleteLoading ? 'Bezig...' : 'Bevestigen'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="text-xs px-2.5 py-1.5 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-md transition-colors"
-                          >
-                            Annuleren
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirm(comp.comp_nr)}
-                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
-                        >
-                          Verwijderen
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setDeleteConfirm(comp.comp_nr);
+                          fetchDeleteStats(comp.comp_nr);
+                        }}
+                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                      >
+                        Verwijderen
+                      </button>
                     </td>
                   </tr>
                   );
