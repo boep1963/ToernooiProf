@@ -1,0 +1,63 @@
+=== Session - 2026-02-20 (current) ===
+Agent: Features #209, #215
+
+COMPLETED:
+- Feature #209: Uitgebreide validatie bij uitslag invoeren ✅
+
+IMPLEMENTATION SUMMARY (Feature #209):
+
+**Problem:**
+Result input validation was minimal. Missing critical checks:
+- Caramboles gemaakt could exceed te maken caramboles
+- No logical validation of hoogste serie × beurten ≥ caramboles gemaakt
+- Generic error messages
+
+**Solution:**
+Implemented comprehensive validation in both frontend and backend:
+
+1. **Frontend Validation** (src/app/(dashboard)/competities/[id]/uitslagen/page.tsx):
+   - Lines 198-262: Enhanced handleSubmitResult with 4 validation groups
+   - Caramboles gemaakt ≤ te maken caramboles (unless vast_beurten = 1)
+   - Aantal beurten ≥ 1
+   - Hoogste serie × beurten ≥ caramboles gemaakt (logical consistency)
+   - Clear Dutch error messages with specific values
+
+2. **Backend Validation** (src/app/api/organizations/[orgNr]/competitions/[compNr]/results/route.ts):
+   - Lines 337-431: Added matching validation in POST endpoint
+   - Validates before point calculation
+   - Returns 400 with Dutch error messages
+   - Prevents invalid data from reaching database
+
+3. **Bug Fix:**
+   - Removed duplicate route: src/app/api/organizations/[orgNr]/competitions/[compNr]/results/[resultId]/
+   - This was conflicting with [id] route, causing Next.js to crash with routing error
+   - "You cannot use different slug names for the same dynamic path ('id' !== 'resultId')"
+
+**Verification:**
+- Created test-feature-209-validation.mjs with 9 test cases
+- All tests passing (9/9):
+  ✅ Valid result
+  ✅ Invalid: beurten = 0
+  ✅ Invalid: caramboles > cartem (non-vast beurten)
+  ✅ Valid: caramboles > cartem (WITH vast beurten)
+  ✅ Invalid: HS × beurten < caramboles (player 1)
+  ✅ Invalid: HS × beurten < caramboles (player 2)
+  ✅ Valid: HS × beurten = caramboles (exact)
+  ✅ Invalid: negative caramboles
+  ✅ Invalid: negative hoogste serie
+
+**Git Commit:** 28c3ac9
+
+IN PROGRESS:
+- Feature #215: Uitgebreide verwijder-bevestiging met consequenties
+  - Requires changes to 11+ files
+  - Add detailed confirmation dialogs for all delete actions
+  - Show consequences: aantal uitslagen, impact on stand, etc.
+  - Status: Claimed, ready for implementation in next session
+
+CURRENT STATUS: 205/249 features passing (82.3%)
+
+NEXT STEPS:
+- Implement feature #215 (delete confirmations with consequences)
+- Verify with browser automation
+- Continue batch work on remaining features
