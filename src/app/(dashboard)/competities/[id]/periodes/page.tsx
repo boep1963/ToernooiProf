@@ -77,6 +77,8 @@ export default function CompetitiePeriodesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [periodStats, setPeriodStats] = useState<{results: number, matches: number} | null>(null);
+  const [loadingPeriodStats, setLoadingPeriodStats] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -250,6 +252,38 @@ export default function CompetitiePeriodesPage() {
     }
   };
 
+  const fetchPeriodStats = async () => {
+    if (!orgNummer || !competition) return;
+    setLoadingPeriodStats(true);
+    try {
+      const [resultsRes, matchesRes] = await Promise.all([
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
+      ]);
+
+      let results = 0, matches = 0;
+
+      if (resultsRes.ok) {
+        const data = await resultsRes.json();
+        const allResults = data.results || [];
+        // Count results in current period
+        results = allResults.filter((r: any) => r.periode === competition.periode).length;
+      }
+      if (matchesRes.ok) {
+        const data = await matchesRes.json();
+        const allMatches = data.matches || [];
+        // Count matches in current period
+        matches = allMatches.filter((m: any) => m.periode === competition.periode).length;
+      }
+
+      setPeriodStats({ results, matches });
+    } catch {
+      setPeriodStats({ results: 0, matches: 0 });
+    } finally {
+      setLoadingPeriodStats(false);
+    }
+  };
+
   const handleDeletePeriod = async () => {
     if (!orgNummer || !competition || competition.periode <= 1) return;
     setIsSubmitting(true);
@@ -266,6 +300,7 @@ export default function CompetitiePeriodesPage() {
         const data = await res.json();
         setSuccess(data.message || `Periode ${competition.periode} is succesvol verwijderd.`);
         setShowDeleteConfirm(false);
+        setPeriodStats(null);
         // Refresh data
         await fetchData();
       } else {
@@ -373,7 +408,10 @@ export default function CompetitiePeriodesPage() {
           <div className="flex gap-2">
             {canDeletePeriod && !showCreateForm && (
               <button
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                  fetchPeriodStats();
+                }}
                 className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors text-sm"
               >
                 Periode verwijderen
@@ -405,20 +443,43 @@ export default function CompetitiePeriodesPage() {
           <h3 className="text-lg font-semibold text-red-700 dark:text-red-200 mb-2">
             Periode {competition.periode} verwijderen?
           </h3>
-          <p className="text-sm text-red-600 dark:text-red-200 mb-4">
-            Alle wedstrijden en uitslagen van periode {competition.periode} worden definitief verwijderd.
-            De competitie keert terug naar periode {competition.periode - 1}.
-          </p>
+          <div className="mb-4">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+              ⚠️ De volgende gegevens worden definitief verwijderd:
+            </p>
+            {loadingPeriodStats ? (
+              <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-300">
+                <div className="w-4 h-4 border-2 border-red-700 dark:border-red-300 border-t-transparent rounded-full animate-spin"></div>
+                Gegevens laden...
+              </div>
+            ) : periodStats ? (
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                <li><strong>{periodStats.results} uitslag{periodStats.results !== 1 ? 'en' : ''}</strong> van periode {competition.periode}</li>
+                <li><strong>{periodStats.matches} wedstrijd{periodStats.matches !== 1 ? 'en' : ''}</strong> uit de planning</li>
+              </ul>
+            ) : null}
+            <p className="text-sm text-red-600 dark:text-red-200 mt-3">
+              De competitie keert terug naar periode {competition.periode - 1}.
+            </p>
+            {!loadingPeriodStats && periodStats && periodStats.results > 0 && (
+              <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-400">
+                Dit heeft consequenties voor de stand en statistieken van alle betrokken spelers.
+              </p>
+            )}
+          </div>
           <div className="flex gap-3">
             <button
               onClick={handleDeletePeriod}
-              disabled={isSubmitting}
+              disabled={isSubmitting || loadingPeriodStats}
               className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors"
             >
               {isSubmitting ? 'Bezig...' : 'Ja, verwijderen'}
             </button>
             <button
-              onClick={() => setShowDeleteConfirm(false)}
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setPeriodStats(null);
+              }}
               className="px-4 py-2.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
             >
               Annuleren

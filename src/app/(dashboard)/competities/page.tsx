@@ -297,6 +297,65 @@ export default function CompetitiesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Competition Confirmation Dialog */}
+      {deleteConfirm !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+              Competitie verwijderen
+            </h3>
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                ⚠️ Waarschuwing: Dit kan niet ongedaan gemaakt worden!
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+                Bij het verwijderen van <strong>{competitions.find(c => c.comp_nr === deleteConfirm)?.comp_naam || `competitie #${deleteConfirm}`}</strong> worden ook verwijderd:
+              </p>
+              {loadingStats ? (
+                <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                  <div className="w-4 h-4 border-2 border-red-700 dark:border-red-300 border-t-transparent rounded-full animate-spin"></div>
+                  Gegevens laden...
+                </div>
+              ) : deleteStats ? (
+                <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                  <li><strong>{deleteStats.players} speler(s)</strong> uit deze competitie</li>
+                  <li><strong>{deleteStats.results} uitslag{deleteStats.results !== 1 ? 'en' : ''}</strong> (alle gespeelde partijen)</li>
+                  <li><strong>{deleteStats.matches} wedstrijd{deleteStats.matches !== 1 ? 'en' : ''}</strong> uit de planning</li>
+                  <li>Alle periodes en instellingen</li>
+                </ul>
+              ) : null}
+              {!loadingStats && deleteStats && (deleteStats.results > 0 || deleteStats.players > 0) && (
+                <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400">
+                  Alle gegevens van deze competitie worden permanent verwijderd.
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Weet u zeker dat u deze competitie wilt verwijderen?
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteConfirm(null);
+                  setDeleteStats(null);
+                }}
+                disabled={deleteLoading}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => deleteConfirm !== null && handleDelete(deleteConfirm)}
+                disabled={deleteLoading || loadingStats}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {deleteLoading ? 'Bezig...' : 'Ja, verwijder competitie'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
