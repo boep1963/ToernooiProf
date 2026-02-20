@@ -213,7 +213,7 @@ export default function CompetitiesPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.comp_datum)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || PUNTEN_SYSTEMEN[1]}</td>
                     <td className="px-4 py-3 text-right">
                       {deleteConfirm === comp.comp_nr ? (
                         <div className="flex items-center justify-end gap-2">
