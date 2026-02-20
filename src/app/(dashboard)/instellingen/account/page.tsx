@@ -105,6 +105,9 @@ export default function AccountPage() {
       return;
     }
 
+    // Check if email has changed
+    const emailChanged = orgDetails && editEmail.trim() !== (orgDetails.org_wl_email || '');
+
     try {
       const res = await fetch(`/api/organizations/${orgNummer}`, {
         method: 'PUT',
@@ -117,7 +120,11 @@ export default function AccountPage() {
       });
 
       if (res.ok) {
-        setSuccess('Accountgegevens zijn succesvol bijgewerkt!');
+        let successMsg = 'Accountgegevens zijn succesvol bijgewerkt!';
+        if (emailChanged) {
+          successMsg += ' Uw logingegevens worden bijgewerkt.';
+        }
+        setSuccess(successMsg);
         setIsEditing(false);
         // Refresh org details from the server
         await fetchOrgDetails();
