@@ -3047,3 +3047,47 @@ Feature #217: No bug found - buttons work correctly. Tested full workflow.
 Feature #218: Changed date input to text field. Accepts 'januari 2026', 'seizoen 2026', etc.
 FILES: src/app/(dashboard)/competities/nieuw/page.tsx
 STATUS: 216/249 features passing (86.7%)
+
+=== Session - 2026-02-20 (afternoon - features #222, #223) ===
+Agent: Navigation and Competition Overview Enhancements
+
+COMPLETED:
+- Feature #222: Controle en Doorkoppelen in menubalk competitie (PASSED)
+- Feature #223: Competitie-overzicht detail: toon alle instellingen (PASSED)
+
+Git Commits: c8f9574, 6b8f52c
+CURRENT STATUS: 223/249 features passing (89.6%)
+
+
+=== Session - 2026-02-20 (afternoon) ===
+Agent: Features #220, #224 - Label Consistency Improvements
+
+ASSIGNED FEATURES: #220, #224
+
+COMPLETED:
+- Feature #220: Label 'Minimale caramboles' wijzigen en max waarde beperken ✓
+- Feature #224: Label 'Formule' consistent naar 'Moyenne-formule' ✓
+
+IMPLEMENTATION SUMMARY:
+
+Feature #220: Changed label to 'Minimaal aantal te maken caramboles' and limited max to 10
+Feature #224: Made 'Formule' label consistent as 'Moyenne-formule' across all pages
+
+VERIFICATION: All automated tests passed (test-feature-220.mjs and test-feature-224.mjs)
+
+CURRENT STATUS: 223/249 features passing (89.6%)
+
+
+
+=== Session - 2026-02-20 (afternoon late) ===
+Agent: Features #225, #227 - Player List and Matrix UI
+
+COMPLETED:
+- Feature #225: Verberg interne volgnummers voor wedstrijdleider
+- Feature #227: Matrix kleurcodering (already implemented)
+
+Feature #225: Removed Nr column showing spc_nummer from player list
+Feature #227: Color coding already working - green/amber/red for win/draw/loss
+
+CURRENT STATUS: 223/249 features passing (89.6%)
+
