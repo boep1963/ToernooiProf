@@ -3123,3 +3123,12 @@ COMPLETED: Features #232 and #233
 Git Commits: fd5541b (feature #232), f3d2b3d (feature #233)
 CURRENT STATUS: 229/249 features passing (92.0%)
 
+
+
+=== Session - 2026-02-20 (Features #234, #236) ===
+Completed Features #234 and #236
+- Feature #234: Overzicht uitslagen per speler - Player results overview with statistics
+- Feature #236: E-mail wijziging consequenties - Email change warnings and email_queue storage
+Current Status: 232/249 features passing (93.2%)
+Git Commits: a64ad92, bdc66fc
+
