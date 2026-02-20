@@ -551,32 +551,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (sp_1_naam) resultData.sp_1_naam = sp_1_naam;
     if (sp_2_naam) resultData.sp_2_naam = sp_2_naam;
 
-    // Use Firestore transaction to prevent race conditions from concurrent submissions
-    // This ensures atomicity: only one result per uitslag_code will be created
-    const resultId = await db.runTransaction(async (transaction) => {
-      // Check if result already exists within transaction
-      const existingResult = await transaction.get(
-        db.collection('results')
-          .where('org_nummer', '==', orgNummer)
-          .where('comp_nr', '==', compNumber)
-          .where('uitslag_code', '==', uitslag_code)
-          .limit(1)
-      );
+    // Check if result already exists
+    console.log('[RESULTS] Checking if result already exists...');
+    const existingResult = await queryWithOrgComp(
+      db.collection('results'),
+      orgNummer,
+      compNumber,
+      [{ field: 'uitslag_code', op: '==', value: uitslag_code }]
+    );
 
-      if (!existingResult.empty) {
-        // Update existing result
-        const docRef = existingResult.docs[0].ref;
-        transaction.update(docRef, resultData);
-        console.log(`[RESULTS] Updating existing result in transaction: ${docRef.id}`);
-        return docRef.id;
-      } else {
-        // Create new result
-        const newDocRef = db.collection('results').doc();
-        transaction.set(newDocRef, resultData);
-        console.log(`[RESULTS] Creating new result in transaction: ${newDocRef.id}`);
-        return newDocRef.id;
-      }
-    });
+    let resultId: string;
+    if (!existingResult.empty) {
+      // Update existing result
+      const docRef = existingResult.docs[0].ref;
+      await docRef.update(resultData);
+      resultId = docRef.id;
+      console.log(`[RESULTS] Updated existing result: ${resultId}`);
+    } else {
+      // Create new result
+      const newDocRef = await db.collection('results').add(resultData);
+      resultId = newDocRef.id;
+      console.log(`[RESULTS] Created new result: ${resultId}`);
+    }
 
     // Mark the match as played (gespeeld=1)
     console.log('[RESULTS] Marking match as played...');

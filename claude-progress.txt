@@ -2744,3 +2744,16 @@ COMPLETED:
 - Feature #204: Puntensysteem kolom always displayed (PASSED)
 
 CURRENT STATUS: 200/249 features passing (80.3%)
+
+=== Session - 2026-02-20 (afternoon) ===
+Agent: Features #207, #208 - Player Cascade Delete & Edit/Delete Buttons
+
+COMPLETED:
+- Feature #207: Fix cascade delete when removing player from competition (PASSED)
+- Feature #208: Add edit/delete buttons for results in overview page (PASSED)
+
+GIT COMMITS:
+- 1360f9b: feat: implement cascade delete for player removal
+- f51bdfd: feat: add edit and delete buttons to results overview
+
+CURRENT STATUS: 206/249 features passing (82.7%)

@@ -175,11 +175,65 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       console.log(`[MEMBER] Cascade deleted ${deletedPlayerCount} competition_players entries for member ${memberNumber}`);
     }
 
+    // Cascade delete: remove all results where this member is player 1 or player 2
+    console.log('[MEMBER] Cascade deleting results for member:', memberNumber, 'in org:', orgNumber);
+    const resultsSnapshot1 = await db.collection('results')
+      .where('org_nummer', '==', orgNumber)
+      .where('sp_1_nr', '==', memberNumber)
+      .get();
+
+    const resultsSnapshot2 = await db.collection('results')
+      .where('org_nummer', '==', orgNumber)
+      .where('sp_2_nr', '==', memberNumber)
+      .get();
+
+    let deletedResultsCount = 0;
+    for (const resultDoc of resultsSnapshot1.docs) {
+      await resultDoc.ref.delete();
+      deletedResultsCount++;
+    }
+    for (const resultDoc of resultsSnapshot2.docs) {
+      await resultDoc.ref.delete();
+      deletedResultsCount++;
+    }
+
+    if (deletedResultsCount > 0) {
+      console.log(`[MEMBER] Cascade deleted ${deletedResultsCount} results for member ${memberNumber}`);
+    }
+
+    // Cascade delete: remove all matches where this member is player A or B
+    console.log('[MEMBER] Cascade deleting matches for member:', memberNumber, 'in org:', orgNumber);
+    const matchesSnapshotA = await db.collection('matches')
+      .where('org_nummer', '==', orgNumber)
+      .where('nummer_A', '==', memberNumber)
+      .get();
+
+    const matchesSnapshotB = await db.collection('matches')
+      .where('org_nummer', '==', orgNumber)
+      .where('nummer_B', '==', memberNumber)
+      .get();
+
+    let deletedMatchesCount = 0;
+    for (const matchDoc of matchesSnapshotA.docs) {
+      await matchDoc.ref.delete();
+      deletedMatchesCount++;
+    }
+    for (const matchDoc of matchesSnapshotB.docs) {
+      await matchDoc.ref.delete();
+      deletedMatchesCount++;
+    }
+
+    if (deletedMatchesCount > 0) {
+      console.log(`[MEMBER] Cascade deleted ${deletedMatchesCount} matches for member ${memberNumber}`);
+    }
+
     console.log('[MEMBER] Member deleted successfully');
     return NextResponse.json({
       message: 'Lid succesvol verwijderd',
       spa_nummer: memberNumber,
       cascade_deleted_players: deletedPlayerCount,
+      cascade_deleted_results: deletedResultsCount,
+      cascade_deleted_matches: deletedMatchesCount,
     });
   } catch (error) {
     console.error('[MEMBER] Error deleting member:', error);
