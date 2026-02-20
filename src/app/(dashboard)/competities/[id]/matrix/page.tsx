@@ -337,17 +337,19 @@ export default function CompetitieMatrixPage() {
     }
 
     setIsCreatingMatches(true);
-    const pairings = generateMatchPairings();
     let createdCount = 0;
     let errors: string[] = [];
 
     try {
-      for (const pairing of pairings) {
-        const assignedTable = matchTableAssignments.get(pairing.pairingKey);
+      for (const pairing of generatedPairings) {
+        if (!pairing.player2) continue; // Skip byes
+
+        const pairingKey = `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}`;
+        const assignedTable = matchTableAssignments.get(pairingKey);
         if (!assignedTable) continue; // Skip if no table assigned
 
-        const playerA = pairing.playerA;
-        const playerB = pairing.playerB;
+        const playerA = pairing.player1;
+        const playerB = pairing.player2;
 
         // Generate match code (same format as auto-generated matches)
         const matchCode = `${selectedPeriode || 1}_${playerA.spc_nummer}_${playerB.spc_nummer}`;
@@ -789,30 +791,49 @@ export default function CompetitieMatrixPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 text-sm rounded-lg border border-blue-200 dark:border-blue-800">
-                    <strong>Let op:</strong> Dit is een suggestie en wordt niet opgeslagen in de database. Gebruik de printknop om deze indeling af te drukken.
-                  </div>
-                  {generatedPairings.map((pairing, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/30"
-                    >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <span className="text-green-700 dark:text-green-400 font-bold text-sm">{index + 1}</span>
-                      </div>
-                      <div className="flex-1 text-base text-slate-900 dark:text-white">
-                        <span className="font-semibold">{getPlayerNameWithCar(pairing.player1)}</span>
-                        {pairing.player2 ? (
-                          <>
-                            <span className="text-slate-500 dark:text-slate-400 mx-3">vs</span>
-                            <span className="font-semibold">{getPlayerNameWithCar(pairing.player2)}</span>
-                          </>
-                        ) : (
-                          <span className="text-slate-500 dark:text-slate-400 ml-3 italic">(bye - speelt niet)</span>
+                  {tablesCount > 0 ? (
+                    <div className="p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-sm rounded-lg border border-green-200 dark:border-green-800">
+                      <strong>Scoreborden beschikbaar:</strong> Wijs tafels toe om wedstrijden aan te maken en in de wachtrij van het scorebord te plaatsen.
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 text-sm rounded-lg border border-blue-200 dark:border-blue-800">
+                      <strong>Geen scoreborden:</strong> Deze partij-indeling is alleen ter informatie. Ga naar Instellingen → Tafels om scoreborden te configureren.
+                    </div>
+                  )}
+                  {generatedPairings.map((pairing, index) => {
+                    if (!pairing.player2) return null; // Skip byes for scoreboard feature
+                    const pairingKey = `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}`;
+                    const assignedTable = matchTableAssignments.get(pairingKey) || 0;
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/30"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                          <span className="text-green-700 dark:text-green-400 font-bold text-sm">{index + 1}</span>
+                        </div>
+                        <div className="flex-1 text-base text-slate-900 dark:text-white">
+                          <span className="font-semibold">{getPlayerNameWithCar(pairing.player1)}</span>
+                          <span className="text-slate-500 dark:text-slate-400 mx-3">vs</span>
+                          <span className="font-semibold">{getPlayerNameWithCar(pairing.player2)}</span>
+                        </div>
+                        {tablesCount > 0 && (
+                          <select
+                            value={assignedTable}
+                            onChange={(e) => handleTableAssignment(pairingKey, parseInt(e.target.value, 10))}
+                            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          >
+                            <option value="0">Geen tafel</option>
+                            {Array.from({ length: tablesCount }, (_, i) => i + 1).map((tableNr) => (
+                              <option key={tableNr} value={tableNr}>
+                                Tafel {tableNr}
+                              </option>
+                            ))}
+                          </select>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -868,22 +889,35 @@ export default function CompetitieMatrixPage() {
                         setShowDagplanning(false);
                         setShowPairings(false);
                         setSelectedPlayers(new Set());
+                        setGeneratedPairings([]);
                         setMatchTableAssignments(new Map());
                       }}
                       className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                     >
-                      Annuleren
+                      Sluiten
                     </button>
-                    <button
-                      onClick={handleCreateMatches}
-                      disabled={isCreatingMatches || matchTableAssignments.size === 0}
-                      className="px-4 py-2 text-sm font-medium bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isCreatingMatches && (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      )}
-                      Wedstrijden aanmaken
-                    </button>
+                    {tablesCount > 0 ? (
+                      <button
+                        onClick={handleCreateMatches}
+                        disabled={isCreatingMatches || matchTableAssignments.size === 0}
+                        className="px-4 py-2 text-sm font-medium bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isCreatingMatches && (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        )}
+                        Wedstrijden aanmaken
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => window.print()}
+                        className="px-4 py-2 text-sm font-medium bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Printen
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
