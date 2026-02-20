@@ -3091,3 +3091,14 @@ Feature #227: Color coding already working - green/amber/red for win/draw/loss
 
 CURRENT STATUS: 223/249 features passing (89.6%)
 
+
+=== Session - 2026-02-20 (Features #228, #229) ===
+Agent: UX Improvements - Matrix and Result Entry
+
+COMPLETED:
+- Feature #228: Matrix - clarify Totaal column ✅
+- Feature #229: Hide matchcode in result entry form ✅
+
+CURRENT STATUS: 228/249 features passing (91.6%)
+
+GIT COMMIT: 1498b1c
