@@ -29,6 +29,46 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
+// Decode WRV punten_sys to check for bonuses
+// Format: 1XYZW where X=bonus flag, Y=unused, Z=remise bonus, W=verlies bonus
+// 10000 = WRV no bonuses, 11100 = WRV with bonuses enabled (winst always on)
+// 11110 = +remise, 11101 = +verlies, 11111 = all bonuses
+function decodePuntenSys(punten_sys: number): string {
+  const puntenSysStr = String(punten_sys);
+
+  // Check if it's a base system (1, 2, 3)
+  if (punten_sys <= 3) {
+    return PUNTEN_SYSTEMEN[punten_sys] || '-';
+  }
+
+  // Check if it's WRV with bonuses (starts with 1)
+  if (puntenSysStr.startsWith('1')) {
+    const hasBonuses = puntenSysStr.length >= 5 && puntenSysStr[1] === '1';
+
+    if (!hasBonuses) {
+      return 'WRV 2-1-0';
+    }
+
+    // Parse bonus flags
+    const bonusRemise = puntenSysStr.length >= 4 && puntenSysStr[3] === '1';
+    const bonusVerlies = puntenSysStr.length >= 5 && puntenSysStr[4] === '1';
+
+    const bonuses = ['winst'];
+    if (bonusRemise) bonuses.push('remise');
+    if (bonusVerlies) bonuses.push('verlies');
+
+    return `WRV 2-1-0 + bonus (${bonuses.join(', ')})`;
+  }
+
+  return PUNTEN_SYSTEMEN[punten_sys] || '-';
+}
+
+const SORTEREN_LABELS: Record<number, string> = {
+  1: 'Stand (beste eerst)',
+  2: 'Alfabetisch',
+  3: 'Achterste stand eerst',
+};
+
 export default function CompetitieDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -109,7 +149,7 @@ export default function CompetitieDetailPage() {
 
       {/* Competition Info Card */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Datum</p>
             <p className="text-sm text-slate-900 dark:text-white">{formatDate(competition.comp_datum)}</p>
@@ -120,11 +160,23 @@ export default function CompetitieDetailPage() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Puntensysteem</p>
-            <p className="text-sm text-slate-900 dark:text-white">{PUNTEN_SYSTEMEN[competition.punten_sys] || '-'}</p>
+            <p className="text-sm text-slate-900 dark:text-white">{decodePuntenSys(competition.punten_sys)}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Moyenne-formule</p>
             <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max beurten</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.max_beurten}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast beurten</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.vast_beurten === 0 ? 'Nee' : 'Ja'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Sorteervolgorde</p>
+            <p className="text-sm text-slate-900 dark:text-white">{SORTEREN_LABELS[competition.sorteren] || '-'}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Periode</p>
