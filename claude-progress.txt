@@ -2757,3 +2757,18 @@ GIT COMMITS:
 - f51bdfd: feat: add edit and delete buttons to results overview
 
 CURRENT STATUS: 206/249 features passing (82.7%)
+
+
+=== Session - 2026-02-20 ===
+Agent: Features #205, #206
+
+COMPLETED:
+- Feature #205: Toon meer competitiekenmerken in overzicht ✅
+- Feature #206: Fix: Uitslag opslaan geeft foutmelding bij correcte invoer ✅
+
+Feature #205: Already implemented in commit 1360f9b
+Feature #206: Fixed db.runTransaction() error - replaced with sequential check-then-update
+
+Git Commit: 1dcd69c
+CURRENT STATUS: 206/249 features passing (82.7%)
+
