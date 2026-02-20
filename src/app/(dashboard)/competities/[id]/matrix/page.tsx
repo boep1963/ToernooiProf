@@ -71,6 +71,8 @@ export default function CompetitieMatrixPage() {
   const [error, setError] = useState('');
   const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
   const latestPeriodeRef = useRef<number | null>(null);
+  const [showDagplanning, setShowDagplanning] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -289,15 +291,26 @@ export default function CompetitieMatrixPage() {
             {isLoadingPeriode && <span className="ml-2 text-green-600 dark:text-green-400">⟳ Laden...</span>}
           </p>
         </div>
-        <button
-          onClick={handlePrint}
-          className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2 print:hidden"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Printen
-        </button>
+        <div className="flex items-center gap-2 print:hidden">
+          <button
+            onClick={() => setShowDagplanning(true)}
+            className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Dagplanning
+          </button>
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Printen
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -479,6 +492,96 @@ export default function CompetitieMatrixPage() {
                       Periode {periodeNr}
                     </button>
                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dagplanning Modal */}
+      {showDagplanning && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDagplanning(false)}>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Dagplanning
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Vink aan welke spelers aanwezig zijn
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDagplanning(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                aria-label="Sluiten"
+              >
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-2">
+                {sortedPlayers.map((player) => {
+                  const isSelected = selectedPlayers.has(player.spc_nummer);
+                  return (
+                    <label
+                      key={player.spc_nummer}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const newSelected = new Set(selectedPlayers);
+                          if (e.target.checked) {
+                            newSelected.add(player.spc_nummer);
+                          } else {
+                            newSelected.delete(player.spc_nummer);
+                          }
+                          setSelectedPlayers(newSelected);
+                        }}
+                        className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-0 dark:bg-slate-700 cursor-pointer"
+                      />
+                      <span className="text-slate-900 dark:text-white font-medium flex-1">
+                        {getPlayerNameWithCar(player)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  {selectedPlayers.size} van {players.length} spelers geselecteerd
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedPlayers(new Set())}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                  >
+                    Wis selectie
+                  </button>
+                  <button
+                    onClick={() => setSelectedPlayers(new Set(players.map(p => p.spc_nummer)))}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                  >
+                    Selecteer alles
+                  </button>
+                  <button
+                    onClick={() => setShowDagplanning(false)}
+                    className="px-4 py-2 text-sm font-medium bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+                  >
+                    Sluiten
+                  </button>
                 </div>
               </div>
             </div>
