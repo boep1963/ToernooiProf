@@ -81,6 +81,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const currentOrgData = orgSnapshot.docs[0].data();
+    const currentEmail = currentOrgData?.org_wl_email || '';
+    const newEmail = body.org_wl_email;
+
+    // Check if email is changing
+    const emailChanged = newEmail !== undefined && newEmail !== currentEmail;
+
     const updateData: Record<string, unknown> = {};
     if (body.org_naam !== undefined) updateData.org_naam = body.org_naam;
     if (body.org_wl_naam !== undefined) updateData.org_wl_naam = body.org_wl_naam;
@@ -89,6 +96,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (body.nieuwsbrief !== undefined) updateData.nieuwsbrief = body.nieuwsbrief;
 
     await orgSnapshot.docs[0].ref.update(updateData);
+
+    // If email changed, add entry to email_queue for future processing
+    if (emailChanged && newEmail) {
+      console.log('[ORG] Email changed, adding to email_queue');
+      await db.collection('email_queue').add({
+        type: 'email_change',
+        org_nummer: orgNummer,
+        old_email: currentEmail,
+        new_email: newEmail,
+        created_at: new Date().toISOString(),
+        processed: false,
+      });
+    }
 
     console.log('[ORG] Organization updated successfully');
     return NextResponse.json({ success: true });

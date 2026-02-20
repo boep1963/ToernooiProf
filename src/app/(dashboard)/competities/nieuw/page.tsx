@@ -19,7 +19,7 @@ export default function NieuweCompetitie() {
 
   const [formData, setFormData] = useState({
     comp_naam: '',
-    comp_datum: new Date().toISOString().split('T')[0],
+    comp_datum: '',
     discipline: 1,
     punten_sys: 1,
     moy_form: 3,
@@ -28,6 +28,11 @@ export default function NieuweCompetitie() {
     vast_beurten: 0,
     sorteren: 1,
   });
+
+  // WRV bonus settings (Feature #219)
+  const [wrvBonusEnabled, setWrvBonusEnabled] = useState(false);
+  const [bonusRemise, setBonusRemise] = useState(false);
+  const [bonusVerlies, setBonusVerlies] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -86,10 +91,20 @@ export default function NieuweCompetitie() {
     setFieldErrors({});
 
     try {
+      // Encode punten_sys with WRV bonus settings (Feature #219)
+      let encodedPuntenSys = formData.punten_sys * 10000;
+      if (formData.punten_sys === 1 && wrvBonusEnabled) {
+        // WRV with bonuses: base 11100 (digit 2 = bonus enabled, winst always on)
+        encodedPuntenSys = 11100;
+        if (bonusRemise) encodedPuntenSys += 10; // digit 4
+        if (bonusVerlies) encodedPuntenSys += 1; // digit 5
+      }
+
       // Convert date to DD-MM-YYYY for Firestore storage
       const submitData = {
         ...formData,
         comp_datum: fromInputDate(formData.comp_datum),
+        punten_sys: encodedPuntenSys,
       };
       const res = await fetch(`/api/organizations/${orgNummer}/competitions`, {
         method: 'POST',
@@ -190,14 +205,15 @@ export default function NieuweCompetitie() {
               <input
                 id="comp_datum"
                 name="comp_datum"
-                type="date"
+                type="text"
                 value={formData.comp_datum}
                 onChange={handleChange}
+                placeholder="Bijv. 14-02-2026 of seizoen 2026"
                 required
                 aria-required="true"
                 aria-invalid={!!fieldErrors.comp_datum}
                 aria-describedby={fieldErrors.comp_datum ? 'comp_datum-error' : undefined}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_datum && (
                 <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_datum}</p>
@@ -238,19 +254,104 @@ export default function NieuweCompetitie() {
                 id="punten_sys"
                 name="punten_sys"
                 value={formData.punten_sys}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Reset WRV bonus settings when switching away from WRV
+                  if (Number(e.target.value) !== 1) {
+                    setWrvBonusEnabled(false);
+                    setBonusRemise(false);
+                    setBonusVerlies(false);
+                  }
+                }}
                 required
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                disabled={formData.vast_beurten !== 0}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {Object.entries(PUNTEN_SYSTEMEN).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value} disabled={formData.vast_beurten !== 0 && Number(value) !== 1}>
+                    {label}{formData.vast_beurten !== 0 && Number(value) !== 1 ? ' (niet beschikbaar)' : ''}
+                  </option>
                 ))}
               </select>
+              {formData.vast_beurten !== 0 && (
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Bij vast aantal beurten is alleen WRV 2-1-0 beschikbaar
+                </p>
+              )}
             </div>
+
+            {/* WRV Bonus Settings (Feature #219) */}
+            {formData.punten_sys === 1 && (
+              <div className="md:col-span-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
+                <div className="mb-3">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={wrvBonusEnabled}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        setWrvBonusEnabled(enabled);
+                        if (!enabled) {
+                          setBonusRemise(false);
+                          setBonusVerlies(false);
+                        }
+                      }}
+                      className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-500 rounded focus:ring-green-500 focus:ring-2"
+                    />
+                    <span className="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Extra punt bij spelen boven moyenne?
+                    </span>
+                  </label>
+                </div>
+                {wrvBonusEnabled && (
+                  <div className="grid grid-cols-3 gap-3 pl-6">
+                    <div>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={true}
+                          disabled
+                          className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-500 rounded opacity-50 cursor-not-allowed"
+                        />
+                        <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
+                          Bij winst (standaard)
+                        </span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={bonusRemise}
+                          onChange={(e) => setBonusRemise(e.target.checked)}
+                          className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-500 rounded focus:ring-green-500 focus:ring-2"
+                        />
+                        <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">
+                          Bij remise
+                        </span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={bonusVerlies}
+                          onChange={(e) => setBonusVerlies(e.target.checked)}
+                          className="w-4 h-4 text-green-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-500 rounded focus:ring-green-500 focus:ring-2"
+                        />
+                        <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">
+                          Bij verlies
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <label htmlFor="moy_form" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Moyenne formule
+                Moyenne-formule
               </label>
               <select
                 id="moy_form"
@@ -275,14 +376,14 @@ export default function NieuweCompetitie() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label htmlFor="min_car" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Minimale caramboles
+                Minimaal aantal te maken caramboles
               </label>
               <input
                 id="min_car"
                 name="min_car"
                 type="number"
                 min="0"
-                max="999"
+                max="10"
                 value={formData.min_car}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
@@ -305,13 +406,19 @@ export default function NieuweCompetitie() {
             </div>
             <div>
               <label htmlFor="vast_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Vaste beurten
+                Vast aantal beurten
               </label>
               <select
                 id="vast_beurten"
                 name="vast_beurten"
                 value={formData.vast_beurten}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Feature #221: Force WRV when vast aantal beurten is enabled
+                  if (Number(e.target.value) !== 0) {
+                    setFormData(prev => ({ ...prev, punten_sys: 1 }));
+                  }
+                }}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
                 <option value={0}>Nee</option>

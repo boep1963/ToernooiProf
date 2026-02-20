@@ -85,6 +85,58 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Introduction and Explanation */}
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <svg className="w-6 h-6 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Welkom bij het Admin-paneel</h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+              Dit paneel is exclusief beschikbaar voor systeembeheerders en biedt inzicht in de onderliggende database-structuur van ClubMatch.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3 ml-9">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat is een Firestore Collectie?</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Firestore is de database van ClubMatch. Elke <strong>collectie</strong> bevat gerelateerde gegevens: bijvoorbeeld de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">organizations</code> bevat alle organisaties, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">competitions</code> alle competities, enzovoort.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat betekent het aantal documenten?</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Elk document is één record in de database. Bijvoorbeeld: 50 documenten in de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">members</code> betekent dat er 50 leden zijn opgeslagen in het systeem.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat kunt u doen met de &quot;Bekijken&quot; link?</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Door op <strong>Bekijken</strong> te klikken bij een collectie, kunt u de individuele documenten inzien. Dit is handig voor het controleren van data, het opsporen van fouten, of het inspecteren van specifieke records (bijvoorbeeld het bekijken van alle uitslagen in een competitie).
+            </p>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-3">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Let op!</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  Deze pagina is bedoeld voor monitoring en controle. Wijzigingen aan de database moeten via de normale applicatie-interface (Competities, Leden, etc.) worden gedaan.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Firestore Collections */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
@@ -189,20 +241,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Info Banner */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Beheerders Paneel</p>
-            <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-              Dit paneel is alleen zichtbaar voor systeembeheerders. Hier kunt u het systeem monitoren en configureren.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

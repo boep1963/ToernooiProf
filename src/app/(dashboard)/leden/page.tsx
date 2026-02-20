@@ -114,10 +114,22 @@ export default function LedenPage() {
         setSuccess(`Lid "${naam}" is succesvol verwijderd.`);
         setTimeout(() => setSuccess(''), 4000);
       } else {
-        setError('Fout bij verwijderen lid.');
+        // Parse error response for detailed message
+        const errorData = await res.json();
+        if (res.status === 409 && errorData.competitions) {
+          // Member is linked to competitions - show detailed error
+          const competitionList = errorData.competitions
+            .map((c: { comp_nr: number; comp_naam: string }) => `${c.comp_naam} (#${c.comp_nr})`)
+            .join(', ');
+          setError(`${errorData.message} Competities: ${competitionList}`);
+        } else {
+          setError(errorData.error || 'Fout bij verwijderen lid.');
+        }
+        setDeleteConfirm(null);
       }
     } catch {
       setError('Er is een fout opgetreden bij het verwijderen.');
+      setDeleteConfirm(null);
     } finally {
       setDeleteLoading(false);
     }

@@ -29,6 +29,45 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
+// Decode WRV punten_sys to check for bonuses
+// Format: 1XYZW where X=bonus flag, Y=unused, Z=remise bonus, W=verlies bonus
+// 10000 = WRV no bonuses, 11100 = WRV with bonuses enabled (winst always on)
+// 11110 = +remise, 11101 = +verlies, 11111 = all bonuses
+function decodePuntenSys(punten_sys: number): string {
+  const puntenSysStr = String(punten_sys);
+
+  // Check if it's a base system (1, 2, 3)
+  if (punten_sys <= 3) {
+    return PUNTEN_SYSTEMEN[punten_sys] || '-';
+  }
+
+  // Check if it's WRV with bonuses (starts with 1)
+  if (puntenSysStr.startsWith('1')) {
+    const hasBonuses = puntenSysStr.length >= 5 && puntenSysStr[1] === '1';
+
+    if (!hasBonuses) {
+      return 'WRV 2-1-0';
+    }
+
+    // Parse bonus flags
+    const bonusRemise = puntenSysStr.length >= 4 && puntenSysStr[3] === '1';
+    const bonusVerlies = puntenSysStr.length >= 5 && puntenSysStr[4] === '1';
+
+    const bonuses = ['winst'];
+    if (bonusRemise) bonuses.push('remise');
+    if (bonusVerlies) bonuses.push('verlies');
+
+    return `WRV 2-1-0 + bonus (${bonuses.join(', ')})`;
+  }
+
+  return PUNTEN_SYSTEMEN[punten_sys] || '-';
+}
+
+const SORTEREN_LABELS: Record<number, string> = {
+  1: 'Voornaam eerst',
+  2: 'Achternaam eerst',
+};
+
 export default function CompetitieDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -101,15 +140,24 @@ export default function CompetitieDetailPage() {
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
 
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           {competition.comp_naam}
         </h1>
+        <Link
+          href={`/competities/${compNr}/bewerken`}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Wijzigen
+        </Link>
       </div>
 
       {/* Competition Info Card */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Datum</p>
             <p className="text-sm text-slate-900 dark:text-white">{formatDate(competition.comp_datum)}</p>
@@ -120,11 +168,23 @@ export default function CompetitieDetailPage() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Puntensysteem</p>
-            <p className="text-sm text-slate-900 dark:text-white">{PUNTEN_SYSTEMEN[competition.punten_sys] || '-'}</p>
+            <p className="text-sm text-slate-900 dark:text-white">{decodePuntenSys(competition.punten_sys)}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Formule</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Moyenne-formule</p>
             <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max beurten</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.max_beurten}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast beurten</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.vast_beurten === 0 ? 'Nee' : 'Ja'}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Naam sortering</p>
+            <p className="text-sm text-slate-900 dark:text-white">{SORTEREN_LABELS[competition.sorteren] || '-'}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Periode</p>

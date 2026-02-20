@@ -196,11 +196,11 @@ export default function CompetiteUitslagenPage() {
 
     // Validate caramboles (cannot be negative)
     if (sp1Cargem < 0) {
-      setError('Caramboles voor speler 1 kunnen niet negatief zijn.');
+      setError('Caramboles gemaakt voor speler 1 kunnen niet negatief zijn.');
       return;
     }
     if (sp2Cargem < 0) {
-      setError('Caramboles voor speler 2 kunnen niet negatief zijn.');
+      setError('Caramboles gemaakt voor speler 2 kunnen niet negatief zijn.');
       return;
     }
 
@@ -214,9 +214,34 @@ export default function CompetiteUitslagenPage() {
       return;
     }
 
-    // Validate turns (must be greater than 0)
-    if (!brt || brt <= 0) {
-      setError('Aantal beurten moet groter zijn dan 0.');
+    // Validate turns (must be >= 1)
+    if (!brt || brt < 1) {
+      setError('Aantal beurten moet minimaal 1 zijn.');
+      return;
+    }
+
+    // Validate caramboles gemaakt <= te maken caramboles (unless vast_beurten)
+    // vast_beurten competitions allow unlimited caramboles (e.g., 20 beurten straight)
+    if (competition.vast_beurten === 0) {
+      // Only enforce this rule for non-fixed-turns competitions
+      if (sp1Cargem > selectedMatch.cartem_A) {
+        setError(`Speler 1: caramboles gemaakt (${sp1Cargem}) kan niet meer zijn dan te maken caramboles (${selectedMatch.cartem_A}).`);
+        return;
+      }
+      if (sp2Cargem > selectedMatch.cartem_B) {
+        setError(`Speler 2: caramboles gemaakt (${sp2Cargem}) kan niet meer zijn dan te maken caramboles (${selectedMatch.cartem_B}).`);
+        return;
+      }
+    }
+
+    // Validate logical consistency: hoogste serie × beurten must be at least caramboles gemaakt
+    // This ensures that the highest series is physically possible given the number of turns played
+    if (sp1Hs * brt < sp1Cargem) {
+      setError(`Speler 1: hoogste serie (${sp1Hs}) × beurten (${brt}) = ${sp1Hs * brt} is minder dan caramboles gemaakt (${sp1Cargem}). Dit is niet mogelijk.`);
+      return;
+    }
+    if (sp2Hs * brt < sp2Cargem) {
+      setError(`Speler 2: hoogste serie (${sp2Hs}) × beurten (${brt}) = ${sp2Hs * brt} is minder dan caramboles gemaakt (${sp2Cargem}). Dit is niet mogelijk.`);
       return;
     }
 
@@ -420,7 +445,6 @@ export default function CompetiteUitslagenPage() {
               <span className="font-medium text-slate-900 dark:text-white">{selectedMatch.naam_A}</span>
               {' '}vs{' '}
               <span className="font-medium text-slate-900 dark:text-white">{selectedMatch.naam_B}</span>
-              <span className="ml-2 text-xs text-slate-400">({selectedMatch.uitslag_code})</span>
             </p>
           </div>
 
@@ -429,7 +453,7 @@ export default function CompetiteUitslagenPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-1">
                 {selectedMatch.naam_A}
-                <span className="ml-2 text-xs font-normal text-slate-400">(doel: {selectedMatch.cartem_A})</span>
+                <span className="ml-2 text-xs font-normal text-slate-400">(Aantal te maken car: {selectedMatch.cartem_A})</span>
               </h3>
               <div>
                 <label htmlFor="sp1-cargem" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -465,7 +489,7 @@ export default function CompetiteUitslagenPage() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600 pb-1">
                 {selectedMatch.naam_B}
-                <span className="ml-2 text-xs font-normal text-slate-400">(doel: {selectedMatch.cartem_B})</span>
+                <span className="ml-2 text-xs font-normal text-slate-400">(Aantal te maken car: {selectedMatch.cartem_B})</span>
               </h3>
               <div>
                 <label htmlFor="sp2-cargem" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -618,7 +642,7 @@ export default function CompetiteUitslagenPage() {
                             <div className="text-sm font-medium text-slate-900 dark:text-white">
                               {match.naam_A}
                             </div>
-                            <div className="text-xs text-slate-400">doel: {match.cartem_A}</div>
+                            <div className="text-xs text-slate-400">Aantal te maken car: {match.cartem_A}</div>
                           </td>
                           <td className="px-2 py-2.5 text-center text-sm tabular-nums">
                             {result ? (
@@ -663,7 +687,7 @@ export default function CompetiteUitslagenPage() {
                             <div className="text-sm font-medium text-slate-900 dark:text-white">
                               {match.naam_B}
                             </div>
-                            <div className="text-xs text-slate-400">doel: {match.cartem_B}</div>
+                            <div className="text-xs text-slate-400">Aantal te maken car: {match.cartem_B}</div>
                           </td>
                           <td className="px-4 py-2.5">
                             {result && result.speeldatum ? (

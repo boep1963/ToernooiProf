@@ -31,8 +31,10 @@ interface StandingEntry {
   percentage: number;
   beurten: number;
   moyenne: number;
+  partijMoyenne: number;
   hoogsteSerie: number;
   punten: number;
+  percentagePunten?: number; // Percentage of points earned vs possible
 }
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
@@ -54,6 +56,7 @@ export default function CompetitieStandPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
+  const [sortByPercentage, setSortByPercentage] = useState(false); // false = absolute points, true = percentage points
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchCompetition = useCallback(async () => {
@@ -82,7 +85,24 @@ export default function CompetitieStandPage() {
       const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/standings/${period}`);
       if (res.ok) {
         const data = await res.json();
-        setStandings(data.standings || []);
+        const standingsData = data.standings || [];
+
+        // Calculate percentage points for each player
+        const standingsWithPercentage = standingsData.map((entry: StandingEntry) => {
+          // Calculate max possible points based on WRV 2-1-0 system (most common)
+          // Max points = 2 points per match if all wins
+          const maxPossiblePoints = entry.matchesPlayed * 2;
+          const percentagePunten = maxPossiblePoints > 0
+            ? (entry.punten / maxPossiblePoints) * 100
+            : 0;
+
+          return {
+            ...entry,
+            percentagePunten: Math.round(percentagePunten * 100) / 100, // 2 decimal places
+          };
+        });
+
+        setStandings(standingsWithPercentage);
       } else {
         const data = await res.json();
         setError(data.error || 'Fout bij laden stand.');
@@ -110,6 +130,39 @@ export default function CompetitieStandPage() {
     setSelectedPeriod(period);
     await fetchStandings(period);
   };
+
+  // Sort standings based on current sort mode
+  const sortedStandings = React.useMemo(() => {
+    if (!standings || standings.length === 0) return [];
+
+    const sorted = [...standings];
+
+    if (sortByPercentage) {
+      // Sort by percentage points first, then tiebreakers
+      sorted.sort((a, b) => {
+        const percA = a.percentagePunten || 0;
+        const percB = b.percentagePunten || 0;
+        if (percB !== percA) return percB - percA;
+        if (b.percentage !== a.percentage) return b.percentage - a.percentage;
+        if (b.moyenne !== a.moyenne) return b.moyenne - a.moyenne;
+        return b.hoogsteSerie - a.hoogsteSerie;
+      });
+    } else {
+      // Sort by absolute points (default)
+      sorted.sort((a, b) => {
+        if (b.punten !== a.punten) return b.punten - a.punten;
+        if (b.percentage !== a.percentage) return b.percentage - a.percentage;
+        if (b.moyenne !== a.moyenne) return b.moyenne - a.moyenne;
+        return b.hoogsteSerie - a.hoogsteSerie;
+      });
+    }
+
+    // Re-assign ranks after sorting
+    return sorted.map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+  }, [standings, sortByPercentage]);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -146,35 +199,37 @@ export default function CompetitieStandPage() {
       </head>
       <body>
         <h1>${orgName} - ${compName}</h1>
-        <h2>${discipline} | ${PUNTEN_SYSTEMEN[competition?.punten_sys || 1] || ''} | Periode ${selectedPeriod}</h2>
+        <h2>${discipline} | ${PUNTEN_SYSTEMEN[competition?.punten_sys || 1] || ''} | ${selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}</h2>
         <table>
           <thead>
             <tr>
               <th class="center">#</th>
               <th>Naam</th>
-              <th class="center">P</th>
+              <th class="right">Pnt</th>
+              <th class="center">Part</th>
               <th class="right">Car.</th>
-              <th class="right">Doel</th>
-              <th class="right">%</th>
+              <th class="right">% Car</th>
               <th class="right">Brt</th>
               <th class="right">Moy</th>
+              <th class="right">P.moy</th>
               <th class="right">HS</th>
-              <th class="right">Pnt</th>
+              ${sortByPercentage ? '<th class="right">% Pnt</th>' : ''}
             </tr>
           </thead>
           <tbody>
-            ${standings.map((entry) => `
+            ${sortedStandings.map((entry) => `
               <tr>
                 <td class="center rank">${entry.rank}</td>
                 <td>${entry.playerName}</td>
+                <td class="right points">${entry.punten}</td>
                 <td class="center">${entry.matchesPlayed}</td>
                 <td class="right">${entry.carambolesGemaakt}</td>
-                <td class="right">${entry.carambolesTeMaken}</td>
                 <td class="right">${entry.percentage.toFixed(2)}</td>
                 <td class="right">${entry.beurten}</td>
                 <td class="right">${entry.moyenne.toFixed(3)}</td>
+                <td class="right">${entry.partijMoyenne.toFixed(2)}</td>
                 <td class="right">${entry.hoogsteSerie}</td>
-                <td class="right points">${entry.punten}</td>
+                ${sortByPercentage ? `<td class="right points">${entry.percentagePunten?.toFixed(2) || '0.00'}%</td>` : ''}
               </tr>
             `).join('')}
           </tbody>
@@ -266,6 +321,46 @@ export default function CompetitieStandPage() {
                 {p}
               </button>
             ))}
+            <button
+              onClick={() => handlePeriodChange(0)}
+              disabled={isLoading}
+              className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
+                selectedPeriod === 0
+                  ? 'bg-green-700 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+              }`}
+            >
+              Totaal
+            </button>
+          </div>
+        </div>
+
+        {/* Sort mode toggle */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Sortering:
+          </label>
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+            <button
+              onClick={() => setSortByPercentage(false)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                !sortByPercentage
+                  ? 'bg-white dark:bg-slate-600 text-green-700 dark:text-green-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              Punten
+            </button>
+            <button
+              onClick={() => setSortByPercentage(true)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                sortByPercentage
+                  ? 'bg-white dark:bg-slate-600 text-green-700 dark:text-green-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              % Punten
+            </button>
           </div>
         </div>
 
@@ -329,18 +424,21 @@ export default function CompetitieStandPage() {
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                   <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10">#</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">P</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">Part</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles gemaakt">Car.</th>
-                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles te maken">Doel</th>
-                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage">%</th>
+                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage caramboles">% Car</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Beurten">Brt</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Moyenne">Moy</th>
+                  <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partij Moyenne">P.moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Hoogste serie">HS</th>
-                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  {sortByPercentage && (
+                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {standings.map((entry, index) => (
+                {sortedStandings.map((entry, index) => (
                   <tr
                     key={entry.playerNr}
                     className={`hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${
@@ -359,14 +457,14 @@ export default function CompetitieStandPage() {
                     <td className="px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white">
                       {entry.playerName}
                     </td>
+                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
+                      {entry.punten}
+                    </td>
                     <td className="text-center px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.matchesPlayed}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.carambolesGemaakt}
-                    </td>
-                    <td className="text-right px-2 py-2.5 text-sm text-slate-500 dark:text-slate-500 tabular-nums">
-                      {entry.carambolesTeMaken}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.percentage.toFixed(2)}
@@ -378,11 +476,16 @@ export default function CompetitieStandPage() {
                       {entry.moyenne.toFixed(3)}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
+                      {entry.partijMoyenne.toFixed(2)}
+                    </td>
+                    <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}
                     </td>
-                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
-                      {entry.punten}
-                    </td>
+                    {sortByPercentage && (
+                      <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
+                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -390,10 +493,13 @@ export default function CompetitieStandPage() {
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | Periode {selectedPeriod}
+              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              Sortering: punten &gt; percentage &gt; moyenne &gt; hoogste serie
+              {sortByPercentage
+                ? 'Sortering: % punten > percentage > moyenne > hoogste serie'
+                : 'Sortering: punten > percentage > moyenne > hoogste serie'
+              }
             </p>
           </div>
         </div>

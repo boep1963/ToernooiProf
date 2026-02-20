@@ -14,12 +14,32 @@ interface CompetitionItem {
   comp_datum: string;
   discipline: number;
   punten_sys: number;
+  moy_form: number;
+  min_car: number;
+  max_beurten: number;
+  vast_beurten: number;
+  sorteren: number;
 }
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
   2: '10-punten',
   3: 'Belgisch',
+};
+
+const MOYENNE_FORMULES: Record<number, string> = {
+  1: 'x15',
+  2: 'x20',
+  3: 'x25',
+  4: 'x30',
+  5: 'x40',
+  6: 'x50',
+  7: 'x60',
+};
+
+const SORTEER_OPTIES: Record<number, string> = {
+  1: 'Voornaam eerst',
+  2: 'Achternaam eerst',
 };
 
 export default function CompetitiesPage() {
@@ -31,6 +51,8 @@ export default function CompetitiesPage() {
   const [success, setSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteStats, setDeleteStats] = useState<{players: number, results: number, matches: number} | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const fetchCompetitions = useCallback(async () => {
     if (!orgNummer) return;
@@ -64,6 +86,39 @@ export default function CompetitiesPage() {
     fetchCompetitions();
   }, [fetchCompetitions]);
 
+  const fetchDeleteStats = async (compNr: number) => {
+    if (!orgNummer) return;
+    setLoadingStats(true);
+    try {
+      const [playersRes, resultsRes, matchesRes] = await Promise.all([
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
+      ]);
+
+      let players = 0, results = 0, matches = 0;
+
+      if (playersRes.ok) {
+        const data = await playersRes.json();
+        players = data.players?.length || 0;
+      }
+      if (resultsRes.ok) {
+        const data = await resultsRes.json();
+        results = data.results?.length || 0;
+      }
+      if (matchesRes.ok) {
+        const data = await matchesRes.json();
+        matches = data.matches?.length || 0;
+      }
+
+      setDeleteStats({ players, results, matches });
+    } catch {
+      setDeleteStats({ players: 0, results: 0, matches: 0 });
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   const handleDelete = async (compNr: number) => {
     if (!orgNummer) return;
     setDeleteLoading(true);
@@ -78,6 +133,7 @@ export default function CompetitiesPage() {
         const naam = deletedComp?.comp_naam || `#${compNr}`;
         setCompetitions(prev => prev.filter(c => c.comp_nr !== compNr));
         setDeleteConfirm(null);
+        setDeleteStats(null);
         setSuccess(`Competitie "${naam}" is succesvol verwijderd.`);
         setTimeout(() => setSuccess(''), 4000);
       } else {
@@ -196,7 +252,11 @@ export default function CompetitiesPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Puntensysteem</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Punten</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Min Car</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Max Brt</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vast Brt</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
               </thead>
@@ -213,38 +273,86 @@ export default function CompetitiesPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.comp_datum)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || PUNTEN_SYSTEMEN[1]}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{MOYENNE_FORMULES[comp.moy_form] || MOYENNE_FORMULES[3]}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.min_car || 0}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.max_beurten || 0}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.vast_beurten || 0}</td>
                     <td className="px-4 py-3 text-right">
-                      {deleteConfirm === comp.comp_nr ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleDelete(comp.comp_nr)}
-                            disabled={deleteLoading}
-                            className="text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md transition-colors"
-                          >
-                            {deleteLoading ? 'Bezig...' : 'Bevestigen'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="text-xs px-2.5 py-1.5 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-md transition-colors"
-                          >
-                            Annuleren
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirm(comp.comp_nr)}
-                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
-                        >
-                          Verwijderen
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setDeleteConfirm(comp.comp_nr);
+                          fetchDeleteStats(comp.comp_nr);
+                        }}
+                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                      >
+                        Verwijderen
+                      </button>
                     </td>
                   </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Competition Confirmation Dialog */}
+      {deleteConfirm !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+              Competitie verwijderen
+            </h3>
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                ⚠️ Waarschuwing: Dit kan niet ongedaan gemaakt worden!
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+                Bij het verwijderen van <strong>{competitions.find(c => c.comp_nr === deleteConfirm)?.comp_naam || `competitie #${deleteConfirm}`}</strong> worden ook verwijderd:
+              </p>
+              {loadingStats ? (
+                <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                  <div className="w-4 h-4 border-2 border-red-700 dark:border-red-300 border-t-transparent rounded-full animate-spin"></div>
+                  Gegevens laden...
+                </div>
+              ) : deleteStats ? (
+                <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                  <li><strong>{deleteStats.players} speler(s)</strong> uit deze competitie</li>
+                  <li><strong>{deleteStats.results} uitslag{deleteStats.results !== 1 ? 'en' : ''}</strong> (alle gespeelde partijen)</li>
+                  <li><strong>{deleteStats.matches} wedstrijd{deleteStats.matches !== 1 ? 'en' : ''}</strong> uit de planning</li>
+                  <li>Alle periodes en instellingen</li>
+                </ul>
+              ) : null}
+              {!loadingStats && deleteStats && (deleteStats.results > 0 || deleteStats.players > 0) && (
+                <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400">
+                  Alle gegevens van deze competitie worden permanent verwijderd.
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Weet u zeker dat u deze competitie wilt verwijderen?
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteConfirm(null);
+                  setDeleteStats(null);
+                }}
+                disabled={deleteLoading}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => deleteConfirm !== null && handleDelete(deleteConfirm)}
+                disabled={deleteLoading || loadingStats}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {deleteLoading ? 'Bezig...' : 'Ja, verwijder competitie'}
+              </button>
+            </div>
           </div>
         </div>
       )}

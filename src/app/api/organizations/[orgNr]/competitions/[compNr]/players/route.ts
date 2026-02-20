@@ -256,7 +256,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/organizations/:orgNr/competitions/:compNr/players
- * Remove a player from a competition
+ * Remove a player from a competition with cascade delete of results and matches
  * Body: { spc_nummer: number } - the member number to remove
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
@@ -307,14 +307,60 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const playerDoc = playerSnapshot.docs[0];
     const playerData = playerDoc.data();
 
-    // Delete the player
+    // CASCADE DELETE: Delete all related data
+
+    // 1. Delete results where this player participated (sp_1_nr OR sp_2_nr)
+    console.log(`[PLAYERS] Deleting results for player ${memberNummer}...`);
+    const resultsSnapshot = await queryWithOrgComp(
+      db.collection('results'),
+      orgNummer,
+      compNumber,
+      [] // Get all results, we'll filter client-side for OR condition
+    );
+
+    const resultsToDelete = resultsSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+      const sp1 = Number(data?.sp_1_nr);
+      const sp2 = Number(data?.sp_2_nr);
+      return sp1 === memberNummer || sp2 === memberNummer;
+    });
+
+    console.log(`[PLAYERS] Found ${resultsToDelete.length} results to delete`);
+    for (const resultDoc of resultsToDelete) {
+      await resultDoc.ref.delete();
+    }
+
+    // 2. Delete matches where this player is involved (nummer_A OR nummer_B)
+    console.log(`[PLAYERS] Deleting matches for player ${memberNummer}...`);
+    const matchesSnapshot = await queryWithOrgComp(
+      db.collection('matches'),
+      orgNummer,
+      compNumber,
+      [] // Get all matches, we'll filter client-side for OR condition
+    );
+
+    const matchesToDelete = matchesSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+      const numA = Number(data?.nummer_A);
+      const numB = Number(data?.nummer_B);
+      return numA === memberNummer || numB === memberNummer;
+    });
+
+    console.log(`[PLAYERS] Found ${matchesToDelete.length} matches to delete`);
+    for (const matchDoc of matchesToDelete) {
+      await matchDoc.ref.delete();
+    }
+
+    // 3. Delete the player record itself
     await playerDoc.ref.delete();
 
-    console.log(`[PLAYERS] Player ${memberNummer} removed from competition ${compNumber}`);
+    console.log(`[PLAYERS] Player ${memberNummer} and all related data removed from competition ${compNumber}`);
     return NextResponse.json({
       message: 'Speler succesvol verwijderd uit competitie',
       spc_nummer: memberNummer,
       player_name: `${playerData?.spa_vnaam || ''} ${playerData?.spa_tv || ''} ${playerData?.spa_anaam || ''}`.trim(),
+      deleted_results: resultsToDelete.length,
+      deleted_matches: matchesToDelete.length,
     });
   } catch (error) {
     console.error('[PLAYERS] Error removing player:', error);

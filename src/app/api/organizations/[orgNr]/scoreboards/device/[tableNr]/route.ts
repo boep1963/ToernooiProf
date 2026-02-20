@@ -70,6 +70,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json();
     const soort = Number(body.soort);
+    const forceUpdate = body.force === true;
 
     if (soort !== 1 && soort !== 2) {
       return NextResponse.json(
@@ -78,7 +79,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    console.log(`[DEVICE_CONFIG] Updating config for org:${orgNummer} table:${tafelNr} to soort:${soort}`);
+    console.log(`[DEVICE_CONFIG] Updating config for org:${orgNummer} table:${tafelNr} to soort:${soort}, force:${forceUpdate}`);
+
+    // Check if scoreboard is active (status=1) unless force=true
+    if (!forceUpdate) {
+      const tableSnapshot = await db.collection('tables')
+        .where('org_nummer', '==', orgNummer)
+        .where('tafel_nr', '==', tafelNr)
+        .get();
+
+      if (!tableSnapshot.empty) {
+        const tableData = tableSnapshot.docs[0].data();
+        if (tableData.status === 1) {
+          console.log(`[DEVICE_CONFIG] Table ${tafelNr} is active (status=1), rejecting change`);
+          return NextResponse.json(
+            {
+              error: 'Scorebord in gebruik',
+              warning: true,
+              message: 'Het scorebord voor deze tafel is momenteel in gebruik. Weet u zeker dat u de bediening wilt wijzigen?',
+              tableNr: tafelNr
+            },
+            { status: 409 }
+          );
+        }
+      }
+    }
 
     // Find existing config
     const snapshot = await db.collection('device_config')

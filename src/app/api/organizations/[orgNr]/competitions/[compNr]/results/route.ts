@@ -334,9 +334,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    if (typeof brt !== 'number' || brt <= 0) {
+    if (typeof brt !== 'number' || brt < 1) {
       return NextResponse.json(
-        { error: 'Aantal beurten moet groter zijn dan 0' },
+        { error: 'Aantal beurten moet minimaal 1 zijn' },
+        { status: 400 }
+      );
+    }
+
+    // Validate caramboles and highest series (cannot be negative)
+    const p1Cargem = Number(sp_1_cargem) || 0;
+    const p1Hs = Number(sp_1_hs) || 0;
+    const p2Cargem = Number(sp_2_cargem) || 0;
+    const p2Hs = Number(sp_2_hs) || 0;
+
+    if (p1Cargem < 0) {
+      return NextResponse.json(
+        { error: 'Caramboles gemaakt voor speler 1 kunnen niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p2Cargem < 0) {
+      return NextResponse.json(
+        { error: 'Caramboles gemaakt voor speler 2 kunnen niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p1Hs < 0) {
+      return NextResponse.json(
+        { error: 'Hoogste serie voor speler 1 kan niet negatief zijn' },
+        { status: 400 }
+      );
+    }
+    if (p2Hs < 0) {
+      return NextResponse.json(
+        { error: 'Hoogste serie voor speler 2 kan niet negatief zijn' },
         { status: 400 }
       );
     }
@@ -363,17 +394,52 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const periode = (compData?.periode as number) || 1;
     const discipline = (compData?.discipline as number) || 1;
 
+    // Additional validation after fetching competition data
+    // Validate caramboles gemaakt <= te maken caramboles (unless vast_beurten)
+    // For fixed-turns competitions, players can make unlimited caramboles
+    const p1Cartem = Number(sp_1_cartem) || 0;
+    const p2Cartem = Number(sp_2_cartem) || 0;
+
+    if (!vastBeurten) {
+      if (p1Cargem > p1Cartem) {
+        return NextResponse.json(
+          { error: `Speler 1: caramboles gemaakt (${p1Cargem}) kan niet meer zijn dan te maken caramboles (${p1Cartem})` },
+          { status: 400 }
+        );
+      }
+      if (p2Cargem > p2Cartem) {
+        return NextResponse.json(
+          { error: `Speler 2: caramboles gemaakt (${p2Cargem}) kan niet meer zijn dan te maken caramboles (${p2Cartem})` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate logical consistency: hoogste serie × beurten >= caramboles gemaakt
+    // This ensures the highest series is physically possible given the number of turns
+    if (p1Hs * brt < p1Cargem) {
+      return NextResponse.json(
+        { error: `Speler 1: hoogste serie (${p1Hs}) × beurten (${brt}) = ${p1Hs * brt} is minder dan caramboles gemaakt (${p1Cargem}). Dit is niet mogelijk.` },
+        { status: 400 }
+      );
+    }
+    if (p2Hs * brt < p2Cargem) {
+      return NextResponse.json(
+        { error: `Speler 2: hoogste serie (${p2Hs}) × beurten (${brt}) = ${p2Hs * brt} is minder dan caramboles gemaakt (${p2Cargem}). Dit is niet mogelijk.` },
+        { status: 400 }
+      );
+    }
+
     // Calculate points based on scoring system
     let sp_1_punt = 0;
     let sp_2_punt = 0;
 
-    const p1Gem = Number(sp_1_cargem) || 0; // caramboles made by player 1
-    const p1Tem = Number(sp_1_cartem) || 0;  // target caramboles for player 1
-    const p2Gem = Number(sp_2_cargem) || 0;  // caramboles made by player 2
-    const p2Tem = Number(sp_2_cartem) || 0;  // target caramboles for player 2
-    const turns = Number(brt) || 0;
-    const p1Hs = Number(sp_1_hs) || 0;
-    const p2Hs = Number(sp_2_hs) || 0;
+    // Use variables already defined above for validation
+    const p1Gem = p1Cargem; // caramboles made by player 1
+    const p1Tem = p1Cartem; // target caramboles for player 1
+    const p2Gem = p2Cargem; // caramboles made by player 2
+    const p2Tem = p2Cartem; // target caramboles for player 2
+    const turns = brt;
 
     // Determine scoring system (first digit)
     const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
@@ -485,32 +551,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (sp_1_naam) resultData.sp_1_naam = sp_1_naam;
     if (sp_2_naam) resultData.sp_2_naam = sp_2_naam;
 
-    // Use Firestore transaction to prevent race conditions from concurrent submissions
-    // This ensures atomicity: only one result per uitslag_code will be created
-    const resultId = await db.runTransaction(async (transaction) => {
-      // Check if result already exists within transaction
-      const existingResult = await transaction.get(
-        db.collection('results')
-          .where('org_nummer', '==', orgNummer)
-          .where('comp_nr', '==', compNumber)
-          .where('uitslag_code', '==', uitslag_code)
-          .limit(1)
-      );
+    // Check if result already exists
+    console.log('[RESULTS] Checking if result already exists...');
+    const existingResult = await queryWithOrgComp(
+      db.collection('results'),
+      orgNummer,
+      compNumber,
+      [{ field: 'uitslag_code', op: '==', value: uitslag_code }]
+    );
 
-      if (!existingResult.empty) {
-        // Update existing result
-        const docRef = existingResult.docs[0].ref;
-        transaction.update(docRef, resultData);
-        console.log(`[RESULTS] Updating existing result in transaction: ${docRef.id}`);
-        return docRef.id;
-      } else {
-        // Create new result
-        const newDocRef = db.collection('results').doc();
-        transaction.set(newDocRef, resultData);
-        console.log(`[RESULTS] Creating new result in transaction: ${newDocRef.id}`);
-        return newDocRef.id;
-      }
-    });
+    let resultId: string;
+    if (!existingResult.empty) {
+      // Update existing result
+      const docRef = existingResult.docs[0].ref;
+      await docRef.update(resultData);
+      resultId = docRef.id;
+      console.log(`[RESULTS] Updated existing result: ${resultId}`);
+    } else {
+      // Create new result
+      const newDocRef = await db.collection('results').add(resultData);
+      resultId = newDocRef.id;
+      console.log(`[RESULTS] Created new result: ${resultId}`);
+    }
 
     // Mark the match as played (gespeeld=1)
     console.log('[RESULTS] Marking match as played...');

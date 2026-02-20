@@ -191,11 +191,15 @@ export default function DoorkoppelenPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p className="font-semibold mb-1">Hoe werkt doorkoppelen?</p>
+            <p className="font-semibold mb-2">Wat is doorkoppelen?</p>
+            <p className="mb-3">
+              <strong>Doorkoppelen past het moyenne van leden aan op basis van hun gespeelde moyenne in deze competitie.</strong>
+            </p>
             <p>
-              Selecteer spelers en een periode. Het moyenne uit die periode wordt gekoppeld aan het
+              Selecteer spelers en een periode. Het moyenne uit die periode wordt overgenomen als het nieuwe
               {' '}{DISCIPLINES[competition?.discipline || 1]} moyenne van de speler in het ledenbestand.
-              Dit is handig bij het aanmaken van een nieuwe competitie, zodat het bijgewerkte moyenne als startwaarde wordt gebruikt.
+              Dit is handig bij het afsluiten van een competitie, zodat het bijgewerkte moyenne automatisch
+              als startwaarde wordt gebruikt voor de volgende competitie.
             </p>
           </div>
         </div>

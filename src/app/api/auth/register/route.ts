@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { addEmailToQueue, generateRegistrationEmail } from '@/lib/emailQueue';
 
 /**
  * Generate a random string of uppercase letters (excluding I and O for readability)
@@ -138,6 +139,19 @@ export async function POST(request: NextRequest) {
         soort: 1,
       });
     }
+
+    // Queue the registration email for sending by Cloud Function
+    const registrationEmail = generateRegistrationEmail(
+      org_wl_email.trim(),
+      org_naam.trim(),
+      loginCode,
+      verificationCode
+    );
+
+    await addEmailToQueue({
+      ...registrationEmail,
+      org_nummer: nextOrgNummer,
+    });
 
     // In development: log the verification code and login code to console
     // (In production, this would be sent via email)

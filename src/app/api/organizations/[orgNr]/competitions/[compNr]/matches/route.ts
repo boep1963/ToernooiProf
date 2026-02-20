@@ -123,11 +123,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const periode = Number(compData?.periode) || 1;
     const sorteren = Number(compData?.sorteren) || 1;
 
-    // Get discipline-specific caramboles key
+    // Get periode-specific caramboles key (NOT discipline - that was the bug!)
     const carKeyMap: Record<number, string> = {
       1: 'spc_car_1', 2: 'spc_car_2', 3: 'spc_car_3', 4: 'spc_car_4', 5: 'spc_car_5',
     };
-    const carKey = carKeyMap[discipline] || 'spc_car_1';
+    const carKey = carKeyMap[periode] || 'spc_car_1';
 
     // Get all players in the competition
     console.log('[MATCHES] Fetching players...');

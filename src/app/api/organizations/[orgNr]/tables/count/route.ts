@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .get();
 
     let count = snapshot.size;
+    let source: 'tables' | 'config' | 'matches' | 'results' | 'none' = snapshot.size > 0 ? 'tables' : 'none';
     logQueryResult('tables', orgNummer, count);
 
     // Fallback 1: Check organization document for aantal_tafels field
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         if (typeof aantalTafels === 'number' && aantalTafels > 0) {
           count = aantalTafels;
+          source = 'config';
           console.log(`[TABLES_COUNT] Using aantal_tafels from organization: ${count}`);
         }
       }
@@ -74,6 +76,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       if (uniqueTables.size > 0) {
         count = uniqueTables.size;
+        source = 'matches';
         console.log(`[TABLES_COUNT] Found ${count} unique tables in matches`);
       }
     }
@@ -96,12 +99,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       if (uniqueTables.size > 0) {
         count = uniqueTables.size;
+        source = 'results';
         console.log(`[TABLES_COUNT] Found ${count} unique tables in results`);
       }
     }
 
-    console.log(`[TABLES_COUNT] Final count for org ${orgNummer}: ${count}`);
-    return NextResponse.json({ count });
+    console.log(`[TABLES_COUNT] Final count for org ${orgNummer}: ${count} (source: ${source})`);
+    return NextResponse.json({ count, source });
   } catch (error) {
     console.error('[TABLES_COUNT] Error counting tables:', error);
     return NextResponse.json(

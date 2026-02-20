@@ -75,6 +75,10 @@ export default function ResultsOverviewPage() {
   const [results, setResults] = useState<EnrichedResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [resultToDelete, setResultToDelete] = useState<EnrichedResult | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Date range filters (input values)
   const [startDate, setStartDate] = useState('');
@@ -287,6 +291,43 @@ export default function ResultsOverviewPage() {
     setDateError('');
   };
 
+  const handleDeleteResult = async () => {
+    if (!orgNummer || !resultToDelete) return;
+    setIsDeleting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/results/${resultToDelete.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (res.ok) {
+        // Remove from local state
+        setResults((prev) => prev.filter((r) => r.id !== resultToDelete.id));
+        setSuccess(`Uitslag succesvol verwijderd!`);
+        setTimeout(() => setSuccess(''), 4000);
+        setShowDeleteDialog(false);
+        setResultToDelete(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Fout bij verwijderen uitslag.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditResult = (result: EnrichedResult) => {
+    // Navigate to the uitslagen page with the result ID in the URL hash
+    router.push(`/competities/${compNr}/uitslagen?edit=${result.id}`);
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
@@ -425,6 +466,15 @@ export default function ResultsOverviewPage() {
         </div>
       )}
 
+      {success && (
+        <div role="status" className="print:hidden mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+
       {/* Results Table */}
       {results.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
@@ -463,6 +513,7 @@ export default function ResultsOverviewPage() {
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moy</th>
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">HS</th>
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pnt</th>
+                  <th className="print:hidden text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -520,6 +571,22 @@ export default function ResultsOverviewPage() {
                         {result.sp_2_punt}
                       </span>
                     </td>
+                    <td className="print:hidden px-4 py-2.5 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          onClick={() => handleEditResult(result)}
+                          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+                        >
+                          Wijzigen
+                        </button>
+                        <button
+                          onClick={() => { setResultToDelete(result); setShowDeleteDialog(true); }}
+                          className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+                        >
+                          Verwijderen
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -529,6 +596,63 @@ export default function ResultsOverviewPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {results.length} {results.length === 1 ? 'uitslag' : 'uitslagen'} gevonden
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Result Confirmation Dialog */}
+      {showDeleteDialog && resultToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+              Uitslag verwijderen
+            </h3>
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                ⚠️ Waarschuwing: Dit kan niet ongedaan gemaakt worden!
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                Bij het verwijderen van deze uitslag:
+              </p>
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                <li>Wordt de uitslag permanent verwijderd uit de database</li>
+                <li>Wordt de stand automatisch aangepast voor <strong>beide spelers</strong></li>
+                <li>Verliezen beide spelers hun punten, caramboles en beurtentelling van deze partij</li>
+              </ul>
+              <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400">
+                Dit heeft consequenties voor de rangschikking in de stand.
+              </p>
+            </div>
+            <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+              <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">
+                <strong>Wedstrijd:</strong> {resultToDelete.naam_A} vs {resultToDelete.naam_B}
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">
+                <strong>Datum:</strong> {formatDate(resultToDelete.speeldatum)}
+              </p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                <strong>Score:</strong> {resultToDelete.sp_1_cargem} - {resultToDelete.sp_2_cargem} ({resultToDelete.sp_1_punt} - {resultToDelete.sp_2_punt} punten)
+              </p>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Weet u zeker dat u deze uitslag wilt verwijderen?
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => { setShowDeleteDialog(false); setResultToDelete(null); }}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleDeleteResult}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {isDeleting ? 'Bezig...' : 'Ja, verwijder uitslag'}
+              </button>
+            </div>
           </div>
         </div>
       )}

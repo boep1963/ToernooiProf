@@ -28,10 +28,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       null
     );
 
-    const competitions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const competitions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Ensure punten_sys has a default value if missing or invalid
+        punten_sys: (typeof data.punten_sys === 'number' && data.punten_sys >= 1 && data.punten_sys <= 3)
+          ? data.punten_sys
+          : 1, // Default to WRV 2-1-0
+      };
+    });
 
     logQueryResult('competitions', orgNummer, competitions.length);
     console.log(`[COMPETITIONS] Found ${competitions.length} competitions`);

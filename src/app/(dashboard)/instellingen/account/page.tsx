@@ -105,6 +105,9 @@ export default function AccountPage() {
       return;
     }
 
+    // Check if email has changed
+    const emailChanged = orgDetails && editEmail.trim() !== (orgDetails.org_wl_email || '');
+
     try {
       const res = await fetch(`/api/organizations/${orgNummer}`, {
         method: 'PUT',
@@ -117,7 +120,11 @@ export default function AccountPage() {
       });
 
       if (res.ok) {
-        setSuccess('Accountgegevens zijn succesvol bijgewerkt!');
+        let successMsg = 'Accountgegevens zijn succesvol bijgewerkt!';
+        if (emailChanged) {
+          successMsg += ' Uw logingegevens worden bijgewerkt.';
+        }
+        setSuccess(successMsg);
         setIsEditing(false);
         // Refresh org details from the server
         await fetchOrgDetails();
@@ -457,6 +464,25 @@ export default function AccountPage() {
               </div>
             </div>
           </div>
+
+          {/* Email Change Warning */}
+          {isEditing && orgDetails && editEmail.trim() !== (orgDetails.org_wl_email || '') && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
+                    E-mailadres wijziging
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    Let op: Bij het wijzigen van uw e-mailadres worden uw logingegevens bijgewerkt. U ontvangt mogelijk een bevestigingsmail op het nieuwe adres.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Edit Actions */}
           {isEditing && (

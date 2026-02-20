@@ -78,11 +78,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Fetch all results for this competition and period
-    const resultsSnapshot = await db.collection('results')
+    // Period 0 means "Totaal" (all periods combined)
+    let resultsQuery = db.collection('results')
       .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .where('periode', '==', periodNumber)
-      .get();
+      .where('comp_nr', '==', compNumber);
+
+    if (periodNumber !== 0) {
+      resultsQuery = resultsQuery.where('periode', '==', periodNumber);
+    }
+
+    const resultsSnapshot = await resultsQuery.get();
 
     // Initialize standings per player
     const standingsMap: Record<number, {
@@ -176,11 +181,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const moyenne = entry.beurten > 0
         ? entry.carambolesGemaakt / entry.beurten
         : 0;
+      const partijMoyenne = entry.matchesPlayed > 0
+        ? entry.carambolesGemaakt / entry.matchesPlayed
+        : 0;
 
       return {
         ...entry,
         percentage: Math.round(percentage * 100) / 100, // 2 decimal places
         moyenne: Math.round(moyenne * 1000) / 1000, // 3 decimal places
+        partijMoyenne: Math.round(partijMoyenne * 100) / 100, // 2 decimal places
       };
     });
 
