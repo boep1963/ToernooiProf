@@ -64,9 +64,8 @@ function decodePuntenSys(punten_sys: number): string {
 }
 
 const SORTEREN_LABELS: Record<number, string> = {
-  1: 'Stand (beste eerst)',
-  2: 'Alfabetisch',
-  3: 'Achterste stand eerst',
+  1: 'Voornaam eerst',
+  2: 'Achternaam eerst',
 };
 
 export default function CompetitieDetailPage() {
@@ -141,10 +140,19 @@ export default function CompetitieDetailPage() {
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
 
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           {competition.comp_naam}
         </h1>
+        <Link
+          href={`/competities/${compNr}/bewerken`}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Wijzigen
+        </Link>
       </div>
 
       {/* Competition Info Card */}
@@ -175,7 +183,7 @@ export default function CompetitieDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">{competition.vast_beurten === 0 ? 'Nee' : 'Ja'}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Sorteervolgorde</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Naam sortering</p>
             <p className="text-sm text-slate-900 dark:text-white">{SORTEREN_LABELS[competition.sorteren] || '-'}</p>
           </div>
           <div>
