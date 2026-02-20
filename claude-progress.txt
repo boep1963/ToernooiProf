@@ -2894,3 +2894,156 @@ SUMMARY:
 - Feature #214: Data integrity fix
 - Feature #216: UX improvement
 - Zero regressions
+
+
+=== Session - 2026-02-20 (afternoon) ===
+Agent: Features #215, #226 - Enhanced Delete Confirmations
+
+COMPLETED:
+- Feature #215: Enhanced delete confirmations across all deletion points ✅
+- Feature #226: Show actual result count in player removal dialog ✅
+
+IMPLEMENTATION:
+- Competition deletion: Modal dialog with player/result/match counts
+- Period deletion: Shows result/match counts for that period
+- Result deletion: Explicit consequences for both players
+- Player removal: Fetches and shows actual result count
+
+All dialogs now show specific counts and warn about standings impact.
+
+Git Commit: 68dc0c0
+CURRENT STATUS: 218/249 features passing (87.6%)
+
+=== Session - 2026-02-20 ===
+Agent: Features #219, #221 - WRV Bonus Points & Vast Aantal Beurten
+
+COMPLETED: All 2 assigned features
+- Feature #219: WRV bonus punten bij spelen boven moyenne ✅
+- Feature #221: Vast aantal beurten: verplicht WRV puntensysteem ✅
+
+IMPLEMENTATION SUMMARY:
+
+**Feature #219: WRV Bonus Points Configuration**
+
+PROBLEM: The legacy ClubMatch PHP system allowed administrators to configure bonus points when players play above their moyenne (average). This was only available for the WRV 2-1-0 point system and included three separate bonus options: bij winst (always enabled when bonuses active), bij remise, and bij verlies. The Next.js migration was missing this functionality.
+
+SOLUTION: Implemented WRV bonus configuration in competition creation form:
+
+1. **UI Components Added:**
+   - Main checkbox: "Extra punt bij spelen boven moyenne?"
+   - Sub-checkboxes (only shown when main checkbox enabled):
+     - "Bij winst (standaard)" - checked and disabled (always ON)
+     - "Bij remise" - user-configurable
+     - "Bij verlies" - user-configurable
+   - Clean, nested UI design with grey background for bonus section
+   - Automatically hides when user switches to 10-punten or Belgisch systems
+
+2. **Encoding Logic:**
+   Based on PHP reference code analysis:
+   - Base WRV without bonuses: `punten_sys = 10000`
+   - WRV with bonuses enabled: `punten_sys = 11100` (digit 2 = bonus flag)
+   - Remise bonus: `+10` (digit 4)
+   - Verlies bonus: `+1` (digit 5)
+
+   Examples:
+   - `10000` = WRV, no bonuses
+   - `11100` = WRV, bonus bij winst only
+   - `11110` = WRV, bonus bij winst + remise
+   - `11101` = WRV, bonus bij winst + verlies
+   - `11111` = WRV, all bonuses enabled
+
+3. **State Management:**
+   - Added three state variables: wrvBonusEnabled, bonusRemise, bonusVerlies
+   - Automatic reset when switching away from WRV system
+   - Encoding happens in submit handler before API call
+
+**Feature #221: Vast Aantal Beurten Enforcement**
+
+PROBLEM: In the legacy PHP system, when "Vast aantal beurten" (fixed number of turns) was selected, only the WRV 2-1-0 point system was allowed. The other systems (10-punten and Belgisch) were automatically disabled. This business rule was not enforced in the Next.js version.
+
+SOLUTION:
+
+1. **Label Change:**
+   - Changed "Vaste beurten" to "Vast aantal beurten" (more explicit)
+
+2. **Enforcement Logic:**
+   - When vast_beurten is set to "Ja" (value !== 0):
+     - Automatically force punten_sys = 1 (WRV 2-1-0)
+     - Disable the puntensysteem dropdown
+     - Mark other options as "(niet beschikbaar)"
+     - Show helper text: "Bij vast aantal beurten is alleen WRV 2-1-0 beschikbaar"
+   - When vast_beurten is set to "Nee":
+     - Re-enable all point systems
+     - Remove restrictions
+
+3. **Bidirectional Binding:**
+   - Selecting "Ja" for vast_beurten forces WRV
+   - User cannot change point system while vast_beurten is active
+   - Switching back to "Nee" restores all options
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/nieuw/page.tsx
+  - Added WRV bonus state variables
+  - Implemented punten_sys encoding logic
+  - Added WRV bonus checkbox UI section
+  - Changed label to "Vast aantal beurten"
+  - Added enforcement logic: disable non-WRV systems when vast_beurten active
+  - Added helper text for user guidance
+
+VERIFICATION (Browser Automation):
+
+✅ Feature #219 Tests:
+1. WRV bonus checkbox appears when punten_sys = WRV 2-1-0
+2. Clicking main checkbox reveals sub-options
+3. "Bij winst" checkbox is checked and disabled (correct)
+4. "Bij remise" and "Bij verlies" are user-configurable
+5. Created competition with all bonuses enabled
+6. API returned: punten_sys = 11111 ✅ (CORRECT)
+7. Created competition with no bonuses
+8. API returned: punten_sys = 10000 ✅ (CORRECT)
+9. Switching to 10-punten hides bonus section
+10. Switching back to WRV shows bonus section again
+
+✅ Feature #221 Tests:
+1. Label correctly shows "Vast aantal beurten"
+2. With "Nee" selected: all point systems available
+3. Selecting "Ja" for vast aantal beurten:
+   - Puntensysteem dropdown becomes disabled
+   - Automatically switches to WRV 2-1-0
+   - Options "10-punten" and "Belgisch" show "(niet beschikbaar)"
+   - Helper text appears below dropdown
+4. Cannot change point system while vast_beurten = "Ja"
+5. Switching back to "Nee": all systems re-enabled
+6. Created competition with vast_beurten = 1
+7. API returned: vast_beurten = 1 ✅
+
+✅ Zero console errors
+✅ No mock data patterns in code
+✅ Both features work independently and together
+✅ UX is intuitive and matches PHP reference behavior
+
+ENCODING VERIFICATION:
+
+Tested multiple scenarios via browser automation:
+- Competition #4: "Test WRV Bonussen Feature 219"
+  - Bonuses: winst + remise + verlies
+  - Expected: 11111
+  - Actual: 11111 ✅
+
+- Competition #6: "Test WRV Sans Bonussen"
+  - Bonuses: none
+  - Expected: 10000
+  - Actual: 10000 ✅
+
+GIT COMMIT: ea667c3
+
+CURRENT STATUS: 217/249 features passing (87.1%)
+
+Both features completed, verified, and passing!
+
+=== Session - 2026-02-20 (Features #217, #218) ===
+COMPLETED: Features #217 (Scoreboard buttons) and #218 (Free text dates)
+Feature #217: No bug found - buttons work correctly. Tested full workflow.
+Feature #218: Changed date input to text field. Accepts 'januari 2026', 'seizoen 2026', etc.
+FILES: src/app/(dashboard)/competities/nieuw/page.tsx
+STATUS: 216/249 features passing (86.7%)
