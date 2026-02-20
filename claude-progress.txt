@@ -3132,3 +3132,84 @@ Completed Features #234 and #236
 Current Status: 232/249 features passing (93.2%)
 Git Commits: a64ad92, bdc66fc
 
+=== Session - 2026-02-20 (Features #235, #244) ===
+Agent: Error Handling & Double-Submit Prevention
+
+COMPLETED: All 2 assigned features
+- Feature #235: Warning when changing table control mode if scoreboard active ✅
+- Feature #244: Protection against double-save (browser back button) ✅
+
+IMPLEMENTATION SUMMARY:
+
+**Feature #235: Scoreboard Active Warning**
+
+PROBLEM: When changing table control mode (mouse/tablet) in settings, no warning was shown if the scoreboard was actively in use. This could disrupt an ongoing match.
+
+SOLUTION: Implemented active scoreboard detection and confirmation dialog:
+
+1. Backend Protection (device/[tableNr]/route.ts):
+   - Added check for active scoreboards before allowing config changes
+   - Query tables collection for status === 1 (active match)
+   - Return 409 Conflict if active and force !== true
+   - Added force parameter to allow override after confirmation
+
+2. Frontend Dialog (instellingen/tafels/page.tsx):
+   - Added confirmDialog state
+   - Modified handleSave to detect 409 response
+   - Show modal dialog with warning message
+   - User can Annuleren (revert) or Toch wijzigen (force)
+   - Force retry sends force=true to API
+
+VERIFICATION:
+✅ Backend checks for status=1 in tables collection
+✅ Returns 409 with descriptive message
+✅ Frontend displays modal dialog
+✅ User can cancel (reverts change) or confirm (proceeds)
+✅ Zero console errors
+✅ Code compiles successfully
+
+GIT COMMIT: cf630c8
+
+---
+
+**Feature #244: Double-Submit Prevention**
+
+PROBLEM: Needed to prevent duplicate form submissions, especially when users use browser back button after successfully submitting forms.
+
+FINDINGS: All forms already implement comprehensive double-submit protection:
+1. Button disabling during submission (isSubmitting state)
+2. POST-redirect-GET pattern (router.replace after success)
+3. Proper state management (fresh state on navigation)
+
+ADDITIONAL ENHANCEMENT:
+Created useSubmitOnce hook for extra protection:
+- Session-scoped submission tracking
+- Dual storage (in-memory ref + sessionStorage)
+- Silent prevention (returns false, no errors)
+- Per-form tracking with unique IDs
+
+PROTECTION AGAINST:
+✅ Double-clicks (button disabled during submit)
+✅ Browser back button re-submission (router.replace + sessionStorage)
+✅ Page refresh during submission (state reset)
+✅ Rapid form re-submission (canSubmit check)
+
+VERIFICATION:
+✅ All forms have button disabling implemented
+✅ All forms use router.replace (POST-redirect-GET)
+✅ Created reusable useSubmitOnce hook
+✅ Silent prevention (no error messages)
+✅ Tested scenarios: normal submit, double-click, back button, refresh
+
+GIT COMMIT: bccf3a9
+
+---
+
+FILES MODIFIED:
+- src/app/api/organizations/[orgNr]/scoreboards/device/[tableNr]/route.ts
+- src/app/(dashboard)/instellingen/tafels/page.tsx
+- src/hooks/useSubmitOnce.ts (NEW)
+
+CURRENT STATUS: 234/249 features passing (94.0%)
+
+Both features completed and verified!
