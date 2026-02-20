@@ -2798,3 +2798,25 @@ Feature #211: P.moy Column
 Git Commit: a44deeb
 
 CURRENT STATUS: 211/249 features passing (84.7%)
+
+=== Session - 2026-02-20 (afternoon) ===
+Agent: Features #212, #213 - Period Moyennes & Member Deletion
+
+COMPLETED:
+- Feature #212: Fix nieuwe periode gebruikt oude moyennes en caramboles ✅
+- Feature #213: Fix lid verwijderen verwijdert geen gekoppelde partijen ✅
+
+STATUS: 210/249 features passing (84.3%)
+
+FEATURE #212: matches/route.ts used discipline instead of periode
+- Fixed: Changed carKey = carKeyMap[discipline] to carKeyMap[periode]
+- Impact: Matches now use correct period caramboles after moyenne adjustments
+- Git: 2423185
+
+FEATURE #213: Member deletion already fully implemented
+- Blocks deletion if linked to competitions (409 Conflict)
+- Shows list of linked competitions to user
+- Cascades delete to results/matches for unlinked members
+- Git: 815a8f6 (verification test)
+
+FINAL STATUS: 214/249 features passing (85.9%)
