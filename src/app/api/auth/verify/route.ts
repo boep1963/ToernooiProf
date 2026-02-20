@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { addEmailToQueue, generateVerificationConfirmationEmail } from '@/lib/emailQueue';
 
 /**
  * POST /api/auth/verify
@@ -69,6 +70,18 @@ export async function POST(request: NextRequest) {
       verified: true,
       verification_code: null,
       verification_time: null,
+    });
+
+    // Queue the verification confirmation email
+    const confirmationEmail = generateVerificationConfirmationEmail(
+      email,
+      orgData?.org_naam as string,
+      orgData?.org_code as string
+    );
+
+    await addEmailToQueue({
+      ...confirmationEmail,
+      org_nummer: orgData?.org_nummer as number,
     });
 
     // Log confirmation email (in production this would be sent via email)
