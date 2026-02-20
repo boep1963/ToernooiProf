@@ -3387,3 +3387,12 @@ Feature #249: Competitie editing - COMPLETED
 Feature #247: Scoreboard redesign - SKIPPED (requires consultation)
 Status: 245/249 features passing (98.4%)
 Details: See session-features-249-247.txt
+
+=== Session - 2026-02-20 (Feature #247) ===
+Agent: Scoreboard Fundamental Redesign
+
+FEATURE #247: Scoreborden fundamenteel herontwerp
+STATUS: IMPLEMENTED - REQUIRES CONSULTATION
+
+See FEATURE-247-IMPLEMENTATION.md for full details
+

@@ -413,11 +413,12 @@ export default function ScoreboardPage() {
   const discipline = competition?.discipline || 1;
   const enNogThreshold = (discipline === 3 || discipline === 4) ? 3 : 5;
 
-  // Render tablet layout
+  // Render tablet layout - PASSIVE DISPLAY ONLY (no buttons)
+  // All control happens via separate tablet control panel at /scoreborden/tablet-control/[tafelNr]
   if (isTablet) {
     return (
       <div className="fixed inset-0 z-[100] bg-[#003300] text-white font-sans overflow-auto scoreboard-tablet">
-        {/* Fullscreen toggle button */}
+        {/* Fullscreen toggle button - ONLY interactive element in tablet mode */}
         <button
           onClick={toggleFullscreen}
           className="fixed top-3 right-3 z-[110] bg-green-700 hover:bg-green-600 active:bg-green-500 text-white p-4 rounded-xl transition-colors shadow-lg min-w-[48px] min-h-[48px]"
@@ -461,10 +462,10 @@ export default function ScoreboardPage() {
         </div>
 
         {!hasMatch ? (
-          /* Waiting state - tablet: with slideshow */
+          /* Waiting state - tablet: PASSIVE DISPLAY with slideshow, NO buttons */
           <div className="relative" style={{ minHeight: 'calc(100vh - 70px)' }}>
             {/* Slideshow background - tablet */}
-            {slideshowImages.length > 0 && !showMatchSelector && (
+            {slideshowImages.length > 0 && (
               <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                 {slideshowImages.map((slide, index) => (
                   <div
@@ -494,54 +495,10 @@ export default function ScoreboardPage() {
               </div>
             )}
 
+            {/* Passive waiting message - NO buttons */}
             <div className="relative z-10 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
               <div className="text-center px-4 max-w-2xl w-full">
-                {showMatchSelector ? (
-                  <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-6 text-left">
-                    <h3 className="text-2xl font-bold text-green-400 mb-4">Wedstrijd selecteren</h3>
-                    {loadingMatches ? (
-                      <div className="text-center py-8">
-                        <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-green-300">Wedstrijden laden...</p>
-                      </div>
-                    ) : availableMatches.length === 0 ? (
-                      <p className="text-green-300">Geen beschikbare wedstrijden gevonden. Genereer eerst een planning.</p>
-                    ) : (
-                      <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                        {availableMatches.map((m) => (
-                          <button
-                            key={m.id}
-                            onClick={() => handleAssignMatch(m)}
-                            disabled={assigning}
-                            className="w-full text-left bg-[#003300] hover:bg-green-800/50 active:bg-green-700/50 border border-green-700 rounded-xl p-4 transition-colors disabled:opacity-50 touch-manipulation min-h-[48px]"
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div>
-                                <p className="text-white font-semibold">
-                                  {m.naam_A} vs {m.naam_B}
-                                </p>
-                                <p className="text-green-400 text-sm">
-                                  {m.comp_naam} | {m.uitslag_code}
-                                </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <p className="text-green-300 text-sm tabular-nums">
-                                  {m.cartem_A} - {m.cartem_B}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => setShowMatchSelector(false)}
-                      className="mt-4 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-3 rounded-xl transition-colors touch-manipulation min-h-[48px]"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                ) : slideshowImages.length === 0 ? (
+                {slideshowImages.length === 0 && (
                   <>
                     <div className="mb-6">
                       <svg className="w-20 h-20 md:w-28 md:h-28 mx-auto text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -550,38 +507,19 @@ export default function ScoreboardPage() {
                     </div>
                     <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Wachten op partij</h2>
                     <p className="text-lg md:text-xl text-green-400 mb-2">Tafel {tafelNr}</p>
-                    <p className="text-green-500">Selecteer een wedstrijd om het scorebord te starten</p>
                     <div className="mt-6 inline-flex items-center gap-3 bg-green-900/40 rounded-full px-6 py-3">
                       <span className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
                       <span className="text-yellow-400 text-lg font-medium">Wachtend</span>
                     </div>
-                    <div className="mt-6">
-                      <button
-                        onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
-                        className="bg-green-700 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors shadow-lg touch-manipulation min-h-[48px]"
-                      >
-                        Wedstrijd toewijzen
-                      </button>
-                    </div>
                   </>
-                ) : (
-                  /* Slideshow active - minimal overlay */
-                  <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-20">
-                    <button
-                      onClick={() => { loadAvailableMatches(); setShowMatchSelector(true); }}
-                      className="bg-green-700/90 hover:bg-green-600 active:bg-green-500 text-white px-6 py-3 rounded-xl text-base font-semibold transition-colors shadow-lg backdrop-blur-sm touch-manipulation min-h-[48px]"
-                    >
-                      Wedstrijd toewijzen
-                    </button>
-                  </div>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          /* Tablet active match layout */
+          /* Tablet active match layout - PASSIVE DISPLAY ONLY */
           <div className="max-w-[1200px] mx-auto px-3 sm:px-4 py-3 sm:py-4">
-            {/* Start match button for tablet - shown when assigned but not started */}
+            {/* Assigned match info for tablet - PASSIVE (no buttons) */}
             {data.status === 0 && (
               <div className="flex items-center justify-center mb-4">
                 <div className="bg-[#002200] rounded-2xl border-2 border-green-600 p-4 sm:p-6 text-center w-full max-w-md">
@@ -592,21 +530,9 @@ export default function ScoreboardPage() {
                   <p className="text-green-400 text-sm mb-4">
                     Doel: {match?.cartem_A} - {match?.cartem_B}
                   </p>
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      onClick={handleStartMatch}
-                      disabled={starting}
-                      className="bg-green-600 hover:bg-green-500 active:bg-green-400 disabled:bg-green-800 text-white px-8 py-4 rounded-xl text-xl font-bold transition-colors shadow-lg touch-manipulation min-h-[48px]"
-                    >
-                      {starting ? 'Starten...' : 'Start partij'}
-                    </button>
-                    <button
-                      onClick={handleClearTable}
-                      className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-6 py-4 rounded-xl text-lg transition-colors touch-manipulation min-h-[48px]"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
+                  <p className="text-gray-400 text-sm italic">
+                    Gebruik het tablet bedieningspaneel om de wedstrijd te starten
+                  </p>
                 </div>
               </div>
             )}
@@ -730,157 +656,17 @@ export default function ScoreboardPage() {
               </div>
             </div>
 
-            {/* Tablet control buttons */}
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-3 sm:gap-4 items-start">
-              {/* Player A controls */}
-              <div className={`flex flex-col items-center gap-3 sm:gap-4 ${turn !== 1 ? 'opacity-30 pointer-events-none' : ''}`}>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  {/* Decrement button */}
-                  <button
-                    onClick={() => handleSerieDecrement('A')}
-                    disabled={turn !== 1 || serieA <= 0}
-                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
-                    aria-label="Min 1 voor speler A"
-                  >
-                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">- 1</span>
-                  </button>
-
-                  {/* Submit/Invoer button */}
-                  <button
-                    onClick={handleSubmitScore}
-                    disabled={turn !== 1 || submitting}
-                    className="bg-green-700 hover:bg-green-600 active:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white border-2 border-green-400 rounded-xl min-w-[80px] min-h-[80px] sm:min-w-[110px] sm:min-h-[110px] md:min-w-[120px] md:min-h-[130px] flex flex-col items-center justify-center transition-colors shadow-lg touch-manipulation select-none"
-                    aria-label="Invoer score speler A"
-                  >
-                    {submitting ? (
-                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <svg className="w-8 h-8 sm:w-10 sm:h-10 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-sm sm:text-base md:text-lg font-bold">Invoer</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Increment button */}
-                  <button
-                    onClick={() => handleSerieIncrement('A')}
-                    disabled={turn !== 1}
-                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
-                    aria-label="Plus 1 voor speler A"
-                  >
-                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">+ 1</span>
-                  </button>
+            {/* NO CONTROL BUTTONS IN TABLET MODE - Passive display only */}
+            {/* All control happens via separate tablet control panel */}
+            <div className="text-center mt-6">
+              {isLastTurn && (
+                <div className="inline-block bg-red-600 rounded-xl px-6 py-4 text-center animate-pulse mb-4">
+                  <p className="text-yellow-400 text-xl md:text-2xl font-bold">LAATSTE BEURT!</p>
                 </div>
-
-                {/* Klaar and Herstel row */}
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <button
-                    onClick={handleSubmitScore}
-                    disabled={turn !== 1 || submitting}
-                    className="bg-green-800 hover:bg-green-700 active:bg-green-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-green-500"
-                    aria-label="Beurt bevestigen speler A"
-                  >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-sm sm:text-base font-semibold">Klaar</span>
-                  </button>
-                  <button
-                    onClick={handleResetSerie}
-                    disabled={turn !== 1}
-                    className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-gray-500"
-                    aria-label="Serie herstellen speler A"
-                  >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span className="text-sm sm:text-base font-semibold">Herstel</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Center - last turn warning */}
-              <div className="flex flex-col items-center justify-center w-24 sm:w-32 md:w-40 pt-4">
-                {isLastTurn && (
-                  <div className="bg-red-600 rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-center animate-pulse">
-                    <p className="text-yellow-400 text-xs sm:text-sm md:text-base font-bold leading-tight">LAATSTE</p>
-                    <p className="text-yellow-400 text-xs sm:text-sm md:text-base font-bold leading-tight">BEURT!</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Player B controls */}
-              <div className={`flex flex-col items-center gap-3 sm:gap-4 ${turn !== 2 ? 'opacity-30 pointer-events-none' : ''}`}>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  {/* Decrement button */}
-                  <button
-                    onClick={() => handleSerieDecrement('B')}
-                    disabled={turn !== 2 || serieB <= 0}
-                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
-                    aria-label="Min 1 voor speler B"
-                  >
-                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">- 1</span>
-                  </button>
-
-                  {/* Submit/Invoer button */}
-                  <button
-                    onClick={handleSubmitScore}
-                    disabled={turn !== 2 || submitting}
-                    className="bg-green-700 hover:bg-green-600 active:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white border-2 border-green-400 rounded-xl min-w-[80px] min-h-[80px] sm:min-w-[110px] sm:min-h-[110px] md:min-w-[120px] md:min-h-[130px] flex flex-col items-center justify-center transition-colors shadow-lg touch-manipulation select-none"
-                    aria-label="Invoer score speler B"
-                  >
-                    {submitting ? (
-                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <svg className="w-8 h-8 sm:w-10 sm:h-10 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-sm sm:text-base md:text-lg font-bold">Invoer</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Increment button */}
-                  <button
-                    onClick={() => handleSerieIncrement('B')}
-                    disabled={turn !== 2}
-                    className="bg-black hover:bg-gray-800 active:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed text-white border-2 border-white rounded-xl min-w-[60px] min-h-[60px] sm:min-w-[80px] sm:min-h-[80px] md:min-w-[100px] md:min-h-[100px] flex items-center justify-center transition-colors touch-manipulation select-none"
-                    aria-label="Plus 1 voor speler B"
-                  >
-                    <span className="text-2xl sm:text-3xl md:text-4xl font-bold">+ 1</span>
-                  </button>
-                </div>
-
-                {/* Klaar and Herstel row */}
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <button
-                    onClick={handleSubmitScore}
-                    disabled={turn !== 2 || submitting}
-                    className="bg-green-800 hover:bg-green-700 active:bg-green-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-green-500"
-                    aria-label="Beurt bevestigen speler B"
-                  >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-sm sm:text-base font-semibold">Klaar</span>
-                  </button>
-                  <button
-                    onClick={handleResetSerie}
-                    disabled={turn !== 2}
-                    className="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl min-w-[60px] min-h-[48px] sm:min-w-[80px] sm:min-h-[56px] px-4 py-2 flex items-center justify-center gap-2 transition-colors touch-manipulation select-none border border-gray-500"
-                    aria-label="Serie herstellen speler B"
-                  >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span className="text-sm sm:text-base font-semibold">Herstel</span>
-                  </button>
-                </div>
-              </div>
+              )}
+              <p className="text-gray-400 text-sm italic mt-4">
+                Gebruik het tablet bedieningspaneel om de wedstrijd te bedienen
+              </p>
             </div>
 
             {/* Last turn warning banner */}
