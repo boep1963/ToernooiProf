@@ -1,0 +1,32 @@
+
+> clubmatch@0.1.0 dev
+> next dev
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/p.l.m.deboer/Documents/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/p.l.m.deboer/Documents/ClubMatch/package-lock.json
+
+ ⚠ Port 3000 is in use by process 41829, using available port 3005 instead.
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3005
+   - Network:      http://172.20.10.3:3005
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1630ms
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 571ms (349 modules)
+[HEALTH] Checking database connectivity...
+[DB] Connected to Google Firestore
+[HEALTH] Database: firestore (connected), Collections: 15
+ GET /api/health 200 in 2817ms
+ ✓ Compiled /favicon.ico in 138ms (157 modules)
+ GET /favicon.ico 200 in 185ms
+ ○ Compiling / ...
+ ✓ Compiled / in 635ms (692 modules)
+ GET / 307 in 908ms
+ ✓ Compiled /inloggen in 280ms (867 modules)
+ GET /inloggen 200 in 565ms
