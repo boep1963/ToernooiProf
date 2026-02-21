@@ -30,3 +30,5 @@
  GET / 307 in 908ms
  ✓ Compiled /inloggen in 280ms (867 modules)
  GET /inloggen 200 in 565ms
+ ✓ Compiled /_not-found in 387ms (866 modules)
+ GET /api/health 404 in 658ms
