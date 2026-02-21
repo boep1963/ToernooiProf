@@ -207,9 +207,6 @@ function VerificationPageContent() {
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               De code is 15 minuten geldig. Check ook uw spam/ongewenst map.
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-              (Ontwikkelmodus: de code staat in de server terminal)
-            </p>
           </div>
 
           {/* Error message */}
