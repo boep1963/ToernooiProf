@@ -17,6 +17,7 @@ function isValidCollection(collection: string): boolean {
     'device_config',
     'scoreboards',
     'news',
+    'email_queue',
   ];
   return validCollections.includes(collection);
 }
@@ -69,7 +70,18 @@ export async function GET(
 
     // Get all documents (we'll filter/paginate in memory for simplicity)
     // For production with large datasets, consider using cursor-based pagination
-    const allDocs = totalSnapshot.docs;
+    let allDocs = totalSnapshot.docs;
+
+    // For email_queue, sort by created_at descending (most recent first)
+    if (collection === 'email_queue') {
+      allDocs = allDocs.sort((a, b) => {
+        const aData = a.data();
+        const bData = b.data();
+        const aCreated = aData.created_at || '';
+        const bCreated = bData.created_at || '';
+        return bCreated.localeCompare(aCreated);
+      });
+    }
 
     // Apply search filter if provided
     let filteredDocs = allDocs;
@@ -102,7 +114,7 @@ export async function GET(
 
       // Auto-detect key fields to display in the list
       const keyFields: Record<string, any> = {};
-      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 'comp_naam', 'email', 'org_wl_email'];
+      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 'comp_naam', 'email', 'org_wl_email', 'to', 'subject', 'type', 'status', 'created_at'];
 
       // Include ID
       keyFields.id = doc.id;

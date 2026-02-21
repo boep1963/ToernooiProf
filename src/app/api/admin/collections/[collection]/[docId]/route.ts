@@ -32,6 +32,7 @@ export async function GET(
       'device_config',
       'scoreboards',
       'news',
+      'email_queue',
     ];
 
     if (!validCollections.includes(collection)) {
@@ -101,6 +102,7 @@ export async function PUT(
       'device_config',
       'scoreboards',
       'news',
+      'email_queue',
     ];
 
     if (!validCollections.includes(collection)) {
@@ -175,6 +177,7 @@ export async function DELETE(
       'device_config',
       'scoreboards',
       'news',
+      'email_queue',
     ];
 
     if (!validCollections.includes(collection)) {

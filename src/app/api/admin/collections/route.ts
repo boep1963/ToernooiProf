@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       'device_config',
       'scoreboards',
       'news',
+      'email_queue',
     ];
 
     // Get document count for each collection
