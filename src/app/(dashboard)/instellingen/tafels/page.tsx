@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface DeviceConfig {
   id?: string;
@@ -219,13 +220,10 @@ export default function TafelsInstellingenPage() {
   return (
     <div>
       {/* Breadcrumb */}
-      <nav className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        <Link href="/instellingen" className="hover:text-green-600 dark:hover:text-green-400">
-          Instellingen
-        </Link>
-        <span className="mx-2">›</span>
-        <span className="text-slate-700 dark:text-slate-200">Bediening tafels</span>
-      </nav>
+      <Breadcrumb items={[
+        { label: 'Instellingen', href: '/instellingen' },
+        { label: 'Bediening tafels' },
+      ]} />
 
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Bediening scoreborden

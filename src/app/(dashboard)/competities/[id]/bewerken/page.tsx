@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -170,12 +171,12 @@ export default function CompetitieBewerkenPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">{error}</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
@@ -187,22 +188,10 @@ export default function CompetitieBewerkenPage() {
       )}
 
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push(`/competities/${compNr}`)}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar competitie"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Competitie bewerken
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 ml-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Competitie bewerken
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
           Wijzig de instellingen van de competitie.
         </p>
       </div>

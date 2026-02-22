@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface Advertisement {
   id: string;
@@ -166,17 +167,11 @@ export default function AdvertentiesPage() {
   if (loading) {
     return (
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <Link
-            href="/instellingen"
-            className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Advertenties</h1>
-        </div>
+        <Breadcrumb items={[
+          { label: 'Instellingen', href: '/instellingen' },
+          { label: 'Advertenties' },
+        ]} />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Advertenties</h1>
         <div className="flex items-center justify-center py-12">
           <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -186,18 +181,12 @@ export default function AdvertentiesPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link
-          href="/instellingen"
-          className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Link>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Advertenties</h1>
-      </div>
+      {/* Breadcrumb + Header */}
+      <Breadcrumb items={[
+        { label: 'Instellingen', href: '/instellingen' },
+        { label: 'Advertenties' },
+      ]} />
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Advertenties</h1>
 
       {/* Description */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">

@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import { fromInputDate } from '@/lib/dateUtils';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
@@ -132,22 +133,14 @@ export default function NieuweCompetitie() {
   return (
     <div>
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push('/competities')}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar competities"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Nieuwe competitie
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 ml-8">
+        <Breadcrumb items={[
+          { label: 'Competities', href: '/competities' },
+          { label: 'Nieuwe competitie' },
+        ]} />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Nieuwe competitie
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
           Vul de gegevens in om een nieuwe competitie aan te maken.
         </p>
       </div>

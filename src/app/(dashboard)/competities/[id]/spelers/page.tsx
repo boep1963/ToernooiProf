@@ -579,7 +579,7 @@ export default function CompetitieSpelersPage() {
                           setShowRemoveDialog(true);
                           fetchResultCount(player.spc_nummer);
                         }}
-                        className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:underline font-medium transition-colors"
+                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
                       >
                         Verwijderen
                       </button>

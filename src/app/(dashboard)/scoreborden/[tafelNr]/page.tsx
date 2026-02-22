@@ -384,7 +384,7 @@ export default function ScoreboardPage() {
         <div className="text-center">
           <p className="text-red-400 text-xl mb-4">{error || 'Geen data beschikbaar'}</p>
           <Link href="/scoreborden" className="text-green-400 hover:text-green-300 underline text-lg">
-            Terug naar overzicht
+            Terug naar scoreborden
           </Link>
         </div>
       </div>
@@ -694,7 +694,7 @@ export default function ScoreboardPage() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Terug
+            Scoreborden
           </Link>
         </div>
       </div>
@@ -1044,7 +1044,7 @@ export default function ScoreboardPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Terug
+          Scoreborden
         </Link>
       </div>
     </div>

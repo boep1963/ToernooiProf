@@ -113,12 +113,12 @@ export default function CompetitieDetailPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">{error || 'Competitie niet gevonden.'}</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
