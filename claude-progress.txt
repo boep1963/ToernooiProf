@@ -3705,3 +3705,26 @@ Changes:
 - Verified across all pages, zero console errors
 
 CURRENT STATUS: 261/299 features passing (87.3%)
+
+
+=== Session - 2026-02-22 (Features #258, #259) ===
+Agent: Coding Agent - Contact Form Extension + Competition Overview Simplification
+
+FEATURE #258: Contactformulier uitbreiden met programmakeuze en onderwerp
+STATUS: COMPLETED AND PASSING
+- Added Afzendergegevens card: Vereniging, Contactpersoon, E-mailadres, Inlogcode
+- Added required Programma dropdown: ClubMatch, ToernooiProf
+- Changed Onderwerp to: Vraag (default), Klacht, Suggestie
+- Created /api/contact/reply for admin replies via email_queue
+- Added contact_messages to admin panel with reply modal and beantwoord status
+- Added org_code to session API response
+GIT COMMIT: 93fc07e
+
+FEATURE #259: Competitie-overzicht kolommen vereenvoudigen
+STATUS: COMPLETED AND PASSING
+- Removed columns: Punten, Moyenne, Min Car, Max brt, Vast Brt
+- Kept columns: Nr, Naam, Datum, Discipline, Acties
+- Cleaned up unused constants and interface fields
+GIT COMMIT: 607b49f
+
+CURRENT STATUS: 262/299 features passing (87.6%)
