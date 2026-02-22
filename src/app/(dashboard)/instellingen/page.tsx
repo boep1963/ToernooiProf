@@ -10,12 +10,6 @@ const settingsLinks = [
     description: 'Bekijk en wijzig uw accountgegevens en organisatie-instellingen.',
     icon: '👤',
   },
-  {
-    href: '/instellingen/advertenties',
-    title: 'Advertenties',
-    description: 'Beheer de slideshow met advertenties.',
-    icon: '📺',
-  },
 ];
 
 export default function InstellingenPage() {

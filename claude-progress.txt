@@ -4139,3 +4139,13 @@ VERIFICATION RESULTS:
 
 GIT COMMIT: 3f231d8
 CURRENT STATUS: 293/299 features passing (98.0%)
+
+=== Session - 2026-02-22 (Features #294, #295) ===
+Agent: Coding Agent - Ledenbeheer Improvements
+
+ASSIGNED FEATURES: #294, #295
+STATUS: BOTH COMPLETED AND PASSING
+Feature #294: Members sorted alphabetically by full name using localeCompare
+Feature #295: Print button added with A4 portrait print styles and print-only header
+VERIFICATION: Members page loads, alphabetical sort confirmed, print button visible, zero console errors
+CURRENT STATUS: 293/299 features passing (98.0%)

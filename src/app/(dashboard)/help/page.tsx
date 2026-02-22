@@ -274,7 +274,6 @@ const helpTopics: HelpTopic[] = [
           <li><strong>Logo:</strong> Upload uw eigen clublogo.</li>
           <li><strong>Organisatienaam:</strong> Wijzig de naam van uw organisatie.</li>
           <li><strong>Nieuwsbrief:</strong> Kies of u de nieuwsbrief wilt ontvangen.</li>
-          <li><strong>Advertenties:</strong> Beheer de slideshow-afbeeldingen.</li>
           <li><strong>Account:</strong> Bekijk uw accountgegevens of verwijder uw account.</li>
         </ul>
       </div>
