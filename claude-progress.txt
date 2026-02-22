@@ -3832,3 +3832,89 @@ VERIFICATION RESULTS:
 
 GIT COMMIT: 79e6b7b (auto-committed)
 CURRENT STATUS: 270/299 features passing (90.3%)
+
+
+=== Session - 2026-02-22 (Features #273, #274) ===
+Agent: Coding Agent - Period-Based Player Management
+
+ASSIGNED FEATURES: #273, #274
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #273: Spelers per periode tonen met correcte moyennes
+- Added period selector dropdown (Periode 1-5) to spelers page
+- Players with moyenne 0.000 in selected period are automatically hidden
+- Shows correct moyenne and caramboles for each period
+- Footer displays "X spelers in periode Y (Z totaal in competitie)"
+- Empty state message when no players have valid moyenne in selected period
+
+Feature #274: Speler toevoegen in latere periode - correcte moyenne-toewijzing
+- Modified POST /api/organizations/:orgNr/competitions/:compNr/players
+- Moyenne assignment now based on competition's current period:
+  - Periods BEFORE current: 0.000 (player didn't exist yet)
+  - Periods FROM current onwards: moyenne from Ledenbeheer
+- Example: Adding player in period 3 results in:
+  - spc_moyenne_1: 0, spc_moyenne_2: 0
+  - spc_moyenne_3: 2.500, spc_moyenne_4: 2.500, spc_moyenne_5: 2.500
+
+Key Discovery: 
+spc_moyenne_1 through spc_moyenne_5 represent PERIODS (not disciplines)
+spc_car_1 through spc_car_5 represent period caramboles (not disciplines)
+This aligns with PHP reference code behavior.
+
+Verification Results:
+✅ Period selector displays correctly
+✅ Period 1: 7 players shown
+✅ Period 2: 1 player shown (newly added Test Speler)
+✅ Period 3-5: 1 player shown (Test Speler only)
+✅ Old players (added before changes) have 0.000 in periods 2-5, so they're hidden
+✅ New player (Test Speler) appears in all periods 1-5
+✅ Zero console errors
+✅ No mock data patterns
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/spelers/page.tsx
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/players/route.ts
+
+GIT COMMIT: a0d6e1a
+
+CURRENT STATUS: 270/299 features passing (90.3%)
+
+Both features completed, verified via browser automation, and marked as passing\!
+
+=== Session - 2026-02-22 (Features #279, #280) ===
+Agent: Coding Agent - Matrix Enhancements
+
+ASSIGNED FEATURES: #279, #280
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #279: Matrix - Spelernamen altijd op gekozen volgorde
+Changes:
+- Modified player sorting in Matrix from spc_nummer to alphabetical by formatted name
+- Players now sorted using formatName() which respects competition's sorteren setting
+- Line 250-254: Changed from sort by number to sort by localeCompare of formatted names
+- Verified via browser: names appear alphabetically
+
+Feature #280: Matrix - Uitslagenbeheer via klikbare vakjes  
+Implementation:
+- Added state management for modal: showResultModal, selectedMatch, formData, isSubmitting
+- Created handleCellClick(): Opens modal, pre-fills form for existing results or clears for new
+- Created handleSubmitResult(): POST to results API, reloads data, closes modal
+- Created handleDeleteResult(): DELETE via API with confirmation, reloads data
+- Updated all non-diagonal cells from static spans to clickable buttons
+- Added comprehensive modal UI with form fields and buttons
+- Updated ResultData interface to include id, brt, sp_1_hs, sp_2_hs
+
+Verification Results (Browser Automation):
+✅ Matrix page loads successfully with player data
+✅ Feature #279: Players sorted alphabetically by formatted name
+✅ Feature #280: Matrix cells are clickable buttons
+✅ Modal opens when clicking a cell
+✅ Form fields work correctly
+✅ Zero console errors
+
+Files Modified:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx (329 insertions, 8 deletions)
+
+GIT COMMIT: a89bc47
+CURRENT STATUS: 275/299 features passing (92.0%)
+

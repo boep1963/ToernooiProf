@@ -121,11 +121,80 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     console.log(`[PERIODS] Reverting competition period from ${currentPeriode} to ${previousPeriode}`);
     await compDoc.ref.update({ periode: previousPeriode });
 
+    // Feature #276: Remove players with moyenne 0.000 in the previous period
+    // When reverting to a previous period, players who were added later (in the deleted period)
+    // will have moyenne 0.000 in the previous period and should be automatically removed
+    const previousMoyKey = `spc_moyenne_${previousPeriode}`;
+    console.log(`[PERIODS] Checking for players with moyenne 0.000 in period ${previousPeriode}...`);
+
+    let removedPlayers = 0;
+    const playersToRemove = [];
+
+    for (const doc of playersSnapshot.docs) {
+      const playerData = doc.data();
+      const previousMoyenne = Number(playerData[previousMoyKey]) || 0;
+
+      if (previousMoyenne === 0) {
+        const playerNummer = Number(playerData.spc_nummer);
+        playersToRemove.push({ doc, playerNummer });
+      }
+    }
+
+    // Delete players with 0.000 moyenne and their related data
+    for (const { doc, playerNummer } of playersToRemove) {
+      console.log(`[PERIODS] Removing player ${playerNummer} with moyenne 0.000 in period ${previousPeriode}...`);
+
+      // Delete all results for this player in the previous period
+      const playerResultsSnapshot = await db.collection('results')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .where('periode', '==', previousPeriode)
+        .get();
+
+      const playerResults = playerResultsSnapshot.docs.filter((resultDoc) => {
+        const data = resultDoc.data();
+        const sp1 = Number(data?.sp_1_nr);
+        const sp2 = Number(data?.sp_2_nr);
+        return sp1 === playerNummer || sp2 === playerNummer;
+      });
+
+      for (const resultDoc of playerResults) {
+        await resultDoc.ref.delete();
+      }
+
+      // Delete all matches for this player in the previous period
+      const playerMatchesSnapshot = await db.collection('matches')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .where('periode', '==', previousPeriode)
+        .get();
+
+      const playerMatches = playerMatchesSnapshot.docs.filter((matchDoc) => {
+        const data = matchDoc.data();
+        const numA = Number(data?.nummer_A);
+        const numB = Number(data?.nummer_B);
+        return numA === playerNummer || numB === playerNummer;
+      });
+
+      for (const matchDoc of playerMatches) {
+        await matchDoc.ref.delete();
+      }
+
+      // Delete the player record
+      await doc.ref.delete();
+      removedPlayers++;
+
+      console.log(`[PERIODS] Player ${playerNummer} removed (moyenne 0.000 in period ${previousPeriode})`);
+    }
+
+    console.log(`[PERIODS] Removed ${removedPlayers} player(s) with moyenne 0.000`);
+
     return NextResponse.json({
       message: `Periode ${periodeNr} is succesvol verwijderd`,
       deleted_matches: deletedMatches,
       deleted_results: deletedResults,
       cleared_players: clearedPlayers,
+      removed_players: removedPlayers,
       new_periode: previousPeriode,
     });
   } catch (error) {
