@@ -175,11 +175,11 @@ export default function CompetitieDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max beurten</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max aantal beurten</p>
             <p className="text-sm text-slate-900 dark:text-white">{competition.max_beurten}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast beurten</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast aantal beurten</p>
             <p className="text-sm text-slate-900 dark:text-white">{competition.vast_beurten === 0 ? 'Nee' : 'Ja'}</p>
           </div>
           <div>
