@@ -194,9 +194,9 @@ export default function CompetitionControlePage() {
               <span className="font-medium"> spelersgegevens</span> (duplicaten, ontbrekende namen),
               <span className="font-medium"> wedstrijdplanning</span> (conflicten, missende wedstrijden), en
               <span className="font-medium"> uitslagen</span> (onmogelijke scores, inconsistenties).
-              <strong className="block mt-1">Fouten</strong> zijn kritieke problemen die opgelost moeten worden.
-              <strong>Waarschuwingen</strong> zijn aandachtspunten die mogelijk actie vereisen.
-              <strong>Informatie</strong> items zijn slechts ter info en geen problemen.
+              <strong className="block mt-2">Fouten</strong> zijn kritieke problemen die opgelost moeten worden.
+              <strong className="block mt-1">Waarschuwingen</strong> zijn aandachtspunten die mogelijk actie vereisen.
+              <strong className="block mt-1">Informatie</strong> items zijn slechts ter info en geen problemen.
             </p>
           </div>
         </div>

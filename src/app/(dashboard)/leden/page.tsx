@@ -43,7 +43,7 @@ function getMemberFullName(member: MemberItem): string {
 }
 
 export default function LedenPage() {
-  const { orgNummer } = useAuth();
+  const { orgNummer, organization } = useAuth();
   const pathname = usePathname();
   const [members, setMembers] = useState<MemberItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +58,53 @@ export default function LedenPage() {
     setSearchQuery('');
   }, [pathname]);
 
+  // Print CSS styles
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        @page { size: A4 portrait; margin: 2cm; }
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-header, #print-header * { visibility: visible; }
+        #print-area {
+          position: absolute;
+          left: 0;
+          top: 4cm;
+          width: 100%;
+          color: black !important;
+        }
+        #print-header {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          margin-bottom: 1cm;
+          border-bottom: 2px solid #333;
+          padding-bottom: 0.5cm;
+          color: black !important;
+        }
+        #print-area table { border-collapse: collapse; width: 100%; }
+        #print-area th, #print-area td {
+          border: 1px solid #333 !important;
+          padding: 6px !important;
+          color: black !important;
+          background: white !important;
+        }
+        #print-area th { background: #f0f0f0 !important; font-weight: bold; }
+        .print\\:hidden { display: none !important; }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   const fetchMembers = useCallback(async () => {
     if (!orgNummer) return;
     setIsLoading(true);
@@ -66,9 +113,13 @@ export default function LedenPage() {
       const res = await fetch(`/api/organizations/${orgNummer}/members`);
       if (res.ok) {
         const data = await res.json();
-        // Sort by spa_nummer
+        // Sort alphabetically by full name
         const sorted = (data.members || []).sort(
-          (a: MemberItem, b: MemberItem) => a.spa_nummer - b.spa_nummer
+          (a: MemberItem, b: MemberItem) => {
+            const nameA = getMemberFullName(a).toLowerCase();
+            const nameB = getMemberFullName(b).toLowerCase();
+            return nameA.localeCompare(nameB, 'nl');
+          }
         );
         setMembers(sorted);
       } else {
@@ -151,15 +202,28 @@ export default function LedenPage() {
             Beheer de leden van uw vereniging
           </p>
         </div>
-        <Link
-          href="/leden/nieuw"
-          className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nieuw lid
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePrint}
+            disabled={members.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed font-medium rounded-lg transition-colors shadow-sm"
+            title={members.length === 0 ? 'Geen leden om te printen' : 'Print ledenoverzicht'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print
+          </button>
+          <Link
+            href="/leden/nieuw"
+            className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nieuw lid
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -187,7 +251,7 @@ export default function LedenPage() {
 
       {/* Search input */}
       {!isLoading && members.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-4 print:hidden">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,26 +308,40 @@ export default function LedenPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-          {/* No results from search */}
-          {filteredMembers.length === 0 && searchQuery.trim() !== '' ? (
-            <div className="p-8 text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+        <>
+          {/* Print-only header */}
+          <div id="print-header" className="hidden print:block mb-4">
+            <h1 className="text-xl font-bold mb-2">{organization?.org_naam || 'Ledenoverzicht'}</h1>
+            <p className="text-sm mb-1">Ledenbeheer</p>
+            <p className="text-xs">Afgedrukt op: {new Date().toLocaleDateString('nl-NL', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+
+          <div id="print-area" className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            {/* No results from search */}
+            {filteredMembers.length === 0 && searchQuery.trim() !== '' ? (
+              <div className="p-8 text-center">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <p className="text-slate-600 dark:text-slate-400 mb-2">
+                  Geen leden gevonden voor &ldquo;{searchQuery.trim()}&rdquo;
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-sm text-green-700 dark:text-green-400 hover:underline"
+                >
+                  Zoekopdracht wissen
+                </button>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 mb-2">
-                Geen leden gevonden voor &ldquo;{searchQuery.trim()}&rdquo;
-              </p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-sm text-green-700 dark:text-green-400 hover:underline"
-              >
-                Zoekopdracht wissen
-              </button>
-            </div>
-          ) : (
+            ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -276,7 +354,7 @@ export default function LedenPage() {
                           {d.label}
                         </th>
                       ))}
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
+                      <th className="print:hidden text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -295,7 +373,7 @@ export default function LedenPage() {
                             {formatMoyenne(member[d.key] as number)}
                           </td>
                         ))}
-                        <td className="px-4 py-3 text-right">
+                        <td className="print:hidden px-4 py-3 text-right">
                           {deleteConfirm === member.spa_nummer ? (
                             <div className="flex items-center justify-end gap-2">
                               <button
@@ -344,7 +422,8 @@ export default function LedenPage() {
               </div>
             </>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

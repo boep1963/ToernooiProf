@@ -505,7 +505,7 @@ export default function AccountPage() {
               Organisatie logo
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Upload een eigen logo voor uw organisatie. Het logo wordt weergegeven in de header en op scoreborden.
+              Upload een eigen logo voor uw organisatie. Het logo wordt weergegeven in de header.
             </p>
 
             {/* Current Logo Display */}

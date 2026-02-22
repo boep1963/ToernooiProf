@@ -298,3 +298,450 @@
  GET /dashboard 200 in 183ms
  GET /api/auth/session 401 in 45ms
  GET /inloggen 200 in 24ms
+ ○ Compiling /api/auth/login-code ...
+ ✓ Compiled /api/auth/login-code in 563ms (862 modules)
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 1088ms
+ GET /dashboard 200 in 150ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 162ms
+ ✓ Compiled /api/organizations/[orgNr]/matches/count in 270ms (866 modules)
+ ✓ Compiled (871 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/api/organizations/[orgNr]/members/route.js:228:39)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:114)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:47)
+    at Object.<anonymous> (.next/server/app/api/organizations/[orgNr]/members/route.js:232:3) {
+  page: '/api/organizations/1205/members'
+}
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/api/organizations/[orgNr]/members/route.js:228:39)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:114)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:47)
+    at Object.<anonymous> (.next/server/app/api/organizations/[orgNr]/members/route.js:232:3) {
+  page: '/api/organizations/1205/members'
+}
+[COMPETITIONS] Querying database for competitions of org: 1205
+[DB] Connected to Google Firestore
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 1686ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 1728ms
+ GET /api/organizations/1205/members 500 in 1717ms
+ GET /api/organizations/1205/members 500 in 1750ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 2027ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 2019ms
+ ✓ Compiled in 1982ms (446 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /dashboard 200 in 235ms
+ GET /competities/1/periodes 200 in 255ms
+ GET /dashboard 200 in 157ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 178ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/api/organizations/[orgNr]/members/route.js:228:39)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:114)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:47)
+    at Object.<anonymous> (.next/server/app/api/organizations/[orgNr]/members/route.js:232:3) {
+  page: '/api/organizations/1205/members'
+}
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/api/organizations/[orgNr]/members/route.js:228:39)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:114)
+    at <unknown> (.next/server/app/api/organizations/[orgNr]/members/route.js:229:47)
+    at Object.<anonymous> (.next/server/app/api/organizations/[orgNr]/members/route.js:232:3) {
+  page: '/api/organizations/1205/members'
+}
+ GET /api/organizations/1205/members 500 in 412ms
+ GET /api/organizations/1205/members 500 in 451ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 493ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 480ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 616ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 647ms
+ ✓ Compiled in 1262ms (446 modules)
+ GET /competities 200 in 187ms
+ GET /competities 200 in 24ms
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 378ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 409ms
+ GET /competities/3 200 in 77ms
+ ○ Compiling /api/organizations/[orgNr]/competitions/[compNr] ...
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr] in 561ms (858 modules)
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 922ms
+ GET /api/organizations/1205/competitions/3 200 in 1116ms
+ ✓ Compiled in 339ms (446 modules)
+ GET /competities/3 200 in 103ms
+ GET /competities/3/periodes 200 in 117ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 382ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/results in 438ms (861 modules)
+ ✓ Compiled (864 modules)
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 1121ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1632ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1698ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 1713ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 1644ms
+ ✓ Compiled in 378ms (446 modules)
+ GET /competities/3/periodes 200 in 92ms
+ ✓ Compiled in 390ms (446 modules)
+ ○ Compiling /competities/[id]/spelers ...
+ ✓ Compiled /competities/[id]/spelers in 962ms (1303 modules)
+ GET /competities/3/spelers 200 in 1863ms
+ GET /competities/3/spelers 200 in 48ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 297ms
+ GET /api/organizations/1205/competitions/3 200 in 419ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 509ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 512ms
+ ⨯ Failed to generate static paths for /api/organizations/[orgNr]/members:
+[TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError'
+}
+ ⨯ Failed to generate static paths for /api/organizations/[orgNr]/members:
+[TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError'
+}
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1220ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1306ms
+ ✓ Compiled in 606ms (448 modules)
+ GET /competities/3/spelers 200 in 155ms
+ ✓ Compiled in 347ms (448 modules)
+ GET /competities/3/spelers 200 in 91ms
+ ✓ Compiled in 364ms (448 modules)
+ GET /competities/3/spelers 200 in 46ms
+ GET /competities/3/periodes 200 in 76ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 271ms
+ GET /api/organizations/1205/competitions/3 200 in 281ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 1035ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 985ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1130ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1128ms
+ ✓ Compiled in 326ms (448 modules)
+ GET /competities/3/periodes 200 in 61ms
+ ✓ Compiled in 280ms (448 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 563ms (859 modules)
+ GET /competities/3/periodes 404 in 657ms
+ GET /competities/3/periodes 200 in 177ms
+ ✓ Compiled /api/auth/session in 297ms (861 modules)
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 534ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 302ms
+ GET /api/organizations/1205/competitions/3 200 in 366ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 879ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 915ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 987ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 996ms
+ ○ Compiling / ...
+ ✓ Compiled / in 892ms (869 modules)
+ GET / 200 in 1181ms
+ ✓ Compiled /favicon.ico in 411ms (871 modules)
+ GET /inloggen 200 in 1025ms
+ GET /favicon.ico 200 in 28ms
+ ○ Compiling /api/organizations/[orgNr]/competitions/[compNr]/periods ...
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/periods in 593ms (1307 modules)
+[PERIODS] Fetching competition for period creation...
+[DB] Connected to Google Firestore
+[PERIODS] Updating competition period from 2 to 3
+[PERIODS] Updating player 7: moyenne=3, car=75
+[PERIODS] Carrying over player 9: moyenne=2.5, car=63
+[PERIODS] Carrying over player 6: moyenne=1.5, car=38
+[PERIODS] Carrying over player 5: moyenne=3.5, car=88
+[PERIODS] Carrying over player 3: moyenne=0.2, car=10
+[PERIODS] Carrying over player 2: moyenne=2.5, car=63
+[PERIODS] Carrying over player 8: moyenne=1.5, car=38
+[PERIODS] Period 3 created. Updated 7 players.
+ POST /api/organizations/1205/competitions/3/periods 201 in 5633ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[RESULTS] Querying database for results of competition: 3 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+ GET /api/organizations/1205/competitions/3 200 in 244ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 811ms
+[RESULTS] Found 0 results for competition 3 (after filters)
+ GET /api/organizations/1205/competitions/3/results 200 in 878ms
+ ✓ Compiled in 1747ms (1319 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(auth)/inloggen/page.js:685:39)
+    at <unknown> (.next/server/app/(auth)/inloggen/page.js:686:359)
+    at <unknown> (.next/server/app/(auth)/inloggen/page.js:686:47)
+    at Object.<anonymous> (.next/server/app/(auth)/inloggen/page.js:689:3) {
+  page: '/inloggen'
+}
+ GET /competities/3/periodes 200 in 432ms
+ GET /inloggen 500 in 588ms
+ GET /inloggen 200 in 358ms
+ GET /competities/3/spelers 200 in 102ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+ GET /api/organizations/1205/competitions/3 200 in 250ms
+ ○ Compiling /api/organizations/[orgNr]/members ...
+ ✓ Compiled /api/organizations/[orgNr]/members in 512ms (873 modules)
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 1119ms
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1534ms
+ GET /api/organizations/1205/members 500 in 1589ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 1540ms
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+ GET /api/organizations/1205/members 500 in 498ms
+ ✓ Compiled /api/auth/login-code in 398ms (875 modules)
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 837ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1706ms (880 modules)
+ GET /dashboard 200 in 2055ms
+ ✓ Compiled in 3.3s (1314 modules)
+ GET /dashboard 200 in 3183ms
+ GET /competities/3/spelers 200 in 2364ms
+ GET /api/auth/session 404 in 3467ms
+ GET /dashboard 200 in 64ms
+ GET /competities/3/spelers 200 in 94ms
+ GET /dashboard 200 in 114ms
+ GET /inloggen 200 in 94ms
+ GET /competities/3/spelers 200 in 83ms
+ GET /inloggen 200 in 58ms
+ GET /competities/3/spelers 200 in 61ms
+ ✓ Compiled in 303ms (448 modules)
+ GET /inloggen 200 in 94ms
+ GET /competities/3/spelers 200 in 88ms
+ GET /inloggen 200 in 31ms
+ GET /competities/3/spelers 200 in 47ms
+ GET /inloggen 200 in 24ms
+ GET /inloggen 200 in 60ms
+ GET /competities/3/spelers 200 in 54ms
+ GET /inloggen 200 in 45ms
+ GET /competities/3/spelers 200 in 41ms
+ GET /competities/3/spelers 200 in 36ms
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 488ms
+ GET /dashboard 200 in 135ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 176ms
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+ ○ Compiling /api/organizations/[orgNr]/matches/count ...
+ ✓ Compiled /api/organizations/[orgNr]/matches/count in 1201ms (1318 modules)
+[COMPETITIONS] Querying database for competitions of org: 1205
+[DB] Connected to Google Firestore
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+ GET /api/organizations/1205/members 500 in 1491ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 1537ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 1597ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 1683ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 1681ms
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+ GET /api/organizations/1205/members 500 in 2177ms
+ ✓ Compiled in 395ms (448 modules)
+ GET /dashboard 200 in 107ms
+ GET /competities/3/spelers 200 in 99ms
+ ○ Compiling /leden ...
+ ✓ Compiled /leden in 727ms (1320 modules)
+ GET /leden 200 in 796ms
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+ ⨯ [TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError',
+  page: '/api/organizations/1205/members'
+}
+ GET /api/organizations/1205/members 500 in 567ms
+ GET /api/organizations/1205/members 500 in 567ms
+ ○ Compiling /competities/[id]/controle ...
+ ✓ Compiled /competities/[id]/controle in 881ms (1317 modules)
+ GET /competities/3/controle 200 in 1633ms
+ ○ Compiling /api/organizations/[orgNr]/competitions/[compNr]/validate ...
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/validate in 673ms (1319 modules)
+[DB] Connected to Google Firestore
+ GET /api/organizations/1205/competitions/3/validate 200 in 3331ms
+ GET /api/organizations/1205/competitions/3/validate 200 in 3315ms
+ ✓ Compiled in 439ms (452 modules)
+ GET /leden 404 in 306ms
+ GET /competities/3/controle 404 in 298ms
+ GET /leden 404 in 268ms
+ GET /competities/3/controle 404 in 262ms
+ ✓ Compiled in 878ms (1323 modules)
+ ✓ Compiled in 1034ms (1320 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/_not-found/page.js:383:39)
+    at <unknown> (.next/server/app/_not-found/page.js:384:135)
+    at <unknown> (.next/server/app/_not-found/page.js:384:47)
+    at Object.<anonymous> (.next/server/app/_not-found/page.js:387:3)
+ GET /leden 500 in 1050ms
+ ✓ Compiled in 521ms (452 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/_not-found/page.js:383:39)
+    at <unknown> (.next/server/app/_not-found/page.js:384:135)
+    at <unknown> (.next/server/app/_not-found/page.js:384:47)
+    at Object.<anonymous> (.next/server/app/_not-found/page.js:387:3)
+ GET /leden 500 in 114ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 964ms (1308 modules)
+ GET /leden 200 in 1104ms
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 307ms
+[MEMBERS] Querying database for members of org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 1011ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 1013ms
+ ✓ Compiled in 362ms (452 modules)
+ GET /leden 200 in 44ms
+ GET /competities/3/controle 200 in 200ms
+ ⨯ Failed to generate static paths for /competities/[id]/controle:
+TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(dashboard)/competities/[id]/controle/page.js:619:39)
+    at <unknown> (.next/server/app/(dashboard)/competities/[id]/controle/page.js:620:135) {
+  type: 'TypeError'
+}
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 172ms
+ ⨯ Failed to generate static paths for /api/organizations/[orgNr]/competitions/[compNr]/validate:
+[TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError'
+}
+ ⨯ Failed to generate static paths for /api/organizations/[orgNr]/competitions/[compNr]/validate:
+[TypeError: Cannot read properties of undefined (reading 'call')] {
+  type: 'TypeError'
+}
+ GET /api/organizations/1205/competitions/3/validate 200 in 1865ms
+ GET /api/organizations/1205/competitions/3/validate 200 in 1912ms
+ ✓ Compiled in 588ms (452 modules)
+ GET /leden 200 in 147ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(dashboard)/competities/[id]/controle/page.js:619:39)
+    at <unknown> (.next/server/app/(dashboard)/competities/[id]/controle/page.js:620:135) {
+  type: 'TypeError',
+  page: '/competities/3/controle'
+}
+ GET /competities/3/controle 500 in 1070ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(dashboard)/competities/[id]/controle/page.js:619:39)
+    at <unknown> (.next/server/app/(dashboard)/competities/[id]/controle/page.js:620:135) {
+  type: 'TypeError',
+  page: '/competities/3/controle'
+}
+ GET /competities/3/controle 500 in 522ms
+ ✓ Compiled in 495ms (452 modules)
+ GET /leden 200 in 91ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(dashboard)/competities/[id]/controle/page.js:619:39)
+    at <unknown> (.next/server/app/(dashboard)/competities/[id]/controle/page.js:620:135) {
+  type: 'TypeError',
+  page: '/competities/3/controle'
+}
+ GET /competities/3/controle 500 in 576ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /competities/3/controle 200 in 1378ms
