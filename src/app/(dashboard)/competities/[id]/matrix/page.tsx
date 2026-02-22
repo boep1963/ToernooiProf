@@ -513,7 +513,7 @@ export default function CompetitieMatrixPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4 flex items-center justify-between">
         <div>

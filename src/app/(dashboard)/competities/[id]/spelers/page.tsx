@@ -18,6 +18,7 @@ interface CompetitionData {
   min_car: number;
   punten_sys: number;
   sorteren: number;
+  periode: number;
 }
 
 interface PlayerData {
@@ -341,7 +342,7 @@ export default function CompetitieSpelersPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">

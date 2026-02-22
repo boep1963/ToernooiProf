@@ -228,7 +228,7 @@ export default function CompetitePlanningPage() {
   return (
     <div>
       <div className="print:hidden">
-        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
       </div>
 
       {/* Print header - only visible when printing */}

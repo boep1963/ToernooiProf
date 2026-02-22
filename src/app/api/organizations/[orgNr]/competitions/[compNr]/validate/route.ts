@@ -260,6 +260,7 @@ export async function GET(
       competition: {
         comp_nr: competition.comp_nr,
         comp_naam: competition.comp_naam,
+        periode: competition.periode || 1,
       },
       timestamp: new Date().toISOString(),
       totalIssues: issues.length,

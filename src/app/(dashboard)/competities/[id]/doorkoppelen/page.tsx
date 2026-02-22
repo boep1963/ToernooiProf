@@ -174,7 +174,7 @@ export default function DoorkoppelenPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition?.comp_naam || 'Competitie'} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition?.comp_naam || 'Competitie'} periode={competition?.periode || 1} />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">

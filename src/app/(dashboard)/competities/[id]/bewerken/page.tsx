@@ -184,7 +184,7 @@ export default function CompetitieBewerkenPage() {
   return (
     <div>
       {competition && (
-        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
       )}
 
       <div className="mb-6">

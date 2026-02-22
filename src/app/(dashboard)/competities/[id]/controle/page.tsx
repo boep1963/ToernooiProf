@@ -16,6 +16,7 @@ interface ValidationReport {
   competition: {
     comp_nr: number;
     comp_naam: string;
+    periode: number;
   };
   timestamp: string;
   totalIssues: number;
@@ -151,7 +152,7 @@ export default function CompetitionControlePage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={report.competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={report.competition.comp_naam} periode={report.competition.periode} />
 
       <div className="mb-6">
         <div className="flex items-center justify-between">

@@ -138,7 +138,7 @@ export default function CompetitieDetailPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -172,7 +172,7 @@ export default function CompetitieDetailPage() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Moyenne-formule</p>
-            <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+            <p className="text-sm text-slate-900 dark:text-white">x{multiplier}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max aantal beurten</p>
@@ -187,13 +187,8 @@ export default function CompetitieDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">{SORTEREN_LABELS[competition.sorteren] || '-'}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Periode</p>
-            <p className="text-sm text-slate-900 dark:text-white">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-green-700 text-white text-xs font-bold rounded">
-                {competition.periode || 1}
-              </span>
-              <span className="ml-1 text-slate-500 dark:text-slate-400">van 5</span>
-            </p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Min. caramboles</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.min_car}</p>
           </div>
         </div>
       </div>
