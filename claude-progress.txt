@@ -3749,3 +3749,36 @@ FEATURE #263: Periode-indicator in alle competitieschermen
 GIT COMMIT: 03d5304
 
 UPDATED STATUS: 264/299 features passing
+
+
+=== Session - 2026-02-22 (Features #268, #269) ===
+Agent: Coding Agent - Dagplanning Print & Leave Warning
+
+FEATURE #268: Dagplanning - Printmogelijkheid
+STATUS: COMPLETED AND PASSING (already implemented)
+- Print button already existed on Step 2 of Dagplanning page
+- Print CSS styles for A4 portrait layout with margins
+- Print-only header with competition name, discipline, period, date
+- Print-only pairings table visible only when printing
+- Verified in browser: button visible, zero console errors
+
+FEATURE #269: Dagplanning - Waarschuwing bij verlaten en automatisch verwijderen
+STATUS: COMPLETED AND PASSING
+Changes made to src/app/(dashboard)/competities/[id]/planning/page.tsx:
+- Added showLeaveWarning and pendingNavigation state variables
+- Added beforeunload event handler (browser close/refresh warning)
+- Added click event interception for internal navigation links
+- Added handleConfirmLeave: clears dagplanning data, navigates to destination
+- Added handleCancelLeave: closes modal, stays on page
+- Added handleAfsluiten: shows warning when data exists, direct nav otherwise
+- Added "Afsluiten" button (red outline with X icon) to Step 2 action bar
+- Added warning modal with Dutch text:
+  "Als u deze pagina verlaat, vervalt de aangemaakte dagplanning."
+  "Print, zo nodig, de planning eerst uit!"
+  "NB: U kunt altijd, op elk moment, een nieuwe dagplanning maken."
+- Modal has 3 buttons: Annuleren, Eerst printen, Pagina verlaten
+- Afsluiten navigates to /competities (Competitie-overzicht) after confirm
+- Sidebar link clicks intercepted and show warning modal
+- Zero console errors, no mock data patterns
+
+UPDATED STATUS: 266/299 features passing
