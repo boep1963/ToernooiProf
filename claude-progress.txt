@@ -3782,3 +3782,53 @@ Changes made to src/app/(dashboard)/competities/[id]/planning/page.tsx:
 - Zero console errors, no mock data patterns
 
 UPDATED STATUS: 266/299 features passing
+
+
+=== Session - 2026-02-22 (Features #271, #272) ===
+Agent: Coding Agent - Remove Uitslagen Menu + Competition Edit Restrictions
+
+ASSIGNED FEATURES: #271, #272
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #271: Menu Uitslagen geheel verwijderen
+- Removed 3 Uitslagen menu items from CompetitionSubNav
+- Deleted uitslagen directory and all 3 pages
+- Updated Stand page to redirect to Matrix
+- Fixed all broken links
+GIT COMMIT: 79e6b7b
+
+Feature #272: Competitie bewerken - Beperk wijzigbare velden (ALREADY IMPLEMENTED)
+- Editable: comp_naam, comp_datum, sorteren
+- Read-only: discipline, punten_sys, moy_form, min_car, max_beurten, vast_beurten
+- Verified via browser automation
+- Zero console errors
+
+FINAL STATUS: 270/299 features passing (90.3%)
+
+=== Session - 2026-02-22 (Features #267, #270) ===
+Agent: Coding Agent - Dagplanning Help Tips and Cleanup
+
+ASSIGNED FEATURES: #267, #270
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #267: Dagplanning - Helptekst met tips voor even/oneven spelers
+- Added Tips button to Dagplanning page header (blue outline with info icon)
+- Implemented modal with two tips for even/odd player counts
+- Tips displayed in blue info boxes with proper styling
+- Verified via browser automation - modal opens and closes correctly
+
+Feature #270: Dagplanning - Scorebord- en tafelverwijzingen verwijderen
+- Removed reference to table assignment from code comment
+- Page is clean without any scoreboard/table functionality references
+- Verified via browser automation - page displays cleanly
+
+VERIFICATION RESULTS:
+✅ Tips button visible and clickable
+✅ Modal displays both tips with correct Dutch text
+✅ Modal closes when Begrepen clicked
+✅ No scoreboard/table references in UI or comments
+✅ Zero console errors
+✅ No mock data patterns found
+
+GIT COMMIT: 79e6b7b (auto-committed)
+CURRENT STATUS: 270/299 features passing (90.3%)
