@@ -3653,3 +3653,29 @@ Feature #253: Consistente knoppen vs links styling
 GIT COMMIT: e1addac
 
 UPDATED STATUS: 256/299 features passing
+
+
+=== Session - 2026-02-22 (Features #256, #257) ===
+Agent: Coding Agent - Dashboard Cleanup (News + Search removal)
+
+ASSIGNED FEATURES: #256, #257
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #256: Dashboard - Blok Nieuws geheel verwijderen
+- Removed entire News section from Dashboard page (articles, comments, create form)
+- Deleted all /api/news/* routes (4 files: CRUD for articles and comments)
+- Removed NewsReaction type from types/index.ts
+- Removed 'news' and 'news_reactions' from admin collection whitelists (3 files)
+- Removed news_reactions from verify-collections test data
+- Cleaned up db.ts collection initialization lists (removed news/news_reactions)
+- Zero console errors, no mock data patterns found
+
+Feature #257: Dashboard - Blok Snelzoeken geheel verwijderen
+- Removed Snelzoeken (Quick Search) block from Dashboard page
+- Removed all search state variables and handler functions
+- Deleted /api/organizations/[orgNr]/search/route.ts (only used by dashboard)
+- Dashboard now shows: Welcome card + Stats cards (Competities, Leden) only
+- Zero console errors, no mock data patterns found
+GIT COMMIT: 3c53869
+
+CURRENT STATUS: 254/299 features passing
