@@ -392,13 +392,13 @@ export default function CompetitieStandPage() {
             </svg>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
-            Er zijn nog geen uitslagen voor deze periode. Voer eerst uitslagen in.
+            Er zijn nog geen uitslagen voor deze periode. Voer eerst uitslagen in via de Matrix.
           </p>
           <button
-            onClick={() => router.push(`/competities/${compNr}/uitslagen`)}
+            onClick={() => router.push(`/competities/${compNr}/matrix`)}
             className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm"
           >
-            Naar uitslagen
+            Naar Matrix
           </button>
         </div>
       )}

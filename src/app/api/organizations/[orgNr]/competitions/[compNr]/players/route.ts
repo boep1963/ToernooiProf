@@ -123,6 +123,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const discipline = (compData?.discipline as number) || 1;
     const moyForm = (compData?.moy_form as number) || 3;
     const minCar = (compData?.min_car as number) || 10;
+    const currentPeriod = (compData?.periode as number) || 1;
 
     const addedPlayers = [];
     const errors = [];
@@ -163,21 +164,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
         const memberData = memberSnapshot.docs[0].data();
 
-        // Get the moyenne for the competition's discipline
+        // Get the moyenne for the competition's discipline from the member record
         const moyenneField = getMoyenneField(discipline);
         const moyenne = Number(memberData?.[moyenneField] as number) || 0;
 
         // Calculate caramboles: moyenne × formula_multiplier, with minimum enforcement
         const caramboles = calculateCaramboles(moyenne, moyForm, minCar);
 
-        // Build moyennes for all 5 disciplines from the member
-        const spc_moyenne_1 = Number(memberData?.spa_moy_lib) || 0;
-        const spc_moyenne_2 = Number(memberData?.spa_moy_band) || 0;
-        const spc_moyenne_3 = Number(memberData?.spa_moy_3bkl) || 0;
-        const spc_moyenne_4 = Number(memberData?.spa_moy_3bgr) || 0;
-        const spc_moyenne_5 = Number(memberData?.spa_moy_kad) || 0;
+        // Build moyennes for all 5 PERIODS (not disciplines)
+        // Periods before current period get 0.000
+        // Current period and later periods get the moyenne from Ledenbeheer
+        // Example: if currentPeriod=3, then periode 1,2 get 0, and periode 3,4,5 get moyenne
+        const spc_moyenne_1 = currentPeriod <= 1 ? moyenne : 0;
+        const spc_moyenne_2 = currentPeriod <= 2 ? moyenne : 0;
+        const spc_moyenne_3 = currentPeriod <= 3 ? moyenne : 0;
+        const spc_moyenne_4 = currentPeriod <= 4 ? moyenne : 0;
+        const spc_moyenne_5 = currentPeriod <= 5 ? moyenne : 0;
 
-        // Calculate caramboles for all disciplines (stored in spc_car_1 through spc_car_5)
+        // Calculate caramboles for all periods based on the period moyenne
         const spc_car_1 = calculateCaramboles(spc_moyenne_1, moyForm, minCar);
         const spc_car_2 = calculateCaramboles(spc_moyenne_2, moyForm, minCar);
         const spc_car_3 = calculateCaramboles(spc_moyenne_3, moyForm, minCar);

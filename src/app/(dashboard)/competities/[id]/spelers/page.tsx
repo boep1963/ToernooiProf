@@ -85,6 +85,7 @@ export default function CompetitieSpelersPage() {
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [resultCount, setResultCount] = useState<number>(0);
   const [loadingResultCount, setLoadingResultCount] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -126,6 +127,13 @@ export default function CompetitieSpelersPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    // Set selected period to competition's current period when competition loads
+    if (competition?.periode) {
+      setSelectedPeriod(competition.periode);
+    }
+  }, [competition]);
 
   // Get members not yet in the competition
   const availableMembers = members.filter(
@@ -298,18 +306,23 @@ export default function CompetitieSpelersPage() {
     }
   };
 
-  // Get discipline-specific moyenne and caramboles for a player
-  const getPlayerDisciplineMoy = (player: PlayerData): number => {
-    if (!competition) return 0;
-    const key = DISCIPLINE_TO_MOY_KEY[competition.discipline];
-    return key ? Number(player[key]) || 0 : 0;
+  // Get moyenne for a specific period (spc_moyenne_1 through spc_moyenne_5 represent periods, not disciplines)
+  const getPlayerPeriodMoy = (player: PlayerData, period: number): number => {
+    const key = `spc_moyenne_${period}` as keyof PlayerData;
+    return Number(player[key]) || 0;
   };
 
-  const getPlayerDisciplineCar = (player: PlayerData): number => {
-    if (!competition) return 0;
-    const key = DISCIPLINE_TO_CAR_KEY[competition.discipline];
-    return key ? Number(player[key]) || 0 : 0;
+  // Get caramboles for a specific period (spc_car_1 through spc_car_5 represent periods, not disciplines)
+  const getPlayerPeriodCar = (player: PlayerData, period: number): number => {
+    const key = `spc_car_${period}` as keyof PlayerData;
+    return Number(player[key]) || 0;
   };
+
+  // Filter players based on selected period - hide players with 0.000 moyenne
+  const filteredPlayers = players.filter((player) => {
+    const periodMoy = getPlayerPeriodMoy(player, selectedPeriod);
+    return periodMoy > 0;
+  });
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -345,12 +358,33 @@ export default function CompetitieSpelersPage() {
       <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Spelers - {competition.comp_naam}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | Formule: x{multiplier} | Min. caramboles: {competition.min_car}
-        </p>
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Spelers - {competition.comp_naam}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {DISCIPLINES[competition.discipline]} | Formule: x{multiplier} | Min. caramboles: {competition.min_car}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="period-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Periode:
+            </label>
+            <select
+              id="period-select"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+              className="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+            >
+              <option value={1}>Periode 1</option>
+              <option value={2}>Periode 2</option>
+              <option value={3}>Periode 3</option>
+              <option value={4}>Periode 4</option>
+              <option value={5}>Periode 5</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -547,6 +581,20 @@ export default function CompetitieSpelersPage() {
             Er zijn nog geen spelers toegevoegd aan deze competitie.
           </p>
         </div>
+      ) : filteredPlayers.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Geen spelers met een geldig moyenne in periode {selectedPeriod}.
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
+            Spelers met moyenne 0.000 worden niet getoond.
+          </p>
+        </div>
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
@@ -560,39 +608,48 @@ export default function CompetitieSpelersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {players.map((player) => (
-                  <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)} ({getPlayerDisciplineCar(player)})
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
-                      {getPlayerDisciplineMoy(player).toFixed(3)}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-green-700 dark:text-green-400 text-right tabular-nums">
-                      {getPlayerDisciplineCar(player)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => {
-                          setPlayerToRemove(player);
-                          setShowRemoveDialog(true);
-                          fetchResultCount(player.spc_nummer);
-                        }}
-                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
-                      >
-                        Verwijderen
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredPlayers.map((player) => {
+                  const periodMoy = getPlayerPeriodMoy(player, selectedPeriod);
+                  const periodCar = getPlayerPeriodCar(player, selectedPeriod);
+                  return (
+                    <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam)} ({periodCar})
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
+                        {periodMoy.toFixed(3)}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-green-700 dark:text-green-400 text-right tabular-nums">
+                        {periodCar}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => {
+                            setPlayerToRemove(player);
+                            setShowRemoveDialog(true);
+                            fetchResultCount(player.spc_nummer);
+                          }}
+                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
+                        >
+                          Verwijderen
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {players.length} {players.length === 1 ? 'speler' : 'spelers'} in competitie
+              {filteredPlayers.length} {filteredPlayers.length === 1 ? 'speler' : 'spelers'} in periode {selectedPeriod}
+              {filteredPlayers.length !== players.length && (
+                <span className="ml-2 text-slate-400">
+                  ({players.length} totaal in competitie)
+                </span>
+              )}
             </p>
           </div>
         </div>

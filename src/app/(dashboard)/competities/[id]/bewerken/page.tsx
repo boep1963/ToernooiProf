@@ -215,7 +215,7 @@ export default function CompetitieBewerkenPage() {
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
-        {/* Basic Info */}
+        {/* Editable Fields: Name, Date, Sorting */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Algemene gegevens
@@ -262,121 +262,6 @@ export default function CompetitieBewerkenPage() {
                 <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_datum}</p>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Discipline & Scoring */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Discipline & Puntentelling
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="discipline" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Discipline <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="discipline"
-                name="discipline"
-                value={formData.discipline}
-                onChange={handleChange}
-                required
-                aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              >
-                {Object.entries(DISCIPLINES).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="punten_sys" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Puntensysteem <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="punten_sys"
-                name="punten_sys"
-                value={formData.punten_sys}
-                onChange={handleChange}
-                required
-                aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              >
-                {Object.entries(PUNTEN_SYSTEMEN).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="moy_form" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Moyenne-formule
-              </label>
-              <select
-                id="moy_form"
-                name="moy_form"
-                value={formData.moy_form}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              >
-                {Object.entries(MOYENNE_FORMULE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Game Settings */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Spelinstellingen
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label htmlFor="min_car" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Minimaal aantal te maken caramboles
-              </label>
-              <input
-                id="min_car"
-                name="min_car"
-                type="number"
-                min="1"
-                max="10"
-                value={formData.min_car}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="max_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Max aantal beurten
-              </label>
-              <input
-                id="max_beurten"
-                name="max_beurten"
-                type="number"
-                min="1"
-                max="999"
-                value={formData.max_beurten}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="vast_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Vast aantal beurten
-              </label>
-              <select
-                id="vast_beurten"
-                name="vast_beurten"
-                value={formData.vast_beurten}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-              >
-                <option value={0}>Nee</option>
-                <option value={1}>Ja</option>
-              </select>
-            </div>
             <div>
               <label htmlFor="sorteren" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Naam sortering
@@ -391,6 +276,71 @@ export default function CompetitieBewerkenPage() {
                 <option value={1}>Voornaam eerst</option>
                 <option value={2}>Achternaam eerst</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Read-only fields: set at creation, cannot be changed */}
+        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Discipline & Spelinstellingen
+            </h2>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
+              Alleen-lezen
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Deze instellingen zijn vastgelegd bij het aanmaken van de competitie en kunnen niet meer worden gewijzigd.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Discipline
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {DISCIPLINES[formData.discipline as keyof typeof DISCIPLINES] || 'Onbekend'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Puntensysteem
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {PUNTEN_SYSTEMEN[formData.punten_sys] || 'Onbekend'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Moyenne-formule
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {MOYENNE_FORMULE_LABELS[formData.moy_form as keyof typeof MOYENNE_FORMULE_LABELS] || 'Onbekend'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Min. caramboles
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {formData.min_car}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Max aantal beurten
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {formData.max_beurten}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                Vast aantal beurten
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                {formData.vast_beurten === 1 ? 'Ja' : 'Nee'}
+              </div>
             </div>
           </div>
         </div>

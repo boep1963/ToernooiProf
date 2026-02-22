@@ -123,6 +123,7 @@ export default function CompetiteDagplanningPage() {
   const [success, setSuccess] = useState('');
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -252,7 +253,6 @@ export default function CompetiteDagplanningPage() {
     setShowPairings(false);
     setGeneratedPairings([]);
     setSelectedPlayers(new Set());
-    setMatchTableAssignments(new Map());
     setShowLeaveWarning(false);
 
     // Navigate to the pending destination or competition overview
@@ -307,105 +307,6 @@ export default function CompetiteDagplanningPage() {
     const name = formatName(player.spa_vnaam, player.spa_tv, player.spa_anaam);
     const car = player[carKey] || 0;
     return `${name} (${car})`;
-  };
-
-  // Handle table assignment for a match
-  const handleTableAssignment = (pairingKey: string, tableNr: number) => {
-    const newAssignments = new Map(matchTableAssignments);
-    if (tableNr === 0) {
-      newAssignments.delete(pairingKey);
-    } else {
-      newAssignments.set(pairingKey, tableNr);
-    }
-    setMatchTableAssignments(newAssignments);
-  };
-
-  // Create matches and assign to scoreboards
-  const handleCreateMatches = async () => {
-    if (!competition || !orgNummer) return;
-    if (matchTableAssignments.size === 0) {
-      alert('Selecteer eerst tafels voor de wedstrijden die je wilt aanmaken.');
-      return;
-    }
-
-    setIsCreatingMatches(true);
-    let createdCount = 0;
-    const errors: string[] = [];
-
-    try {
-      for (const pairing of generatedPairings) {
-        if (!pairing.player2) continue;
-
-        const pairingKey = `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}`;
-        const assignedTable = matchTableAssignments.get(pairingKey);
-        if (!assignedTable) continue;
-
-        const playerA = pairing.player1;
-        const playerB = pairing.player2;
-        const matchCode = `${selectedPeriode || 1}_${playerA.spc_nummer}_${playerB.spc_nummer}`;
-
-        const matchData = {
-          org_nummer: orgNummer,
-          comp_nr: compNr,
-          nummer_A: playerA.spc_nummer,
-          naam_A: formatName(playerA.spa_vnaam, playerA.spa_tv, playerA.spa_anaam),
-          cartem_A: playerA[carKey] || 0,
-          nummer_B: playerB.spc_nummer,
-          naam_B: formatName(playerB.spa_vnaam, playerB.spa_tv, playerB.spa_anaam),
-          cartem_B: playerB[carKey] || 0,
-          periode: selectedPeriode || 1,
-          uitslag_code: matchCode,
-          gespeeld: 0,
-          tafel: '000000000000',
-        };
-
-        const matchRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches/single`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(matchData),
-        });
-
-        if (!matchRes.ok) {
-          const errorData = await matchRes.json();
-          errors.push(`${matchData.naam_A} vs ${matchData.naam_B}: ${errorData.error || 'Fout'}`);
-          continue;
-        }
-
-        const assignRes = await fetch(`/api/organizations/${orgNummer}/scoreboards/${assignedTable}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'assign',
-            comp_nr: compNr,
-            uitslag_code: matchCode,
-          }),
-        });
-
-        if (assignRes.ok) {
-          createdCount++;
-        } else {
-          const errorData = await assignRes.json();
-          errors.push(`Tafel ${assignedTable}: ${errorData.error || 'Fout bij toewijzen'}`);
-        }
-      }
-
-      if (createdCount > 0) {
-        setSuccess(`${createdCount} wedstrijd(en) aangemaakt en toegewezen aan scoreborden!`);
-        setSelectedPlayers(new Set());
-        setMatchTableAssignments(new Map());
-        setGeneratedPairings([]);
-        setShowPairings(false);
-        setTimeout(() => setSuccess(''), 5000);
-      }
-
-      if (errors.length > 0) {
-        setError(`Fouten bij aanmaken:\n${errors.join('\n')}`);
-      }
-    } catch {
-      setError('Fout bij aanmaken wedstrijden.');
-    } finally {
-      setIsCreatingMatches(false);
-    }
   };
 
   // Generate pairings for dagplanning - supports 1 or 2 matches per player
@@ -696,14 +597,10 @@ export default function CompetiteDagplanningPage() {
                   <th className="text-left py-2 px-3 text-sm font-semibold">Speler A</th>
                   <th className="text-center py-2 px-3 text-sm font-semibold">vs</th>
                   <th className="text-left py-2 px-3 text-sm font-semibold">Speler B</th>
-                  {tablesCount > 0 && <th className="text-center py-2 px-3 text-sm font-semibold">Tafel</th>}
                 </tr>
               </thead>
               <tbody>
-                {generatedPairings.map((pairing, index) => {
-                  const pairingKey = pairing.player2 ? `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}` : '';
-                  const assignedTable = pairingKey ? (matchTableAssignments.get(pairingKey) || 0) : 0;
-                  return (
+                {generatedPairings.map((pairing, index) => (
                     <tr key={index} className="border-b border-gray-200">
                       <td className="py-2 px-3 text-sm">{pairing.ronde}</td>
                       <td className="py-2 px-3 text-sm">{index + 1}</td>
@@ -712,14 +609,8 @@ export default function CompetiteDagplanningPage() {
                       <td className="py-2 px-3 text-sm font-medium">
                         {pairing.player2 ? getPlayerNameWithCar(pairing.player2) : <em>vrij (bye)</em>}
                       </td>
-                      {tablesCount > 0 && (
-                        <td className="py-2 px-3 text-sm text-center">
-                          {assignedTable > 0 ? `Tafel ${assignedTable}` : '-'}
-                        </td>
-                      )}
                     </tr>
-                  );
-                })}
+                  ))}
               </tbody>
             </table>
           </div>
@@ -727,12 +618,26 @@ export default function CompetiteDagplanningPage() {
       </div>
 
       <div className="mb-4 print:hidden">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Dagplanning - {competition.comp_naam}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | Periode {selectedPeriode}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Dagplanning - {competition.comp_naam}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {DISCIPLINES[competition.discipline]} | Periode {selectedPeriode}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="px-4 py-2 text-sm font-medium border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex items-center gap-2"
+            title="Bekijk tips voor dagplanning"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Tips
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -769,7 +674,6 @@ export default function CompetiteDagplanningPage() {
                     setSelectedPlayers(new Set());
                     setMatchesPerPlayer(1);
                     setGeneratedPairings([]);
-                    setMatchTableAssignments(new Map());
                   }}
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                     selectedPeriode === periodeNr
@@ -916,7 +820,7 @@ export default function CompetiteDagplanningPage() {
           </div>
         </div>
       ) : (
-        /* Step 2: Generated pairings with table assignment */
+        /* Step 2: Generated pairings */
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -929,16 +833,6 @@ export default function CompetiteDagplanningPage() {
           </div>
 
           <div className="p-6 space-y-3">
-            {tablesCount > 0 ? (
-              <div className="p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-sm rounded-lg border border-green-200 dark:border-green-800">
-                <strong>Scoreborden beschikbaar:</strong> Wijs tafels toe om wedstrijden aan te maken en in de wachtrij van het scorebord te plaatsen.
-              </div>
-            ) : (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 text-sm rounded-lg border border-blue-200 dark:border-blue-800">
-                <strong>Geen scoreborden:</strong> Deze partij-indeling is alleen ter informatie. Ga naar Instellingen &rarr; Tafels om scoreborden te configureren.
-              </div>
-            )}
-
             {/* Group pairings by round */}
             {(() => {
               const rounds = new Map<number, typeof generatedPairings>();
@@ -962,8 +856,6 @@ export default function CompetiteDagplanningPage() {
                   <div className="space-y-2">
                     {rounds.get(roundNr)!.map((pairing, index) => {
                       const isBye = !pairing.player2;
-                      const pairingKey = pairing.player2 ? `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}` : '';
-                      const assignedTable = pairingKey ? (matchTableAssignments.get(pairingKey) || 0) : 0;
 
                       return (
                         <div
@@ -1002,20 +894,6 @@ export default function CompetiteDagplanningPage() {
                               </>
                             )}
                           </div>
-                          {!isBye && tablesCount > 0 && (
-                            <select
-                              value={assignedTable}
-                              onChange={(e) => handleTableAssignment(pairingKey, parseInt(e.target.value, 10))}
-                              className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            >
-                              <option value="0">Geen tafel</option>
-                              {Array.from({ length: tablesCount }, (_, i) => i + 1).map((tableNr) => (
-                                <option key={tableNr} value={tableNr}>
-                                  Tafel {tableNr}
-                                </option>
-                              ))}
-                            </select>
-                          )}
                         </div>
                       );
                     })}
@@ -1031,7 +909,6 @@ export default function CompetiteDagplanningPage() {
                 onClick={() => {
                   setShowPairings(false);
                   setGeneratedPairings([]);
-                  setMatchTableAssignments(new Map());
                 }}
                 className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2"
               >
@@ -1050,18 +927,6 @@ export default function CompetiteDagplanningPage() {
                   </svg>
                   Printen
                 </button>
-                {tablesCount > 0 && (
-                  <button
-                    onClick={handleCreateMatches}
-                    disabled={isCreatingMatches || matchTableAssignments.size === 0}
-                    className="px-4 py-2 text-sm font-medium bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isCreatingMatches && (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    )}
-                    Wedstrijden aanmaken
-                  </button>
-                )}
                 <button
                   onClick={handleAfsluiten}
                   className="px-4 py-2 text-sm font-medium border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors flex items-center gap-2"
@@ -1118,6 +983,49 @@ export default function CompetiteDagplanningPage() {
                 className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
               >
                 Pagina verlaten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help modal with tips */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 print:hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-lg w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Tips voor Dagplanning
+              </h3>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Tip 1: Even aantal spelers</h4>
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  Als u een even aantal spelers aanvinkt, kies dan <strong>1 partij per speler</strong> en maak na de laatste partij opnieuw een dagplanning met 1 partij per speler.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Tip 2: Oneven aantal spelers</h4>
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  Als u een oneven aantal spelers aanvinkt, kies dan <strong>2 partijen per speler</strong> omdat dan zo mogelijk de 2 rustspelers per ronde tegen elkaar worden ingedeeld.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Begrepen
               </button>
             </div>
           </div>
