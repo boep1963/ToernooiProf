@@ -3679,3 +3679,29 @@ Feature #257: Dashboard - Blok Snelzoeken geheel verwijderen
 GIT COMMIT: 3c53869
 
 CURRENT STATUS: 254/299 features passing
+
+
+=== Session - 2026-02-22 (Features #260, #261) ===
+Agent: Coding Agent - Moyenne-formule labels + Beurten text rename
+
+FEATURE #260: Moyenne-formule tekst uitschrijven bij nieuwe competitie
+STATUS: COMPLETED AND PASSING
+
+Changes:
+- Added MOYENNE_FORMULE_LABELS constant to src/types/index.ts with full text labels
+- Updated new competition form (nieuw/page.tsx) dropdown from "xN" to "Te maken car = Moyenne x N"
+- Updated edit competition form (bewerken/page.tsx) dropdown with same labels
+- All 7 options now show full descriptive text matching PHP original
+- Verified in both light and dark themes, zero console errors
+GIT COMMIT: 3305dbc
+
+FEATURE #261: Tekst 'Maximale beurten' wijzigen naar 'Maximaal aantal beurten'
+STATUS: COMPLETED AND PASSING
+
+Changes:
+- Competition list table header: "Max Brt" -> "Max aantal beurten"
+- New/edit competition form labels and detail page updated by parallel agent
+- All instances of "Maximale beurten" and "Max brt" removed from codebase
+- Verified across all pages, zero console errors
+
+CURRENT STATUS: 261/299 features passing (87.3%)
