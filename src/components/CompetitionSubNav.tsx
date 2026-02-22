@@ -40,7 +40,7 @@ export default function CompetitionSubNav({ compNr, compNaam }: CompetitionSubNa
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-3" aria-label="Breadcrumb">
         <Link
           href="/competities"
-          className="hover:text-green-700 dark:hover:text-green-400 transition-colors"
+          className="hover:text-green-700 dark:hover:text-green-400 hover:underline transition-colors"
         >
           Competities
         </Link>
@@ -49,7 +49,7 @@ export default function CompetitionSubNav({ compNr, compNaam }: CompetitionSubNa
         </svg>
         <Link
           href={basePath}
-          className="hover:text-green-700 dark:hover:text-green-400 transition-colors font-medium text-slate-700 dark:text-slate-300"
+          className="hover:text-green-700 dark:hover:text-green-400 hover:underline transition-colors font-medium text-slate-700 dark:text-slate-300"
         >
           {compNaam}
         </Link>

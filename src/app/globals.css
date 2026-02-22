@@ -22,6 +22,17 @@ textarea:focus-visible {
   outline: none;
 }
 
+/* Consistent hover states for all clickable elements */
+/* All buttons should show pointer cursor */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* All anchor/link elements should show pointer cursor */
+a {
+  cursor: pointer;
+}
+
 /* Tabular numbers for scores and statistics */
 .tabular-nums {
   font-variant-numeric: tabular-nums;

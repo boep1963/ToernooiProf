@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import { calculateCaramboles, getMoyenneField, formatPlayerName } from '@/lib/billiards';
@@ -326,12 +327,12 @@ export default function CompetitieSpelersPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">Competitie niet gevonden.</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
@@ -388,7 +389,7 @@ export default function CompetitieSpelersPage() {
                   setSelectedMember(null);
                   setSelectedMembers([]);
                 }}
-                className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+                className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors"
               >
                 {bulkMode ? 'Schakel naar enkelvoudig' : 'Schakel naar bulk'}
               </button>
@@ -408,7 +409,7 @@ export default function CompetitieSpelersPage() {
                   </label>
                   <button
                     onClick={toggleSelectAll}
-                    className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+                    className="text-sm text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors"
                   >
                     {selectedMembers.length === availableMembers.length ? 'Deselecteer alles' : 'Selecteer alles'}
                   </button>
@@ -578,7 +579,7 @@ export default function CompetitieSpelersPage() {
                           setShowRemoveDialog(true);
                           fetchResultCount(player.spc_nummer);
                         }}
-                        className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+                        className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:underline font-medium transition-colors"
                       >
                         Verwijderen
                       </button>

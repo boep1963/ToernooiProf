@@ -275,7 +275,7 @@ export default function CollectionDetailPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <Link href="/admin" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+        <Link href="/admin" className="hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors">
           Admin
         </Link>
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -526,7 +526,7 @@ export default function CollectionDetailPage() {
                     <td className="py-3 px-4 text-right">
                       <Link
                         href={`/admin/collections/${collection}/${doc.id}`}
-                        className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:underline transition-colors"
                       >
                         Bekijken
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

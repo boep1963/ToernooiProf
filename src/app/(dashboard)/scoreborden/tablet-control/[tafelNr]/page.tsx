@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface ScoreboardData {
   tafel_nr: number;
@@ -320,12 +321,15 @@ export default function TabletControlPage() {
               Tablet Bediening - Tafel {tafelNr}
             </h1>
             <p className="text-gray-400 mb-4">Wachten op partij</p>
-            <Link
-              href="/scoreborden"
-              className="inline-block bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
-            >
-              ← Terug naar scoreborden
-            </Link>
+            <nav className="flex items-center gap-2 text-sm text-gray-400 mb-2" aria-label="Breadcrumb">
+              <Link href="/scoreborden" className="hover:text-green-400 hover:underline transition-colors">
+                Scoreborden
+              </Link>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className="font-medium text-gray-200">Tablet Bediening</span>
+            </nav>
           </div>
 
           {!showMatchSelector ? (

@@ -284,7 +284,7 @@ export default function CompetitiesPage() {
                           setDeleteConfirm(comp.comp_nr);
                           fetchDeleteStats(comp.comp_nr);
                         }}
-                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 hover:underline rounded-md transition-colors"
                       >
                         Verwijderen
                       </button>

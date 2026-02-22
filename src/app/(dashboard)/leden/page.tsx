@@ -316,13 +316,13 @@ export default function LedenPage() {
                             <div className="flex items-center justify-end gap-2">
                               <Link
                                 href={`/leden/${member.spa_nummer}/bewerken`}
-                                className="text-xs px-2.5 py-1.5 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors"
+                                className="text-xs px-2.5 py-1.5 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 hover:underline rounded-md transition-colors"
                               >
                                 Bewerken
                               </Link>
                               <button
                                 onClick={() => setDeleteConfirm(member.spa_nummer)}
-                                className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 hover:underline rounded-md transition-colors"
                               >
                                 Verwijderen
                               </button>
