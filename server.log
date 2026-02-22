@@ -163,3 +163,33 @@
 [BATCH_ENRICH] No players need enrichment
 [STANDINGS] Calculated standings for 2 players
  GET /api/organizations/1205/competitions/1/standings/1 200 in 1356ms
+ ✓ Compiled in 367ms (287 modules)
+ GET /competities/1/stand 200 in 132ms
+ GET /competities/1/stand 200 in 139ms
+ GET /competities/1/stand 200 in 129ms
+ ✓ Compiled in 351ms (287 modules)
+ GET /competities/1/stand 200 in 135ms
+ GET /competities/1/stand 200 in 134ms
+ GET /competities/1/stand 200 in 147ms
+ ⨯ Failed to generate static paths for /competities/[id]/stand:
+[Error [PageNotFoundError]: Cannot find module for page: /(dashboard)/competities/[id]/stand/page] {
+  type: 'PageNotFoundError',
+  code: 'ENOENT'
+}
+ ⨯ Failed to generate static paths for /competities/[id]/stand:
+[Error [PageNotFoundError]: Cannot find module for page: /(dashboard)/competities/[id]/stand/page] {
+  type: 'PageNotFoundError',
+  code: 'ENOENT'
+}
+ ⨯ Failed to generate static paths for /competities/[id]/stand:
+[Error [PageNotFoundError]: Cannot find module for page: /(dashboard)/competities/[id]/stand/page] {
+  type: 'PageNotFoundError',
+  code: 'ENOENT'
+}
+ ✓ Compiled in 387ms (287 modules)
+ GET /competities/1/stand 404 in 84ms
+ GET /competities/1/stand 404 in 85ms
+ GET /competities/1/stand 404 in 98ms
+ GET /competities/1/stand 404 in 293ms
+ GET /competities/1/stand 404 in 320ms
+ GET /competities/1/stand 404 in 295ms

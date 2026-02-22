@@ -3,11 +3,6 @@ import db from '@/lib/db';
 
 const TEST_COLLECTION = 'test_persistence';
 const TEST_DOC_ID = 'restart_test_doc';
-const TEST_DATA = {
-  test_name: 'RESTART_TEST_12345',
-  timestamp: new Date().toISOString(),
-  purpose: 'Verify data persists across server restart',
-};
 
 export async function GET() {
   try {
@@ -43,16 +38,22 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const testData = {
+      test_name: 'RESTART_TEST_12345',
+      timestamp: new Date().toISOString(),
+      purpose: 'Verify data persists across server restart',
+    };
+
     // Create test document
     const docRef = db.collection(TEST_COLLECTION).doc(TEST_DOC_ID);
-    await docRef.set(TEST_DATA);
+    await docRef.set(testData);
 
-    console.log('[TEST-PERSISTENCE] Test data created:', TEST_DATA);
+    console.log('[TEST-PERSISTENCE] Test data created:', testData);
 
     return NextResponse.json({
       status: 'CREATED',
       message: 'Test data created successfully',
-      data: TEST_DATA,
+      data: testData,
     });
   } catch (error) {
     console.error('[TEST-PERSISTENCE] Create failed:', error);
