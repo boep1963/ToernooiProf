@@ -88,6 +88,8 @@ export default function CompetitieMatrixPage() {
     sp_2_hs: '',
     brt: '',
   });
+  const [showVerification, setShowVerification] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -290,6 +292,117 @@ export default function CompetitieMatrixPage() {
     return `${name} (${car})`;
   };
 
+  // Calculate verification data
+  const calculateVerificationData = () => {
+    const cargem1 = Number(formData.sp_1_cargem) || 0;
+    const cargem2 = Number(formData.sp_2_cargem) || 0;
+    const brt = Number(formData.brt) || 1;
+
+    // Calculate moyenne (3 decimals, truncated not rounded)
+    const moyenne1 = Math.floor((cargem1 / brt) * 1000) / 1000;
+    const moyenne2 = Math.floor((cargem2 / brt) * 1000) / 1000;
+
+    // Calculate points based on competition's point system
+    const cartem1 = Number(formData.sp_1_cartem) || 0;
+    const cartem2 = Number(formData.sp_2_cartem) || 0;
+
+    let points1 = 0;
+    let points2 = 0;
+    let result = '';
+
+    if (competition) {
+      // Determine winner based on caramboles made vs target
+      const won1 = cargem1 >= cartem1;
+      const won2 = cargem2 >= cartem2;
+
+      if (won1 && !won2) {
+        // Player 1 wins
+        if (competition.punten_sys === 1) { // WRV 2-1-0
+          points1 = 2;
+          points2 = 0;
+        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+          points1 = 3;
+          points2 = 0;
+        }
+        result = `${selectedMatch?.playerAName} wint`;
+      } else if (!won1 && won2) {
+        // Player 2 wins
+        if (competition.punten_sys === 1) { // WRV 2-1-0
+          points1 = 0;
+          points2 = 2;
+        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+          points1 = 0;
+          points2 = 3;
+        }
+        result = `${selectedMatch?.playerBName} wint`;
+      } else if (won1 && won2) {
+        // Both won - check who made more caramboles
+        if (cargem1 > cargem2) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 2;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 3;
+            points2 = 2;
+          }
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (cargem2 > cargem1) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 2;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 2;
+            points2 = 3;
+          }
+          result = `${selectedMatch?.playerBName} wint`;
+        } else {
+          // Exact draw
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 1;
+          }
+          result = 'Remise';
+        }
+      } else {
+        // Neither won - check who made more caramboles
+        if (cargem1 > cargem2) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 0;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 2;
+            points2 = 1;
+          }
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (cargem2 > cargem1) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 0;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 2;
+          }
+          result = `${selectedMatch?.playerBName} wint`;
+        } else {
+          // Exact draw
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 1;
+          }
+          result = 'Remise';
+        }
+      }
+    }
+
+    return { moyenne1, moyenne2, points1, points2, result };
+  };
+
   // Handle print
   const handlePrint = () => {
     window.print();
@@ -339,6 +452,7 @@ export default function CompetitieMatrixPage() {
       setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName });
     }
 
+    setShowVerification(false);
     setShowResultModal(true);
   };
 
@@ -393,10 +507,17 @@ export default function CompetitieMatrixPage() {
     }
   };
 
-  // Handle result deletion
-  const handleDeleteResult = async () => {
-    if (!selectedMatch?.resultId || !window.confirm('Weet u zeker dat u deze uitslag wilt verwijderen?')) return;
+  // Show delete warning modal
+  const handleDeleteClick = () => {
+    if (!selectedMatch?.resultId) return;
+    setShowDeleteWarning(true);
+  };
 
+  // Handle result deletion confirmation
+  const handleConfirmDelete = async () => {
+    if (!selectedMatch?.resultId) return;
+
+    setShowDeleteWarning(false);
     setIsSubmitting(true);
     setError('');
 
@@ -770,13 +891,40 @@ export default function CompetitieMatrixPage() {
                   {error}
                 </div>
               )}
+
+              {/* Verification Info */}
+              {showVerification && formData.sp_1_cargem && formData.sp_2_cargem && formData.brt && (() => {
+                const verification = calculateVerificationData();
+                return (
+                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Controle</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerAName}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne1.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points1}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerBName}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne2.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points2}</p>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-blue-200 dark:border-blue-700">
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">{verification.result}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="p-6 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
               <div>
                 {selectedMatch.resultId && (
                   <button
-                    onClick={handleDeleteResult}
+                    onClick={handleDeleteClick}
                     disabled={isSubmitting}
                     className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium disabled:opacity-50"
                   >
@@ -790,11 +938,19 @@ export default function CompetitieMatrixPage() {
                     setShowResultModal(false);
                     setSelectedMatch(null);
                     setError('');
+                    setShowVerification(false);
                   }}
                   disabled={isSubmitting}
                   className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   Annuleren
+                </button>
+                <button
+                  onClick={() => setShowVerification(true)}
+                  disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
+                  className="px-4 py-2 border border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Controle
                 </button>
                 <button
                   onClick={handleSubmitResult}
@@ -804,6 +960,49 @@ export default function CompetitieMatrixPage() {
                   {isSubmitting ? 'Bezig...' : (selectedMatch.resultId ? 'Wijzigen' : 'Opslaan')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Warning Modal */}
+      {showDeleteWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    Uitslag verwijderen
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Een uitslag verwijderen kan niet meer ongedaan gemaakt worden!
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Weet u zeker dat u deze uitslag wilt verwijderen?
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteWarning(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Verwijderen
+              </button>
             </div>
           </div>
         </div>
