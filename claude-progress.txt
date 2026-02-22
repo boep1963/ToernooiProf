@@ -4095,3 +4095,10 @@ Files Modified:
 - src/app/api/organizations/[orgNr]/competitions/[compNr]/standings/[period]/route.ts
 
 Both features verified with browser automation and marked as passing.
+
+=== Session - 2026-02-22 (Features #290, #291) ===
+Agent: Coding Agent - Stand % Punten Column + Period Creation
+
+FEATURE #290: COMPLETED ✅ - Replace Punten column with % Punten when sorting by percentage
+FEATURE #291: COMPLETED ✅ - No automatic match generation on period creation (already implemented)
+STATUS: 288/299 features passing (96.3%)

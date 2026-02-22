@@ -193,3 +193,108 @@
  GET /competities/1/stand 404 in 293ms
  GET /competities/1/stand 404 in 320ms
  GET /competities/1/stand 404 in 295ms
+ ✓ Compiled in 260ms (287 modules)
+ GET /competities/1/stand 404 in 76ms
+ GET /competities/1/stand 404 in 75ms
+ GET /competities/1/stand 404 in 84ms
+ GET /competities/1/stand 404 in 84ms
+ ○ Compiling /competities/[id]/periodes ...
+ ✓ Compiled /competities/[id]/periodes in 4.9s (913 modules)
+ GET /competities/1/stand 200 in 2168ms
+ GET /competities/1/periodes 200 in 3842ms
+ ✓ Compiled in 2.3s (933 modules)
+ GET /competities/1/stand 200 in 115ms
+ ✓ Compiled /api/auth/session in 396ms (660 modules)
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 335ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/results in 273ms (664 modules)
+ GET /api/auth/session 200 in 1242ms
+ ✓ Compiled in 641ms (953 modules)
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[DB] Connected to Google Firestore
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[SESSION] Querying database for organization: 1205
+ GET /api/organizations/1205/competitions/1 200 in 1413ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /api/organizations/1205/competitions/1/results 200 in 1411ms
+ GET /api/organizations/1205/competitions/1/players 200 in 1424ms
+ GET /api/organizations/1205/competitions/1 200 in 1413ms
+ GET /api/organizations/1205/competitions/1/results 200 in 1413ms
+ GET /api/organizations/1205/competitions/1/players 200 in 1413ms
+ GET /competities/1/periodes 200 in 289ms
+ GET /api/auth/session 200 in 1273ms
+ GET /api/organizations/1205/competitions/1 200 in 1274ms
+ GET /api/organizations/1205/competitions/1 200 in 1276ms
+[PLAYERS] Querying database for players of competition: 1 in org: 1205
+[PLAYERS] Querying database for players of competition: 1 in org: 1205
+[RESULTS] Querying database for results of competition: 1 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[RESULTS] Querying database for results of competition: 1 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/standings/[period] in 331ms (675 modules)
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[DB] Connected to Google Firestore
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 693ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[PLAYERS] Querying database for players of competition: 1 in org: 1205
+[PLAYERS] Querying database for players of competition: 1 in org: 1205
+[RESULTS] Querying database for results of competition: 1 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[RESULTS] Querying database for results of competition: 1 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: null
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[BATCH_ENRICH] No players need enrichment
+[BATCH_ENRICH] No players need enrichment
+ GET /api/organizations/1205/competitions/1 200 in 839ms
+ GET /api/organizations/1205/competitions/1 200 in 843ms
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 2593ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 1
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 1
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 2559ms
+[RESULTS] Found 1 results for competition 1 (after filters)
+[RESULTS] Found 1 results for competition 1 (after filters)
+[RESULTS] Found 1 results for competition 1 (after filters)
+ GET /api/organizations/1205/competitions/1/results 200 in 2075ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 1
+ GET /api/organizations/1205/competitions/1/players 200 in 2100ms
+[RESULTS] Found 1 results for competition 1 (after filters)
+ GET /api/organizations/1205/competitions/1/results 200 in 2181ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 1
+ GET /api/organizations/1205/competitions/1/players 200 in 2183ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1372ms (533 modules)
+ GET / 200 in 1671ms
+ ✓ Compiled /favicon.ico in 443ms (535 modules)
+ ○ Compiling /inloggen ...
+ ✓ Compiled /inloggen in 1214ms (687 modules)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at __webpack_exec__ (.next/server/app/(auth)/inloggen/page.js:685:39)
+    at <unknown> (.next/server/app/(auth)/inloggen/page.js:686:359)
+    at <unknown> (.next/server/app/(auth)/inloggen/page.js:686:47)
+    at Object.<anonymous> (.next/server/app/(auth)/inloggen/page.js:689:3) {
+  page: '/inloggen'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.3s (1308 modules)
+ GET /competities/1/periodes 200 in 1431ms
+ GET /inloggen 500 in 4455ms
+ GET /competities/1/periodes 200 in 125ms
+ GET /favicon.ico 200 in 40ms
+ ✓ Compiled in 590ms (446 modules)
+ GET /competities/1/periodes 200 in 623ms
+ GET /inloggen 200 in 615ms
+ GET /dashboard 200 in 183ms
+ GET /api/auth/session 401 in 45ms
+ GET /inloggen 200 in 24ms
