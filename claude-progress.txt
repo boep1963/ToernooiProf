@@ -3918,3 +3918,14 @@ Files Modified:
 GIT COMMIT: a89bc47
 CURRENT STATUS: 275/299 features passing (92.0%)
 
+
+=== Session - 2026-02-22 (Features #275, #276) ===
+Agent: Coding Agent - Player Deletion Improvements
+
+ASSIGNED FEATURES: #275, #276
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #275: Player deletion - ALREADY WORKING
+Feature #276: Auto-remove players with 0.000 moyenne - IMPLEMENTED
+GIT COMMIT: 9146771
+CURRENT STATUS: 276/299 features passing (92.3%)
