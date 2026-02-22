@@ -9,14 +9,10 @@
  Detected additional lockfiles: 
    * /Users/p.l.m.deboer/Documents/ClubMatch/package-lock.json
 
- ⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3002
-    at <unknown> (Error: listen EADDRINUSE: address already in use :::3002)
-    at new Promise (<anonymous>) {
-  code: 'EADDRINUSE',
-  errno: -48,
-  syscall: 'listen',
-  address: '::',
-  port: 3002
-}
-[?25h
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.160.169:3002
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1522ms
