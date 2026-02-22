@@ -3728,3 +3728,24 @@ STATUS: COMPLETED AND PASSING
 GIT COMMIT: 607b49f
 
 CURRENT STATUS: 262/299 features passing (87.6%)
+
+
+=== Session - 2026-02-22 (Features #262, #263) ===
+Agent: Coding Agent - Competition Labels and Period Indicator
+
+ASSIGNED FEATURES: #262, #263
+STATUS: BOTH COMPLETED AND PASSING
+
+FEATURE #262: Competitie-info labels update
+- Updated info card labels: "Max beurten" to "Max aantal beurten", "Vast beurten" to "Vast aantal beurten"
+- Updated form labels on edit and new competition pages for consistency
+GIT COMMIT: 6cf76dc
+
+FEATURE #263: Periode-indicator in alle competitieschermen
+- Added optional periode prop to CompetitionSubNav component
+- Shows "Periode X van 5" in green text in breadcrumb area on all 12 competition sub-pages
+- Removed Periode from info card, replaced with Min. caramboles
+- Added periode to validation API response and spelers interface
+GIT COMMIT: 03d5304
+
+UPDATED STATUS: 264/299 features passing
