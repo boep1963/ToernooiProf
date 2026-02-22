@@ -142,3 +142,24 @@
  GET /api/organizations/1205/competitions 200 in 711ms
 [COMPETITIONS] Found 7 competitions
  GET /api/organizations/1205/competitions 200 in 1119ms
+ ○ Compiling /competities/[id] ...
+ ✓ Compiled /competities/[id] in 574ms (951 modules)
+ GET /competities/1 200 in 1124ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[DB] Connected to Google Firestore
+[COMPETITION] Querying database for competition: 1 in org: 1205
+ GET /api/organizations/1205/competitions/1 200 in 305ms
+ GET /api/organizations/1205/competitions/1 200 in 745ms
+ GET /competities/1/stand 200 in 41ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[COMPETITION] Querying database for competition: 1 in org: 1205
+ GET /api/organizations/1205/competitions/1 200 in 180ms
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+ GET /api/organizations/1205/competitions/1 200 in 673ms
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[BATCH_ENRICH] No players need enrichment
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 1180ms
+[BATCH_ENRICH] No players need enrichment
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 1356ms
