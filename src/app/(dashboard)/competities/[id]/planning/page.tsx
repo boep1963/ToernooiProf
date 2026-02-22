@@ -118,9 +118,6 @@ export default function CompetiteDagplanningPage() {
   // Dagplanning state
   const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
   const [matchesPerPlayer, setMatchesPerPlayer] = useState<1 | 2>(1);
-  const [tablesCount, setTablesCount] = useState<number>(0);
-  const [matchTableAssignments, setMatchTableAssignments] = useState<Map<string, number>>(new Map());
-  const [isCreatingMatches, setIsCreatingMatches] = useState(false);
   const [generatedPairings, setGeneratedPairings] = useState<Array<{ player1: PlayerData; player2: PlayerData | null; ronde: number }>>([]);
   const [showPairings, setShowPairings] = useState(false);
   const [success, setSuccess] = useState('');
@@ -204,25 +201,6 @@ export default function CompetiteDagplanningPage() {
 
     loadMatchesAndResults();
   }, [orgNummer, compNr, selectedPeriode]);
-
-  // Fetch tables count on load
-  useEffect(() => {
-    if (!orgNummer) return;
-
-    const fetchTablesCount = async () => {
-      try {
-        const res = await fetch(`/api/organizations/${orgNummer}/tables/count`);
-        if (res.ok) {
-          const data = await res.json();
-          setTablesCount(data.count || 0);
-        }
-      } catch {
-        setTablesCount(0);
-      }
-    };
-
-    fetchTablesCount();
-  }, [orgNummer]);
 
   // Check if dagplanning has active data that would be lost on navigation
   const hasDagplanningData = showPairings && generatedPairings.length > 0;
