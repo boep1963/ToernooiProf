@@ -3610,4 +3610,46 @@ Changes: Removed scoreboard stats card, tableCount/tableSource state, tables/cou
 Grid changed from 3-col to 2-col (Competities + Leden only).
 GIT COMMIT: 94d0664
 
-CURRENT STATUS: 252/299 features passing (84.3%)
+
+=== Session - 2026-02-22 (Feature #251) ===
+Agent: Coding Agent - Breadcrumb Navigation
+
+FEATURE #251: Consistente menu-structuur met volledige breadcrumb-navigatie
+STATUS: COMPLETED AND PASSING
+
+Created reusable Breadcrumb component (src/components/common/Breadcrumb.tsx) and replaced
+all '< Terug' icon/text back buttons with full breadcrumb paths across 16+ pages.
+
+Changes:
+- Created Breadcrumb.tsx: semantic nav with aria-label, SVG chevron separators, dark theme support
+- Instellingen sub-pages (account, tafels, advertenties): replaced icon back-buttons with Breadcrumb
+- Leden sub-pages (nieuw, bewerken): replaced icon back-buttons with Breadcrumb
+- Competities sub-pages (nieuw, bewerken, + 8 error states): replaced buttons with Link navigation
+- Scoreborden: relabeled exit buttons from "Terug" to "Scoreborden" for clarity
+- Tablet-control: inline dark-theme breadcrumb replacing "← Terug naar scoreborden"
+- Admin pages: replaced "Terug" links with descriptive navigation text
+- CompetitionSubNav: already had proper breadcrumb, left as-is
+GIT COMMIT: 1a1b5ca
+
+CURRENT STATUS: 254/299 features passing (84.9%)
+
+
+=== Session - 2026-02-22 (Features #252, #253) ===
+Agent: Coding Agent - Consistent Hover States and Action Styling
+
+ASSIGNED FEATURES: #252, #253
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #252: Consistente hover-states voor alle klikbare elementen
+- Added global CSS: cursor:pointer for all buttons and anchors
+- Added hover:underline to text-styled toggle buttons, breadcrumb links, table action links
+- 13 files modified across components and pages
+GIT COMMIT: 34c41da
+
+Feature #253: Consistente knoppen vs links styling
+- Established consistent action styling pattern across the app
+- Primary actions: solid green buttons, Destructive: outlined red, Edit: outlined green, Nav: text links
+- Updated table action buttons from text-only to outlined button style
+GIT COMMIT: e1addac
+
+UPDATED STATUS: 256/299 features passing

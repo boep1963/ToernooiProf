@@ -537,7 +537,7 @@ export async function initializeCollections(): Promise<string[]> {
     const requiredCollections = [
       'organizations', 'competitions', 'members', 'competition_players',
       'matches', 'results', 'tables', 'device_config',
-      'score_helpers', 'score_helpers_tablet', 'news_reactions', 'news',
+      'score_helpers', 'score_helpers_tablet',
     ];
     ensureDbDir();
     const initialized: string[] = [];
@@ -555,7 +555,7 @@ export async function initializeCollections(): Promise<string[]> {
   const requiredCollections = [
     'organizations', 'competitions', 'members', 'competition_players',
     'matches', 'results', 'tables', 'device_config',
-    'score_helpers', 'score_helpers_tablet', 'news_reactions', 'news',
+    'score_helpers', 'score_helpers_tablet',
   ];
 
   const initialized: string[] = [];

@@ -16,7 +16,6 @@ function isValidCollection(collection: string): boolean {
     'tables',
     'device_config',
     'scoreboards',
-    'news',
     'email_queue',
   ];
   return validCollections.includes(collection);

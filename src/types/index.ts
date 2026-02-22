@@ -143,14 +143,6 @@ export interface ScoreHelperTablet extends ScoreHelper {
   serie_B: number;
 }
 
-// News Reaction (mapped from specialsoftware_reacties)
-export interface NewsReaction {
-  nummer: number;
-  tijd: Date;
-  naam: string;
-  tekst: string;
-}
-
 // Discipline names
 export const DISCIPLINES: Record<number, string> = {
   1: 'Libre',

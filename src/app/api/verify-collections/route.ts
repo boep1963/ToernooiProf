@@ -145,12 +145,6 @@ export async function GET() {
       serie_A: 2,
       serie_B: 3,
     },
-    news_reactions: {
-      nummer: 99999,
-      tijd: new Date().toISOString(),
-      naam: 'Test User',
-      tekst: 'Test reactie',
-    },
   };
 
   const createdDocIds: Array<{ collection: string; id: string }> = [];

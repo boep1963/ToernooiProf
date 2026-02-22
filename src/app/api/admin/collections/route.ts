@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
       'tables',
       'device_config',
       'scoreboards',
-      'news',
       'email_queue',
     ];
 
