@@ -4102,3 +4102,15 @@ Agent: Coding Agent - Stand % Punten Column + Period Creation
 FEATURE #290: COMPLETED ✅ - Replace Punten column with % Punten when sorting by percentage
 FEATURE #291: COMPLETED ✅ - No automatic match generation on period creation (already implemented)
 STATUS: 288/299 features passing (96.3%)
+
+=== Session - 2026-02-22 (Features #292, #293) ===
+Agent: Coding Agent - Period Moyennes and Controle Page Spacing
+
+ASSIGNED FEATURES: #292, #293
+STATUS: BOTH COMPLETED AND PASSING
+
+FEATURE #292: Already implemented - moyennes saved per period, player page shows period-specific moyennes
+FEATURE #293: Added spacing between Fouten, Waarschuwingen, Informatie in Controles info block
+
+GIT COMMIT: e35d427
+CURRENT STATUS: 292/299 features passing (97.7%)

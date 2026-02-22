@@ -194,7 +194,7 @@ export default function AdvertentiesPage() {
           Slideshow beheer
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-3">
-          Hier kunt u slides (advertenties of mededelingen) uploaden voor de slideshow op uw scorebord(en).
+          Hier kunt u slides (advertenties of mededelingen) uploaden voor de slideshow.
         </p>
         <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1 list-disc list-inside">
           <li>Alleen bestanden met de extensie <strong>.JPG</strong> of <strong>.jpg</strong></li>
