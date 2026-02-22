@@ -449,9 +449,15 @@ export default function CompetitieStandPage() {
                     <td className="px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white">
                       {entry.playerName}
                     </td>
-                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
-                      {entry.punten}
-                    </td>
+                    {sortByPercentage ? (
+                      <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
+                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
+                      </td>
+                    ) : (
+                      <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
+                        {entry.punten}
+                      </td>
+                    )}
                     <td className="text-center px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.matchesPlayed}
                     </td>
@@ -473,11 +479,6 @@ export default function CompetitieStandPage() {
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}
                     </td>
-                    {sortByPercentage && (
-                      <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
-                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

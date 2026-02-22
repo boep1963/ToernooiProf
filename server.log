@@ -15,15 +15,130 @@
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1409ms
+ ✓ Ready in 1501ms
  ○ Compiling /competities/[id]/stand ...
- ✓ Compiled /competities/[id]/stand in 2.2s (707 modules)
- GET /competities/1/stand 200 in 2859ms
- ✓ Compiled /api/auth/session in 424ms (469 modules)
- ✓ Compiled in 606ms (256 modules)
- GET /favicon.ico 200 in 1238ms
- GET /api/auth/session 401 in 1297ms
- GET /competities/1/stand 200 in 423ms
+ ✓ Compiled / in 1461ms (727 modules)
+ GET / 200 in 688ms
+ ✓ Compiled /favicon.ico in 174ms (486 modules)
+ GET /favicon.ico 200 in 205ms
+ GET /competities/1/stand 200 in 2272ms
  ○ Compiling /inloggen ...
- ✓ Compiled /inloggen in 557ms (890 modules)
- GET /inloggen 200 in 680ms
+ ✓ Compiled /api/auth/session in 2s (907 modules)
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET / 200 in 1254ms
+ GET /inloggen 200 in 3001ms
+ GET /favicon.ico 200 in 23ms
+ GET /api/auth/session 200 in 1870ms
+ ○ Compiling /api/organizations/[orgNr]/competitions/[compNr] ...
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr] in 867ms (911 modules)
+ GET /inloggen 200 in 1317ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[DB] Connected to Google Firestore
+[COMPETITION] Querying database for competition: 1 in org: 1205
+ GET /api/organizations/1205/competitions/1 200 in 2075ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/standings/[period] in 245ms (917 modules)
+ GET /api/organizations/1205/competitions/1 200 in 2590ms
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[DB] Connected to Google Firestore
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[BATCH_ENRICH] No players need enrichment
+[BATCH_ENRICH] No players need enrichment
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 1542ms
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 2070ms
+ GET /inloggen 200 in 352ms
+ GET /inloggen 200 in 368ms
+ ✓ Compiled in 1192ms (917 modules)
+ GET /competities/1/stand 200 in 907ms
+ GET /inloggen 200 in 65ms
+ GET /inloggen 200 in 67ms
+ GET /competities/1/stand 200 in 119ms
+ ✓ Compiled /api/auth/login-code in 264ms (919 modules)
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 1048ms
+ ✓ Compiled /dashboard in 435ms (926 modules)
+ GET /dashboard 200 in 565ms
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 314ms
+ ○ Compiling /api/organizations/theme ...
+ ✓ Compiled /api/organizations/theme in 1011ms (934 modules)
+[DB] Connected to Google Firestore
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[MEMBERS] Querying database for members of org: 1205
+ PATCH /api/organizations/theme 200 in 1431ms
+[AUTH] Querying database for login code...
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 2437ms
+[AUTH] Updating login date in database...
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 2437ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 2444ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 2439ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 2571ms
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 970ms
+ GET /dashboard 200 in 117ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 3082ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 167ms
+[MEMBERS] Querying database for members of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 498ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 721ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 731ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 761ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 828ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 1353ms
+ GET /competities/1/stand 200 in 102ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 168ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[COMPETITION] Querying database for competition: 1 in org: 1205
+ GET /api/organizations/1205/competitions/1 200 in 568ms
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+ GET /api/organizations/1205/competitions/1 200 in 675ms
+[STANDINGS] Calculating standings for competition 1, period 1, org 1205
+[BATCH_ENRICH] No players need enrichment
+[BATCH_ENRICH] No players need enrichment
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 1408ms
+[STANDINGS] Calculated standings for 2 players
+ GET /api/organizations/1205/competitions/1/standings/1 200 in 1311ms
+ ✓ Compiled /_not-found in 493ms (935 modules)
+ GET /competities/4/stand 404 in 757ms
+ ○ Compiling /competities ...
+ ✓ Compiled /competities in 560ms (944 modules)
+ GET /competities 200 in 831ms
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 330ms
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 711ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 1119ms

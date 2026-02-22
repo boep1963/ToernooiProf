@@ -99,6 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       beurten: number;
       hoogsteSerie: number;
       punten: number;
+      partijMoyennes: number[]; // Track individual match moyennes for P.moy calculation
     }> = {};
 
     // Initialize all players with zero stats
@@ -113,6 +114,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         beurten: 0,
         hoogsteSerie: 0,
         punten: 0,
+        partijMoyennes: [],
       };
     }
 
@@ -121,29 +123,44 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const result = doc.data();
       if (!result) return;
 
+      const p1Punt = Number(result.sp_1_punt) || 0;
+      const p2Punt = Number(result.sp_2_punt) || 0;
+      const brt = Number(result.brt) || 0;
+      const p1Car = Number(result.sp_1_cargem) || 0;
+      const p2Car = Number(result.sp_2_cargem) || 0;
+
       // Player 1 stats
       const p1Nr = Number(result.sp_1_nr);
       if (standingsMap[p1Nr]) {
         standingsMap[p1Nr].matchesPlayed += 1;
-        standingsMap[p1Nr].carambolesGemaakt += Number(result.sp_1_cargem) || 0;
+        standingsMap[p1Nr].carambolesGemaakt += p1Car;
         standingsMap[p1Nr].carambolesTeMaken += Number(result.sp_1_cartem) || 0;
-        standingsMap[p1Nr].beurten += Number(result.brt) || 0;
+        standingsMap[p1Nr].beurten += brt;
         standingsMap[p1Nr].hoogsteSerie = Math.max(
           standingsMap[p1Nr].hoogsteSerie,
           Number(result.sp_1_hs) || 0
         );
-        standingsMap[p1Nr].punten += Number(result.sp_1_punt) || 0;
+        standingsMap[p1Nr].punten += p1Punt;
+        // For P.moy: only track match moyenne if player won or drew
+        if (p1Punt >= p2Punt && brt > 0) {
+          standingsMap[p1Nr].partijMoyennes.push(p1Car / brt);
+        }
       } else {
         // Player not in competition players but has a result - add them
+        const partijMoyennes: number[] = [];
+        if (p1Punt >= p2Punt && brt > 0) {
+          partijMoyennes.push(p1Car / brt);
+        }
         standingsMap[p1Nr] = {
           playerNr: p1Nr,
           playerName: playerMap[p1Nr]?.name || `Speler ${p1Nr}`,
           matchesPlayed: 1,
-          carambolesGemaakt: Number(result.sp_1_cargem) || 0,
+          carambolesGemaakt: p1Car,
           carambolesTeMaken: Number(result.sp_1_cartem) || 0,
-          beurten: Number(result.brt) || 0,
+          beurten: brt,
           hoogsteSerie: Number(result.sp_1_hs) || 0,
-          punten: Number(result.sp_1_punt) || 0,
+          punten: p1Punt,
+          partijMoyennes,
         };
       }
 
@@ -151,24 +168,33 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const p2Nr = Number(result.sp_2_nr);
       if (standingsMap[p2Nr]) {
         standingsMap[p2Nr].matchesPlayed += 1;
-        standingsMap[p2Nr].carambolesGemaakt += Number(result.sp_2_cargem) || 0;
+        standingsMap[p2Nr].carambolesGemaakt += p2Car;
         standingsMap[p2Nr].carambolesTeMaken += Number(result.sp_2_cartem) || 0;
-        standingsMap[p2Nr].beurten += Number(result.brt) || 0;
+        standingsMap[p2Nr].beurten += brt;
         standingsMap[p2Nr].hoogsteSerie = Math.max(
           standingsMap[p2Nr].hoogsteSerie,
           Number(result.sp_2_hs) || 0
         );
-        standingsMap[p2Nr].punten += Number(result.sp_2_punt) || 0;
+        standingsMap[p2Nr].punten += p2Punt;
+        // For P.moy: only track match moyenne if player won or drew
+        if (p2Punt >= p1Punt && brt > 0) {
+          standingsMap[p2Nr].partijMoyennes.push(p2Car / brt);
+        }
       } else {
+        const partijMoyennes: number[] = [];
+        if (p2Punt >= p1Punt && brt > 0) {
+          partijMoyennes.push(p2Car / brt);
+        }
         standingsMap[p2Nr] = {
           playerNr: p2Nr,
           playerName: playerMap[p2Nr]?.name || `Speler ${p2Nr}`,
           matchesPlayed: 1,
-          carambolesGemaakt: Number(result.sp_2_cargem) || 0,
+          carambolesGemaakt: p2Car,
           carambolesTeMaken: Number(result.sp_2_cartem) || 0,
-          beurten: Number(result.brt) || 0,
+          beurten: brt,
           hoogsteSerie: Number(result.sp_2_hs) || 0,
-          punten: Number(result.sp_2_punt) || 0,
+          punten: p2Punt,
+          partijMoyennes,
         };
       }
     });
@@ -181,12 +207,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const moyenne = entry.beurten > 0
         ? entry.carambolesGemaakt / entry.beurten
         : 0;
-      const partijMoyenne = entry.matchesPlayed > 0
-        ? entry.carambolesGemaakt / entry.matchesPlayed
+      // P.moy = highest moyenne from matches the player won or drew
+      // If no wins or draws, P.moy = 0.000
+      const partijMoyenne = entry.partijMoyennes.length > 0
+        ? Math.max(...entry.partijMoyennes)
         : 0;
 
       return {
-        ...entry,
+        playerNr: entry.playerNr,
+        playerName: entry.playerName,
+        matchesPlayed: entry.matchesPlayed,
+        carambolesGemaakt: entry.carambolesGemaakt,
+        carambolesTeMaken: entry.carambolesTeMaken,
+        beurten: entry.beurten,
+        hoogsteSerie: entry.hoogsteSerie,
+        punten: entry.punten,
         percentage: Math.round(percentage * 100) / 100, // 2 decimal places
         moyenne: Math.round(moyenne * 1000) / 1000, // 3 decimal places
         partijMoyenne: Math.round(partijMoyenne * 100) / 100, // 2 decimal places
