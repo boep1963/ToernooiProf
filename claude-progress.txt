@@ -4056,3 +4056,42 @@ Implementation:
 
 GIT COMMIT: 5ad6bcb
 CURRENT STATUS: 287/299 features passing (96.0%)
+
+
+=== Session - 2026-02-22 (Features #286, #289) ===
+Agent: Coding Agent - Player Results Print + P.moy Fix
+
+ASSIGNED FEATURES: #286, #289
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #286: Uitslagen per speler - Printmogelijkheid toevoegen
+- Recreated /competities/[id]/uitslagen/per-speler page (was deleted in feature #271)
+- Added print functionality with A4 portrait print styles
+- Print button appears when player is selected and has results
+- Added print-only header with org name, competition, player, discipline, timestamp
+- Added 'Uitslagen per speler' to CompetitionSubNav menu
+- Verified via browser automation: page loads correctly, zero console errors
+GIT COMMIT: 3cfb271
+
+Feature #289: Stand - P.moy berekening corrigeren
+Problem: P.moy was calculating average caramboles per match (incorrect)
+Solution: P.moy now calculates highest moyenne from matches where player WON or DREW
+Changes:
+- Added partijMoyennes array to track individual match moyennes
+- Only matches with player_points >= opponent_points are included
+- If player lost all matches, P.moy = 0.00
+- Updated standings API route to implement correct calculation
+Verification:
+- Test Speler (won): P.moy = 0.50 ✅
+- Test Laag0.2 (lost): P.moy = 0.00 ✅
+- Zero console errors
+GIT COMMIT: 51061e5
+
+CURRENT STATUS: 287/299 features passing (96.0%)
+
+Files Modified:
+- src/app/(dashboard)/competities/[id]/uitslagen/per-speler/page.tsx (new)
+- src/components/CompetitionSubNav.tsx
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/standings/[period]/route.ts
+
+Both features verified with browser automation and marked as passing.
