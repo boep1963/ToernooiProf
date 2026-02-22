@@ -3,15 +3,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
+const PROGRAMMA_OPTIES = ['ClubMatch', 'ToernooiProf'];
+
 const ONDERWERP_OPTIES = [
-  'Vraag algemeen',
-  'Suggestie voor verbetering of extra functionaliteit',
-  'Melding fout (graag melden bij welke functie of pagina)',
+  { value: 'vraag', label: 'Vraag' },
+  { value: 'klacht', label: 'Klacht' },
+  { value: 'suggestie', label: 'Suggestie' },
 ];
 
 export default function ContactPage() {
   const { organization } = useAuth();
-  const [onderwerp, setOnderwerp] = useState(ONDERWERP_OPTIES[0]);
+  const [programma, setProgramma] = useState('');
+  const [onderwerp, setOnderwerp] = useState('vraag');
   const [bericht, setBericht] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -22,8 +25,14 @@ export default function ContactPage() {
     setError('');
     setSuccess('');
 
+    // Validate programma (required)
+    if (!programma) {
+      setError('Selecteer een programma.');
+      return;
+    }
+
     // Validate onderwerp (subject)
-    if (!onderwerp || !onderwerp.trim()) {
+    if (!onderwerp) {
       setError('Selecteer een onderwerp.');
       return;
     }
@@ -45,13 +54,14 @@ export default function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onderwerp, bericht }),
+        body: JSON.stringify({ programma, onderwerp, bericht }),
       });
 
       if (res.ok) {
         setSuccess('Uw bericht is succesvol verzonden. Wij nemen zo snel mogelijk contact met u op.');
         setBericht('');
-        setOnderwerp(ONDERWERP_OPTIES[0]);
+        setProgramma('');
+        setOnderwerp('vraag');
       } else {
         const data = await res.json();
         setError(data.error || 'Fout bij verzenden bericht.');
@@ -93,26 +103,76 @@ export default function ContactPage() {
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        {/* Sender info card (read-only) */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            Afzendergegevens
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Vereniging
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 text-sm">
+                {organization?.org_naam || '-'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Contactpersoon
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 text-sm">
+                {organization?.org_wl_naam || '-'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                E-mailadres
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 text-sm">
+                {organization?.org_wl_email || '-'}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                Antwoord wordt naar dit adres verzonden.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Inlogcode
+              </label>
+              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 text-sm font-mono">
+                {organization?.org_code || '-'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact form card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Contactformulier
           </h2>
 
           <div className="space-y-4">
-            {/* Email display */}
-            {organization?.org_wl_email && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Uw e-mailadres
-                </label>
-                <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 text-sm">
-                  {organization.org_wl_email}
-                </div>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                  Antwoord wordt naar dit adres verzonden.
-                </p>
-              </div>
-            )}
+            {/* Programma dropdown (required) */}
+            <div>
+              <label htmlFor="programma" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Programma <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="programma"
+                value={programma}
+                onChange={(e) => setProgramma(e.target.value)}
+                required
+                aria-required="true"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+              >
+                <option value="">-- Kies een programma --</option>
+                {PROGRAMMA_OPTIES.map((optie) => (
+                  <option key={optie} value={optie}>{optie}</option>
+                ))}
+              </select>
+            </div>
 
             {/* Subject dropdown */}
             <div>
@@ -128,7 +188,7 @@ export default function ContactPage() {
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
                 {ONDERWERP_OPTIES.map((optie) => (
-                  <option key={optie} value={optie}>{optie}</option>
+                  <option key={optie.value} value={optie.value}>{optie.label}</option>
                 ))}
               </select>
             </div>
@@ -165,7 +225,7 @@ export default function ContactPage() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={isSubmitting || !onderwerp.trim() || !bericht.trim()}
+            disabled={isSubmitting || !programma || !onderwerp || !bericht.trim()}
             className="flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             {isSubmitting ? (

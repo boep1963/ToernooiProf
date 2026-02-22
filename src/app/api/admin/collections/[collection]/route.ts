@@ -17,6 +17,7 @@ function isValidCollection(collection: string): boolean {
     'device_config',
     'scoreboards',
     'email_queue',
+    'contact_messages',
   ];
   return validCollections.includes(collection);
 }
@@ -82,6 +83,17 @@ export async function GET(
       });
     }
 
+    // For contact_messages, sort by tijd descending (most recent first)
+    if (collection === 'contact_messages') {
+      allDocs = allDocs.sort((a, b) => {
+        const aData = a.data();
+        const bData = b.data();
+        const aTime = aData.tijd || '';
+        const bTime = bData.tijd || '';
+        return bTime.localeCompare(aTime);
+      });
+    }
+
     // Apply search filter if provided
     let filteredDocs = allDocs;
     if (searchTerm) {
@@ -113,7 +125,7 @@ export async function GET(
 
       // Auto-detect key fields to display in the list
       const keyFields: Record<string, any> = {};
-      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 'comp_naam', 'email', 'org_wl_email', 'to', 'subject', 'type', 'status', 'created_at'];
+      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 'comp_naam', 'email', 'org_wl_email', 'to', 'subject', 'type', 'status', 'created_at', 'programma', 'onderwerp', 'onderwerp_label', 'org_contactpersoon', 'org_email', 'tijd'];
 
       // Include ID
       keyFields.id = doc.id;
