@@ -11,14 +11,6 @@ export default function DashboardPage() {
   const [competitionCount, setCompetitionCount] = useState<number>(0);
   const [matchCount, setMatchCount] = useState<number>(0);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{
-    members: Array<{ id: string; nummer: number; naam: string }>;
-    competitions: Array<{ id: string; nummer: number; naam: string }>;
-  } | null>(null);
-  const [searching, setSearching] = useState(false);
-
   // Fetch stats
   useEffect(() => {
     if (!orgNummer) return;
@@ -54,39 +46,6 @@ export default function DashboardPage() {
     fetchStats();
   }, [orgNummer]);
 
-  // Handle search
-  const handleSearch = async () => {
-    if (!orgNummer || !searchQuery.trim()) {
-      setSearchResults(null);
-      return;
-    }
-
-    setSearching(true);
-    try {
-      const res = await fetch(
-        `/api/organizations/${orgNummer}/search?q=${encodeURIComponent(searchQuery)}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data);
-      } else {
-        setSearchResults(null);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-      setSearchResults(null);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Handle search on Enter key
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
@@ -105,7 +64,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -161,95 +120,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Quick search */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Snelzoeken
-        </h2>
-        <div className="flex gap-3 mb-4">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="Zoek een lid of competitie..."
-            className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-          />
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={searching || !searchQuery.trim()}
-            className="px-4 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-700/50 text-white font-medium rounded-lg transition-colors shadow-sm"
-          >
-            {searching ? 'Zoeken...' : 'Zoeken'}
-          </button>
-        </div>
-
-        {/* Search results */}
-        {searchResults && (
-          <div className="space-y-4">
-            {/* Members results */}
-            {searchResults.members.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  Leden ({searchResults.members.length})
-                </h3>
-                <div className="space-y-1">
-                  {searchResults.members.map((member) => (
-                    <a
-                      key={member.id}
-                      href={`/leden/${member.nummer}/bewerken`}
-                      className="block px-3 py-2 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    >
-                      <span className="text-sm text-slate-900 dark:text-white font-medium">
-                        {member.naam}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
-                        (#{member.nummer})
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Competitions results */}
-            {searchResults.competitions.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  Competities ({searchResults.competitions.length})
-                </h3>
-                <div className="space-y-1">
-                  {searchResults.competitions.map((comp) => (
-                    <a
-                      key={comp.id}
-                      href={`/competities/${comp.nummer}`}
-                      className="block px-3 py-2 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    >
-                      <span className="text-sm text-slate-900 dark:text-white font-medium">
-                        {comp.naam}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
-                        (#{comp.nummer})
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* No results */}
-            {searchResults.members.length === 0 && searchResults.competitions.length === 0 && (
-              <div className="text-center py-4">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Geen resultaten gevonden voor &quot;{searchQuery}&quot;
-                </p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
