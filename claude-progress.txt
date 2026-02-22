@@ -4149,3 +4149,29 @@ Feature #294: Members sorted alphabetically by full name using localeCompare
 Feature #295: Print button added with A4 portrait print styles and print-only header
 VERIFICATION: Members page loads, alphabetical sort confirmed, print button visible, zero console errors
 CURRENT STATUS: 293/299 features passing (98.0%)
+
+
+=== Session - 2026-02-22 (Features #298, #299) ===
+Agent: Coding Agent - Settings Cleanup and Email Validation
+
+ASSIGNED FEATURES: #298, #299
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #298: Instellingen - Advertenties verwijderen
+COMPLETED - Removed all Advertenties functionality from Settings
+- Removed Advertenties menu item from Instellingen page
+- Deleted /instellingen/advertenties page
+- Deleted all 3 advertisements API routes
+- Removed Advertenties reference from help page
+GIT COMMIT: bc5d999
+
+Feature #299: Account - E-mailadres wijziging validatie
+COMPLETED - Email change validation with Firebase Auth integration
+- Added server-side email format validation
+- Update email in organizations collection
+- Update email in Firebase Auth when changed
+- All 6 feature requirements met
+GIT COMMIT: 7885ecb
+
+CURRENT STATUS: 297/299 features passing (99.3%)
+
