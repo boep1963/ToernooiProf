@@ -3587,3 +3587,27 @@ CURRENT STATUS: 250/250 features passing (100% COMPLETE!)
 
 Session Complete! Feature #250 verified via browser automation and marked as passing.
 All 250 features are now complete and verified!
+
+
+=== Session - 2026-02-22 (Features #254, #255) ===
+Agent: Coding Agent - Print UX + Dashboard Cleanup
+
+FEATURE #254: Printpagina's sluiten zonder verwarring
+STATUS: COMPLETED AND PASSING
+
+Problem: Standings page opened a new browser window for printing, confusing users.
+Solution: Converted to window.print() with embedded print CSS, consistent with all other pages.
+- Added print CSS via useEffect (A4 portrait, margins, color preservation)
+- Added print-only header with org name, competition, discipline, period, timestamp
+- Added print:hidden to UI controls
+- All 4 print pages now use same window.print() pattern
+GIT COMMIT: c2eb362
+
+FEATURE #255: Dashboard - Blok Actieve scoreborden verwijderen
+STATUS: COMPLETED AND PASSING
+
+Changes: Removed scoreboard stats card, tableCount/tableSource state, tables/count API call.
+Grid changed from 3-col to 2-col (Competities + Leden only).
+GIT COMMIT: 94d0664
+
+CURRENT STATUS: 252/299 features passing (84.3%)
