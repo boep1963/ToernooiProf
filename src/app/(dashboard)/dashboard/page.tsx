@@ -32,8 +32,6 @@ export default function DashboardPage() {
   const [memberCount, setMemberCount] = useState<number>(0);
   const [competitionCount, setCompetitionCount] = useState<number>(0);
   const [matchCount, setMatchCount] = useState<number>(0);
-  const [tableCount, setTableCount] = useState<number>(0);
-  const [tableSource, setTableSource] = useState<'tables' | 'config' | 'matches' | 'results' | 'none'>('none');
 
   // News state
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -67,11 +65,10 @@ export default function DashboardPage() {
 
     const fetchStats = async () => {
       try {
-        const [membersRes, compsRes, matchesRes, tablesRes] = await Promise.all([
+        const [membersRes, compsRes, matchesRes] = await Promise.all([
           fetch(`/api/organizations/${orgNummer}/members`),
           fetch(`/api/organizations/${orgNummer}/competitions`),
           fetch(`/api/organizations/${orgNummer}/matches/count`),
-          fetch(`/api/organizations/${orgNummer}/tables/count`),
         ]);
 
         if (membersRes.ok) {
@@ -88,12 +85,6 @@ export default function DashboardPage() {
           const matchesData = await matchesRes.json();
           // Matches count API returns { count: N }
           setMatchCount(matchesData.count || 0);
-        }
-        if (tablesRes.ok) {
-          const tablesData = await tablesRes.json();
-          // Tables count API returns { count: N, source: 'tables' | 'config' | 'matches' | 'results' | 'none' }
-          setTableCount(tablesData.count || 0);
-          setTableSource(tablesData.source || 'none');
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -318,8 +309,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats cards - order matches sidebar: Competities, Leden, Scoreborden */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -370,38 +361,6 @@ export default function DashboardPage() {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {tableSource === 'tables' ? 'Actieve scoreborden' :
-                 tableSource === 'config' ? 'Aantal tafels' :
-                 tableSource === 'matches' ? 'Tafels (uit wedstrijden)' :
-                 tableSource === 'results' ? 'Tafels (uit uitslagen)' :
-                 'Scoreborden'}
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {tableCount}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-purple-600 dark:text-purple-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
             </div>
@@ -577,7 +536,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => toggleArticle(article.id)}
-                    className="mt-3 flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+                    className="mt-3 flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline font-medium transition-colors"
                   >
                     <svg
                       className="w-4 h-4"
