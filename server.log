@@ -15,49 +15,15 @@
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1265ms
- ○ Compiling /competities/[id]/matrix ...
- ✓ Compiled /competities/[id]/matrix in 3.4s (709 modules)
- ✓ Compiled /_not-found in 181ms (713 modules)
- ⨯ Error: Cannot find module './vendor-chunks/next.js'
-Require stack:
-- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/webpack-runtime.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/app/_not-found/page.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/require.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/load-components.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/utils.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/swc/options.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/swc/index.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/next-config-ts/transpile-config.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/config.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/next.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/lib/start-server.js
-    at <unknown> (.next/server/app/_not-found/page.js:331:47)
-    at Object.<anonymous> (.next/server/app/_not-found/page.js:334:3) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [Array]
-}
- ○ Compiling /_error ...
- ✓ Compiled /_error in 1372ms (1040 modules)
- GET /competities/1/matrix 500 in 6479ms
- ✓ Compiled /favicon.ico in 285ms (662 modules)
- ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
-Require stack:
-- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/webpack-runtime.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/app/favicon.ico/route.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/require.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/load-components.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/utils.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/swc/options.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/swc/index.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/next-config-ts/transpile-config.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/config.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/next.js
-- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/lib/start-server.js
-    at <unknown> (.next/server/app/favicon.ico/route.js:123:47)
-    at Object.<anonymous> (.next/server/app/favicon.ico/route.js:126:3) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [Array],
-  page: '/favicon.ico'
-}
- GET /favicon.ico 500 in 410ms
+ ✓ Ready in 1409ms
+ ○ Compiling /competities/[id]/stand ...
+ ✓ Compiled /competities/[id]/stand in 2.2s (707 modules)
+ GET /competities/1/stand 200 in 2859ms
+ ✓ Compiled /api/auth/session in 424ms (469 modules)
+ ✓ Compiled in 606ms (256 modules)
+ GET /favicon.ico 200 in 1238ms
+ GET /api/auth/session 401 in 1297ms
+ GET /competities/1/stand 200 in 423ms
+ ○ Compiling /inloggen ...
+ ✓ Compiled /inloggen in 557ms (890 modules)
+ GET /inloggen 200 in 680ms

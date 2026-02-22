@@ -411,7 +411,11 @@ export default function CompetitieStandPage() {
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                   <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10">Pos</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  {sortByPercentage ? (
+                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
+                  ) : (
+                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  )}
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">Part</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles gemaakt">Car.</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage caramboles">% Car</th>
@@ -419,22 +423,23 @@ export default function CompetitieStandPage() {
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Moyenne">Moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partij Moyenne">P.moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Hoogste serie">HS</th>
-                  {sortByPercentage && (
-                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
-                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {sortedStandings.map((entry, index) => (
                   <tr
                     key={entry.playerNr}
-                    className={`hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${
-                      index === 0 ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
-                    }`}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                   >
                     <td className="text-center px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                      {index === 0 && entry.matchesPlayed > 0 ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500 text-white text-xs rounded-full">
+                      {entry.matchesPlayed > 0 && entry.rank >= 1 && entry.rank <= 3 ? (
+                        <span
+                          className={`inline-flex items-center justify-center w-6 h-6 text-white text-xs rounded-full ${
+                            entry.rank === 1 ? 'bg-green-700' :
+                            entry.rank === 2 ? 'bg-green-600' :
+                            'bg-green-500'
+                          }`}
+                        >
                           {entry.rank}
                         </span>
                       ) : (
