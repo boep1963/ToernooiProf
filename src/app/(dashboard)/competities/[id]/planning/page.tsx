@@ -303,8 +303,12 @@ export default function CompetiteDagplanningPage() {
     }
   }, [hasDagplanningData, router]);
 
-  // Sort players by number
-  const sortedPlayers = [...players].sort((a, b) => a.spc_nummer - b.spc_nummer);
+  // Sort players according to competition sort setting (voornaam or achternaam)
+  const sortedPlayers = [...players].sort((a, b) => {
+    const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
+    const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
+    return nameA.localeCompare(nameB, 'nl');
+  });
 
   // Get caramboles field key based on discipline
   const getCarambolesKey = (discipline: number): keyof PlayerData => {
