@@ -573,16 +573,16 @@ export default function ResultsOverviewPage() {
                       </span>
                     </td>
                     <td className="print:hidden px-4 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-3">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditResult(result)}
-                          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium transition-colors"
+                          className="text-xs px-2.5 py-1.5 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors font-medium"
                         >
                           Wijzigen
                         </button>
                         <button
                           onClick={() => { setResultToDelete(result); setShowDeleteDialog(true); }}
-                          className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:underline font-medium transition-colors"
+                          className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
                         >
                           Verwijderen
                         </button>
