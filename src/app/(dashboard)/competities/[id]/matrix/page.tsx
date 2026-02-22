@@ -517,14 +517,14 @@ export default function CompetitieMatrixPage() {
                   ))}
                   <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider align-bottom">
                     <div style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }} className="mx-auto">
-                      Totaal punten
+                      Totaal aantal partijen
                     </div>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {sortedPlayers.map((playerRow) => {
-                  let totalPoints = 0;
+                  let totalMatches = 0;
 
                   return (
                     <tr key={playerRow.spc_nummer} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
@@ -566,16 +566,16 @@ export default function CompetitieMatrixPage() {
                             <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
                               <button
                                 onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
-                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors cursor-pointer"
                                 title="Klik om uitslag in te voeren"
                               >
-                                ?
+                                -
                               </button>
                             </td>
                           );
                         }
 
-                        totalPoints += matchResult.pointsA;
+                        totalMatches += 1;
 
                         const isWin = matchResult.pointsA > matchResult.pointsB;
                         const isDraw = matchResult.pointsA === matchResult.pointsB && matchResult.pointsA > 0;
@@ -599,7 +599,7 @@ export default function CompetitieMatrixPage() {
                         );
                       })}
                       <td className="text-center px-3 py-2 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums border-l border-slate-200 dark:border-slate-700">
-                        {totalPoints}
+                        {totalMatches}
                       </td>
                     </tr>
                   );
@@ -623,7 +623,7 @@ export default function CompetitieMatrixPage() {
                   Verloren
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="inline-block w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-center text-[10px] leading-4">?</span>
+                  <span className="inline-block w-4 h-4 rounded bg-slate-300 dark:bg-slate-600 border border-slate-400 dark:border-slate-500 text-center text-[10px] leading-4 text-slate-500 dark:text-slate-400">-</span>
                   Nog niet gespeeld
                 </span>
               </div>
