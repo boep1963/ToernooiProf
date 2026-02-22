@@ -43,17 +43,21 @@ interface MatchData {
 }
 
 interface ResultData {
+  id: string;
   uitslag_code: string;
   sp_1_nr: number;
   sp_1_naam?: string;
   sp_1_punt: number;
   sp_1_cartem?: number;
   sp_1_cargem?: number;
+  sp_1_hs?: number;
   sp_2_nr: number;
   sp_2_naam?: string;
   sp_2_punt: number;
   sp_2_cartem?: number;
   sp_2_cargem?: number;
+  sp_2_hs?: number;
+  brt?: number;
 }
 
 export default function CompetitieMatrixPage() {
@@ -72,6 +76,18 @@ export default function CompetitieMatrixPage() {
   const [error, setError] = useState('');
   const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
   const latestPeriodeRef = useRef<number | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<{ playerANr: number; playerBNr: number; playerAName: string; playerBName: string; resultId?: string; result?: ResultData } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    sp_1_cartem: '',
+    sp_1_cargem: '',
+    sp_1_hs: '',
+    sp_2_cartem: '',
+    sp_2_cargem: '',
+    sp_2_hs: '',
+    brt: '',
+  });
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -246,8 +262,12 @@ export default function CompetitieMatrixPage() {
     );
   }
 
-  // Sort players by number
-  const sortedPlayers = [...players].sort((a, b) => a.spc_nummer - b.spc_nummer);
+  // Sort players by name according to competition sorteren setting
+  const sortedPlayers = [...players].sort((a, b) => {
+    const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
+    const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
+    return nameA.localeCompare(nameB, 'nl');
+  });
 
   // Get caramboles field key based on discipline
   const getCarambolesKey = (discipline: number): keyof PlayerData => {
@@ -273,6 +293,138 @@ export default function CompetitieMatrixPage() {
   // Handle print
   const handlePrint = () => {
     window.print();
+  };
+
+  // Handle Matrix cell click
+  const handleCellClick = (playerANr: number, playerBNr: number) => {
+    const playerA = players.find(p => p.spc_nummer === playerANr);
+    const playerB = players.find(p => p.spc_nummer === playerBNr);
+
+    if (!playerA || !playerB) return;
+
+    const playerAName = formatName(playerA.spa_vnaam, playerA.spa_tv, playerA.spa_anaam);
+    const playerBName = formatName(playerB.spa_vnaam, playerB.spa_tv, playerB.spa_anaam);
+
+    // Find existing result
+    const result = results.find(
+      (r) =>
+        (r.sp_1_nr === playerANr && r.sp_2_nr === playerBNr) ||
+        (r.sp_1_nr === playerBNr && r.sp_2_nr === playerANr)
+    );
+
+    if (result) {
+      // Pre-fill form with existing result
+      const isPlayerAFirst = result.sp_1_nr === playerANr;
+      setFormData({
+        sp_1_cartem: String(isPlayerAFirst ? result.sp_1_cartem : result.sp_2_cartem),
+        sp_1_cargem: String(isPlayerAFirst ? result.sp_1_cargem : result.sp_2_cargem),
+        sp_1_hs: String(isPlayerAFirst ? (result.sp_1_hs || 0) : (result.sp_2_hs || 0)),
+        sp_2_cartem: String(isPlayerAFirst ? result.sp_2_cartem : result.sp_1_cartem),
+        sp_2_cargem: String(isPlayerAFirst ? result.sp_2_cargem : result.sp_1_cargem),
+        sp_2_hs: String(isPlayerAFirst ? (result.sp_2_hs || 0) : (result.sp_1_hs || 0)),
+        brt: String(result.brt || 1),
+      });
+      setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName, resultId: result.id, result });
+    } else {
+      // New result - clear form
+      setFormData({
+        sp_1_cartem: String(playerA[carKey] || 0),
+        sp_1_cargem: '',
+        sp_1_hs: '',
+        sp_2_cartem: String(playerB[carKey] || 0),
+        sp_2_cargem: '',
+        sp_2_hs: '',
+        brt: '',
+      });
+      setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName });
+    }
+
+    setShowResultModal(true);
+  };
+
+  // Handle form submission
+  const handleSubmitResult = async () => {
+    if (!selectedMatch || !selectedPeriode) return;
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const uitslag_code = `${selectedPeriode}_${String(selectedMatch.playerANr).padStart(3, '0')}_${String(selectedMatch.playerBNr).padStart(3, '0')}`;
+
+      const resultData = {
+        uitslag_code,
+        sp_1_nr: selectedMatch.playerANr,
+        sp_1_cartem: Number(formData.sp_1_cartem),
+        sp_1_cargem: Number(formData.sp_1_cargem),
+        sp_1_hs: Number(formData.sp_1_hs),
+        sp_2_nr: selectedMatch.playerBNr,
+        sp_2_cartem: Number(formData.sp_2_cartem),
+        sp_2_cargem: Number(formData.sp_2_cargem),
+        sp_2_hs: Number(formData.sp_2_hs),
+        brt: Number(formData.brt),
+      };
+
+      const response = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Fout bij opslaan uitslag');
+        return;
+      }
+
+      // Reload results
+      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
+      if (resultsRes.ok) {
+        const resultsData = await resultsRes.json();
+        setResults(resultsData.results || []);
+      }
+
+      setShowResultModal(false);
+      setSelectedMatch(null);
+    } catch (err) {
+      setError('Fout bij opslaan uitslag');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle result deletion
+  const handleDeleteResult = async () => {
+    if (!selectedMatch?.resultId || !window.confirm('Weet u zeker dat u deze uitslag wilt verwijderen?')) return;
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results/${selectedMatch.resultId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Fout bij verwijderen uitslag');
+        return;
+      }
+
+      // Reload results
+      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
+      if (resultsRes.ok) {
+        const resultsData = await resultsRes.json();
+        setResults(resultsData.results || []);
+      }
+
+      setShowResultModal(false);
+      setSelectedMatch(null);
+    } catch (err) {
+      setError('Fout bij verwijderen uitslag');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -398,7 +550,13 @@ export default function CompetitieMatrixPage() {
                         if (!matchResult) {
                           return (
                             <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                              <span className="text-slate-300 dark:text-slate-600 text-xs">-</span>
+                              <button
+                                onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                                title="Klik om uitslag in te voeren"
+                              >
+                                -
+                              </button>
                             </td>
                           );
                         }
@@ -406,9 +564,13 @@ export default function CompetitieMatrixPage() {
                         if (!matchResult.played) {
                           return (
                             <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                              <span className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500">
+                              <button
+                                onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                                title="Klik om uitslag in te voeren"
+                              >
                                 ?
-                              </span>
+                              </button>
                             </td>
                           );
                         }
@@ -420,17 +582,19 @@ export default function CompetitieMatrixPage() {
 
                         return (
                           <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                            <span
-                              className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold ${
+                            <button
+                              onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                              className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold cursor-pointer hover:opacity-80 transition-opacity ${
                                 isWin
                                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                   : isDraw
                                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200'
                               }`}
+                              title="Klik om uitslag te wijzigen"
                             >
                               {matchResult.pointsA}
-                            </span>
+                            </button>
                           </td>
                         );
                       })}
@@ -482,6 +646,163 @@ export default function CompetitieMatrixPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Result Entry/Edit Modal */}
+      {showResultModal && selectedMatch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedMatch.resultId ? 'Uitslag wijzigen' : 'Uitslag invoeren'}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {selectedMatch.playerAName} vs {selectedMatch.playerBName}
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Player 1 */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerAName}</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Te maken
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_cartem}
+                      onChange={(e) => setFormData({ ...formData, sp_1_cartem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Gemaakt
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_cargem}
+                      onChange={(e) => setFormData({ ...formData, sp_1_cargem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Hoogste serie
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_hs}
+                      onChange={(e) => setFormData({ ...formData, sp_1_hs: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Player 2 */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerBName}</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Te maken
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_cartem}
+                      onChange={(e) => setFormData({ ...formData, sp_2_cartem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Gemaakt
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_cargem}
+                      onChange={(e) => setFormData({ ...formData, sp_2_cargem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Hoogste serie
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_hs}
+                      onChange={(e) => setFormData({ ...formData, sp_2_hs: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Beurten */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Aantal beurten
+                </label>
+                <input
+                  type="number"
+                  value={formData.brt}
+                  onChange={(e) => setFormData({ ...formData, brt: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  required
+                  min="1"
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm">
+                  {error}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+              <div>
+                {selectedMatch.resultId && (
+                  <button
+                    onClick={handleDeleteResult}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    Partij verwijderen
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowResultModal(false);
+                    setSelectedMatch(null);
+                    setError('');
+                  }}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={handleSubmitResult}
+                  disabled={isSubmitting || !formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
+                  className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Bezig...' : (selectedMatch.resultId ? 'Wijzigen' : 'Opslaan')}
+                </button>
               </div>
             </div>
           </div>
