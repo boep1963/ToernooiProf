@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
-import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
+import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import { fromInputDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
@@ -353,8 +353,8 @@ export default function NieuweCompetitie() {
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
-                {Object.entries(MOYENNE_MULTIPLIERS).map(([value, multiplier]) => (
-                  <option key={value} value={value}>x{multiplier}</option>
+                {Object.entries(MOYENNE_FORMULE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </div>
@@ -384,7 +384,7 @@ export default function NieuweCompetitie() {
             </div>
             <div>
               <label htmlFor="max_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Maximale beurten
+                Max aantal beurten
               </label>
               <input
                 id="max_beurten"

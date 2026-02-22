@@ -163,6 +163,17 @@ export const MOYENNE_MULTIPLIERS: Record<number, number> = {
   7: 60,
 };
 
+// Moyenne formula labels for dropdowns (full text)
+export const MOYENNE_FORMULE_LABELS: Record<number, string> = {
+  1: 'Te maken car = Moyenne x 15',
+  2: 'Te maken car = Moyenne x 20',
+  3: 'Te maken car = Moyenne x 25',
+  4: 'Te maken car = Moyenne x 30',
+  5: 'Te maken car = Moyenne x 40',
+  6: 'Te maken car = Moyenne x 50',
+  7: 'Te maken car = Moyenne x 60',
+};
+
 // Standing entry for display
 export interface StandingEntry {
   rank: number;

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
+import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import { toInputDate, fromInputDate } from '@/lib/dateUtils';
 
@@ -318,8 +318,8 @@ export default function CompetitieBewerkenPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
               >
-                {Object.entries(MOYENNE_MULTIPLIERS).map(([value, multiplier]) => (
-                  <option key={value} value={value}>x{multiplier}</option>
+                {Object.entries(MOYENNE_FORMULE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </div>
@@ -349,7 +349,7 @@ export default function CompetitieBewerkenPage() {
             </div>
             <div>
               <label htmlFor="max_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Maximale beurten
+                Max aantal beurten
               </label>
               <input
                 id="max_beurten"
@@ -364,7 +364,7 @@ export default function CompetitieBewerkenPage() {
             </div>
             <div>
               <label htmlFor="vast_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Vaste beurten
+                Vast aantal beurten
               </label>
               <select
                 id="vast_beurten"
