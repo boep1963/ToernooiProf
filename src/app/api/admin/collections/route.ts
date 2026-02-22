@@ -25,9 +25,12 @@ export async function GET(request: NextRequest) {
       'results',
       'tables',
       'device_config',
+      'score_helpers',
+      'score_helpers_tablet',
       'scoreboards',
       'email_queue',
       'contact_messages',
+      'news_reactions',
     ];
 
     // Get document count for each collection
