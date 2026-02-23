@@ -4357,3 +4357,20 @@ GIT COMMIT: 59500c8
 CURRENT STATUS: 314/315 features passing (99.7%)
 
 Both features completed, thoroughly tested with browser automation, and marked as passing\!
+
+
+=== Session - 2026-02-23 (Feature #313) ===
+Agent: Coding Agent - Format All Decimal Numbers to 3 Decimals (Truncated)
+
+ASSIGNED FEATURE: #313
+STATUS: COMPLETED AND PASSING
+
+Feature #313: Alle decimale getallen in 3 decimalen afgekapt tonen
+- Created formatUtils.ts with formatDecimal function (truncates to 3 decimals)
+- Updated Stand, Spelers, Matrix, Uitslagen per speler, Periodes, Doorkoppelen, Leden pages
+- Updated API route for doorkoppelen
+- All decimal numbers now display as X.XXX (truncated, not rounded)
+
+GIT COMMIT: 0b1b0b3
+CURRENT STATUS: 311/315 features passing (98.7%)
+
