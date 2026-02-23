@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import { calculateCaramboles, getMoyenneField, formatPlayerName } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
@@ -618,13 +619,13 @@ export default function CompetitieSpelersPage() {
                     <div>
                       <span className="text-slate-500 dark:text-slate-400">Moyenne ({DISCIPLINES[competition.discipline]}):</span>
                       <span className="ml-2 font-medium text-slate-900 dark:text-white">
-                        {getSelectedMemberMoyenne().toFixed(3)}
+                        {formatDecimal(getSelectedMemberMoyenne())}
                       </span>
                     </div>
                     <div>
                       <span className="text-slate-500 dark:text-slate-400">Formule:</span>
                       <span className="ml-2 font-medium text-slate-900 dark:text-white">
-                        {getSelectedMemberMoyenne().toFixed(3)} x {multiplier} = {(getSelectedMemberMoyenne() * multiplier).toFixed(1)}
+                        {formatDecimal(getSelectedMemberMoyenne())} x {multiplier} = {formatDecimal(getSelectedMemberMoyenne() * multiplier)}
                       </span>
                     </div>
                     <div>
@@ -732,7 +733,7 @@ export default function CompetitieSpelersPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
-                        {periodMoy.toFixed(3)}
+                        {formatDecimal(periodMoy)}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-green-700 dark:text-green-400 text-right tabular-nums">
                         {periodCar}

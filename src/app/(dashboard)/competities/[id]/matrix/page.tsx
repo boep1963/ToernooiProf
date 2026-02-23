@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import { formatPlayerName } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
@@ -953,12 +954,12 @@ export default function CompetitieMatrixPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerAName}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne1.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {formatDecimal(verification.moyenne1)}</p>
                           <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points1}</p>
                         </div>
                         <div>
                           <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerBName}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne2.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {formatDecimal(verification.moyenne2)}</p>
                           <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points2}</p>
                         </div>
                       </div>

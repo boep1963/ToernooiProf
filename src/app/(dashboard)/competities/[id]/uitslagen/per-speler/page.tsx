@@ -366,7 +366,7 @@ export default function PlayerResultsPage() {
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
         <h2 className="text-xl mb-2">Uitslagen per speler: {selectedPlayer && formatPlayerName(selectedPlayer)}</h2>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -380,7 +380,7 @@ export default function PlayerResultsPage() {
           Uitslagen per speler - {competition.comp_naam}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
         </p>
       </div>
 

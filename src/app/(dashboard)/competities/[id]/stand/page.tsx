@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
@@ -253,7 +254,7 @@ export default function CompetitieStandPage() {
       <div className="hidden print:block mb-6">
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
+          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -267,7 +268,7 @@ export default function CompetitieStandPage() {
           Stand - {competition.comp_naam}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
         </p>
       </div>
 
@@ -451,7 +452,7 @@ export default function CompetitieStandPage() {
                     </td>
                     {sortByPercentage ? (
                       <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
-                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
+                        {formatDecimal(entry.percentagePunten)}%
                       </td>
                     ) : (
                       <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
@@ -465,16 +466,16 @@ export default function CompetitieStandPage() {
                       {entry.carambolesGemaakt}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
-                      {entry.percentage.toFixed(2)}
+                      {formatDecimal(entry.percentage)}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-500 dark:text-slate-500 tabular-nums">
                       {entry.beurten}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
-                      {entry.moyenne.toFixed(3)}
+                      {formatDecimal(entry.moyenne)}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
-                      {entry.partijMoyenne.toFixed(2)}
+                      {formatDecimal(entry.partijMoyenne)}
                     </td>
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}

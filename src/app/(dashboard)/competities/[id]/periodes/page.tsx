@@ -351,7 +351,7 @@ export default function CompetitiePeriodesPage() {
           Periodes - {competition.comp_naam}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]} | Formule: x{multiplier} | Min. caramboles: {competition.min_car}
+          {DISCIPLINES[competition.discipline]} | Formule: Car = Moyenne x {multiplier} | Min. caramboles: {competition.min_car}
         </p>
       </div>
 
