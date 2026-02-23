@@ -377,6 +377,39 @@ export default function CompetitieSpelersPage() {
     return periodMoy > 0;
   });
 
+  // Sort players based on competition's sorteren setting
+  const sortedPlayers = [...filteredPlayers].sort((a, b) => {
+    const sorteren = competition?.sorteren || 1;
+
+    if (sorteren === 2) {
+      // Sort by last name first: achternaam, voornaam, tussenvoegsel
+      const aLast = (a.spa_anaam || '').toLowerCase();
+      const bLast = (b.spa_anaam || '').toLowerCase();
+      if (aLast !== bLast) return aLast.localeCompare(bLast, 'nl');
+
+      const aFirst = (a.spa_vnaam || '').toLowerCase();
+      const bFirst = (b.spa_vnaam || '').toLowerCase();
+      if (aFirst !== bFirst) return aFirst.localeCompare(bFirst, 'nl');
+
+      const aMiddle = (a.spa_tv || '').toLowerCase();
+      const bMiddle = (b.spa_tv || '').toLowerCase();
+      return aMiddle.localeCompare(bMiddle, 'nl');
+    } else {
+      // Sort by first name first: voornaam, tussenvoegsel, achternaam
+      const aFirst = (a.spa_vnaam || '').toLowerCase();
+      const bFirst = (b.spa_vnaam || '').toLowerCase();
+      if (aFirst !== bFirst) return aFirst.localeCompare(bFirst, 'nl');
+
+      const aMiddle = (a.spa_tv || '').toLowerCase();
+      const bMiddle = (b.spa_tv || '').toLowerCase();
+      if (aMiddle !== bMiddle) return aMiddle.localeCompare(bMiddle, 'nl');
+
+      const aLast = (a.spa_anaam || '').toLowerCase();
+      const bLast = (b.spa_anaam || '').toLowerCase();
+      return aLast.localeCompare(bLast, 'nl');
+    }
+  });
+
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
   };
@@ -638,7 +671,7 @@ export default function CompetitieSpelersPage() {
           </button>
           <button
             onClick={handlePrint}
-            disabled={filteredPlayers.length === 0}
+            disabled={sortedPlayers.length === 0}
             className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -661,7 +694,7 @@ export default function CompetitieSpelersPage() {
             Er zijn nog geen spelers toegevoegd aan deze competitie.
           </p>
         </div>
-      ) : filteredPlayers.length === 0 ? (
+      ) : sortedPlayers.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -684,11 +717,11 @@ export default function CompetitieSpelersPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Caramboles</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider print:hidden">Acties</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {filteredPlayers.map((player) => {
+                {sortedPlayers.map((player) => {
                   const periodMoy = getPlayerPeriodMoy(player, selectedPeriod);
                   const periodCar = getPlayerPeriodCar(player, selectedPeriod);
                   return (
@@ -704,7 +737,7 @@ export default function CompetitieSpelersPage() {
                       <td className="px-4 py-3 text-sm font-medium text-green-700 dark:text-green-400 text-right tabular-nums">
                         {periodCar}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right print:hidden">
                         <button
                           onClick={() => {
                             setPlayerToRemove(player);
@@ -724,8 +757,8 @@ export default function CompetitieSpelersPage() {
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {filteredPlayers.length} {filteredPlayers.length === 1 ? 'speler' : 'spelers'} in periode {selectedPeriod}
-              {filteredPlayers.length !== players.length && (
+              {sortedPlayers.length} {sortedPlayers.length === 1 ? 'speler' : 'spelers'} in periode {selectedPeriod}
+              {sortedPlayers.length !== players.length && (
                 <span className="ml-2 text-slate-400">
                   ({players.length} totaal in competitie)
                 </span>

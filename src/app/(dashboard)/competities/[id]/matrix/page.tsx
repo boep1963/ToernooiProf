@@ -127,8 +127,8 @@ export default function CompetitieMatrixPage() {
         const compData = await compRes.json();
         setCompetition(compData);
 
-        // Initialize selectedPeriode to periode 1 (most data-rich periode)
-        setSelectedPeriode(1);
+        // Initialize selectedPeriode to competition's current periode
+        setSelectedPeriode(compData.periode || 1);
 
         if (playersRes.ok) {
           const playersData = await playersRes.json();

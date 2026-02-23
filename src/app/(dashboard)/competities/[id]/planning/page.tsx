@@ -150,7 +150,7 @@ export default function CompetiteDagplanningPage() {
 
         const compData = await compRes.json();
         setCompetition(compData);
-        setSelectedPeriode(1);
+        setSelectedPeriode(compData.periode || 1);
 
         if (playersRes.ok) {
           const playersData = await playersRes.json();
