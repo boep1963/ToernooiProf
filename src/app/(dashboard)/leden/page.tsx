@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { formatDecimal } from '@/lib/formatUtils';
 // Types imported from shared types module
 
 interface MemberItem {
@@ -188,7 +189,7 @@ export default function LedenPage() {
 
   const formatMoyenne = (value: number): string => {
     if (!value || value === 0) return '-';
-    return value.toFixed(3);
+    return formatDecimal(value);
   };
 
   return (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { formatDecimal } from '@/lib/formatUtils';
 
 export async function GET(
   request: NextRequest,
@@ -266,7 +267,7 @@ export async function POST(
       if (!memberSnapshot.empty) {
         const memberDoc = memberSnapshot.docs[0];
         await memberDoc.ref.update({
-          [moyenneField]: parseFloat(moyenneToTransfer.toFixed(3)),
+          [moyenneField]: parseFloat(formatDecimal(moyenneToTransfer)),
         });
         updated++;
       }

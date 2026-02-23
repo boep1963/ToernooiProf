@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import { DISCIPLINES } from '@/types';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface PlayerMoyenne {
   spc_nummer: number;
@@ -333,7 +334,7 @@ export default function DoorkoppelenPage() {
                       {player.playerName}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-slate-700 dark:text-slate-300 bg-yellow-50 dark:bg-yellow-900/10">
-                      {player.startMoyenne.toFixed(3)}
+                      {formatDecimal(player.startMoyenne)}
                     </td>
                     {[1, 2, 3, 4, 5].map((period) => (
                       <td
@@ -342,13 +343,13 @@ export default function DoorkoppelenPage() {
                           selectedPeriod === period ? 'bg-green-50 dark:bg-green-900/10 font-semibold' : ''
                         } ${competition && competition.periode < period ? 'opacity-50' : ''}`}
                       >
-                        {getPeriodMoyenne(player, period).toFixed(3)}
+                        {formatDecimal(getPeriodMoyenne(player, period))}
                       </td>
                     ))}
                     <td className={`px-4 py-3 whitespace-nowrap text-sm text-center text-slate-700 dark:text-slate-300 ${
                       selectedPeriod === 6 ? 'bg-green-50 dark:bg-green-900/10 font-semibold' : ''
                     }`}>
-                      {player.totalMoy.toFixed(3)}
+                      {formatDecimal(player.totalMoy)}
                     </td>
                   </tr>
                 ))}

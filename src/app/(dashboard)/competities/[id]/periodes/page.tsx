@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
 import { calculateCaramboles } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
@@ -151,7 +152,7 @@ export default function CompetitiePeriodesPage() {
 
         if (totalBrt > 0) {
           moyBehaald = totalCar / totalBrt;
-          moyNieuw = parseFloat(moyBehaald.toFixed(3));
+          moyNieuw = parseFloat(formatDecimal(moyBehaald));
           carNieuw = calculateCaramboles(moyNieuw, moyForm, minCar);
         } else {
           // No results: keep the start moyenne
@@ -553,7 +554,7 @@ export default function CompetitiePeriodesPage() {
                         {info.partijen}
                       </td>
                       <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
-                        {info.moy_start.toFixed(3)}
+                        {formatDecimal(info.moy_start)}
                       </td>
                       <td className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
                         {info.car_start}
@@ -561,7 +562,7 @@ export default function CompetitiePeriodesPage() {
                       <td className="px-3 py-2 text-right">
                         <input
                           type="number"
-                          value={info.moy_nieuw.toFixed(3)}
+                          value={formatDecimal(info.moy_nieuw)}
                           onChange={(e) => updatePlayerMoyenne(idx, e.target.value)}
                           step="0.001"
                           min="0.200"

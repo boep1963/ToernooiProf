@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import { formatDate } from '@/lib/dateUtils';
+import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
@@ -239,8 +240,8 @@ export default function PlayerResultsPage() {
         const playerHS = isPlayer1 ? result.sp_1_hs : result.sp_2_hs;
         const opponentHS = isPlayer1 ? result.sp_2_hs : result.sp_1_hs;
 
-        const playerMoy = result.brt > 0 ? (playerCar / result.brt).toFixed(3) : '0.000';
-        const opponentMoy = result.brt > 0 ? (opponentCar / result.brt).toFixed(3) : '0.000';
+        const playerMoy = result.brt > 0 ? formatDecimal(playerCar / result.brt) : '0.000';
+        const opponentMoy = result.brt > 0 ? formatDecimal(opponentCar / result.brt) : '0.000';
 
         let resultType: 'win' | 'draw' | 'loss';
         if (playerPnt > opponentPnt) resultType = 'win';
@@ -283,8 +284,8 @@ export default function PlayerResultsPage() {
 
       const totalCaramboles = transformedResults.reduce((sum, r) => sum + r.playerCar, 0);
       const totalBeurten = transformedResults.reduce((sum, r) => sum + r.brt, 0);
-      const avgMoyenne = totalBeurten > 0 ? (totalCaramboles / totalBeurten).toFixed(3) : '0.000';
-      const winPercentage = totalMatches > 0 ? ((wins / totalMatches) * 100).toFixed(1) : '0.0';
+      const avgMoyenne = totalBeurten > 0 ? formatDecimal(totalCaramboles / totalBeurten) : '0.000';
+      const winPercentage = totalMatches > 0 ? formatDecimal((wins / totalMatches) * 100) : '0.000';
 
       setPlayerStats({
         totalMatches,
