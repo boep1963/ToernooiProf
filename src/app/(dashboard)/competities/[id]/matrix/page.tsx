@@ -187,6 +187,17 @@ export default function CompetitieMatrixPage() {
     loadMatchesAndResults();
   }, [orgNummer, compNr, selectedPeriode]);
 
+  // Sort players by name according to competition sorteren setting (memoized for performance)
+  // Must be called before any early returns to follow React hooks rules
+  const sortedPlayers = useMemo(() => {
+    if (!competition) return [];
+    return [...players].sort((a, b) => {
+      const nameA = formatPlayerName(a.spa_vnaam, a.spa_tv, a.spa_anaam, competition.sorteren || 1);
+      const nameB = formatPlayerName(b.spa_vnaam, b.spa_tv, b.spa_anaam, competition.sorteren || 1);
+      return nameA.localeCompare(nameB, 'nl');
+    });
+  }, [players, competition?.sorteren]);
+
   // Build matrix data
   const getMatchResult = (playerANr: number, playerBNr: number): { played: boolean; pointsA: number; pointsB: number } | null => {
     // Find the match between these two players
@@ -263,15 +274,6 @@ export default function CompetitieMatrixPage() {
       </div>
     );
   }
-
-  // Sort players by name according to competition sorteren setting (memoized for performance)
-  const sortedPlayers = useMemo(() => {
-    return [...players].sort((a, b) => {
-      const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
-      const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
-      return nameA.localeCompare(nameB, 'nl');
-    });
-  }, [players, competition?.sorteren]);
 
   // Get caramboles field key based on discipline
   const getCarambolesKey = (discipline: number): keyof PlayerData => {
@@ -719,7 +721,9 @@ export default function CompetitieMatrixPage() {
                                 className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
                                 title="Klik om uitslag in te voeren"
                               >
-                                -
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
                               </button>
                             </td>
                           );
@@ -733,7 +737,9 @@ export default function CompetitieMatrixPage() {
                                 className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors cursor-pointer"
                                 title="Klik om uitslag in te voeren"
                               >
-                                -
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
                               </button>
                             </td>
                           );
@@ -915,18 +921,20 @@ export default function CompetitieMatrixPage() {
               </div>
 
               {/* Beurten */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Aantal beurten
-                </label>
-                <input
-                  type="number"
-                  value={formData.brt}
-                  onChange={(e) => setFormData({ ...formData, brt: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  required
-                  min="1"
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Aantal beurten
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.brt}
+                    onChange={(e) => setFormData({ ...formData, brt: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    required
+                    min="1"
+                  />
+                </div>
               </div>
 
               {error && (
