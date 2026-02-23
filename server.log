@@ -317,3 +317,62 @@
 [COMPETITION] Querying database for competition: 3 in org: 1205
  GET /api/organizations/1205/competitions/3 200 in 169ms
  GET /api/organizations/1205/competitions/3 200 in 173ms
+[COMPETITION] Updating competition: 3 in org: 1205
+[COMPETITION] Competition 3 updated successfully
+ PUT /api/organizations/1205/competitions/3 200 in 365ms
+ GET /competities/3 200 in 56ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 190ms
+ GET /api/organizations/1205/competitions/3 200 in 211ms
+ ✓ Compiled in 1418ms (838 modules)
+ ✓ Compiled in 0ms (538 modules)
+ ✓ Compiled in 0ms (538 modules)
+ ✓ Compiled in 0ms (538 modules)
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+ GET /competities/3 200 in 1509ms
+ GET /competities/3/planning 200 in 1512ms
+ GET /competities/3/spelers 200 in 1515ms
+ GET /api/organizations/1205/competitions/3 200 in 5470ms
+ GET /competities/3 200 in 57ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[DB] Connected to Google Firestore
+[COMPETITION] Querying database for competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 189ms
+ GET /api/organizations/1205/competitions/3 200 in 233ms
+ GET /competities/3/spelers 200 in 373ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 648ms
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[COMPETITION] Querying database for competition: 3 in org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[MEMBERS] Querying database for members of org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+[PLAYERS] Querying database for players of competition: 3 in org: 1205
+ GET /api/organizations/1205/competitions/3 200 in 325ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 329ms
+ GET /api/organizations/1205/competitions/3 200 in 331ms
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 337ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 987ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 7 players for competition 3
+ GET /api/organizations/1205/competitions/3/players 200 in 991ms
+ GET /competities 200 in 75ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 176ms
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Querying database for competitions of org: 1205
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 483ms
+[COMPETITIONS] Found 7 competitions
+ GET /api/organizations/1205/competitions 200 in 489ms
+ GET /competities/1 200 in 104ms
+[COMPETITION] Querying database for competition: 1 in org: 1205
+[COMPETITION] Querying database for competition: 1 in org: 1205
+ GET /api/organizations/1205/competitions/1 200 in 327ms
+ GET /api/organizations/1205/competitions/1 200 in 378ms
