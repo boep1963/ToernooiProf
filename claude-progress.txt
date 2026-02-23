@@ -4215,3 +4215,43 @@ FILES MODIFIED:
 - src/app/(dashboard)/competities/[id]/spelers/page.tsx
 
 CURRENT STATUS: 301/315 features passing (95.6%)
+
+=== Session - 2026-02-23 (Features #303, #307) ===
+Agent: Coding Agent - Print View Improvements
+
+ASSIGNED FEATURES: #303, #307
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #303: Kolom Acties verbergen bij printen van spelerslijst
+- Added print:hidden class to "Acties" column header (th)
+- Added print:hidden class to all "Acties" table cells (td)
+- Column remains visible on screen for user interactions
+- Column is automatically hidden when printing (using Tailwind's print:hidden utility)
+- Verified via browser automation on competition #3 with 7 players
+- Zero console errors
+
+Feature #307: Dagplanning printen: partijen 1x tonen zonder Stap 2 tekst
+- Added print:hidden class to Step 2 display section (line 824)
+- Print-only section (lines 578-618) already existed with clean table layout
+- Print header shows "Partijindeling" instead of "Stap 2: Partijindeling voor vandaag"
+- When printing: only the print-optimized table is visible (pairings shown once)
+- When viewing: users see the styled Step 2 cards with "Stap 2" heading
+- Generated test pairings with 7 players, verified print structure
+- Zero console errors
+
+VERIFICATION RESULTS:
+✅ Feature #303: Acties header and cells have print:hidden class
+✅ Feature #307: Step 2 section has print:hidden, print table exists with "Partijindeling" header
+✅ Both features verified with browser automation
+✅ Zero console errors on both pages
+✅ Clean git commit with detailed message
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/spelers/page.tsx (lines 720, 740)
+- src/app/(dashboard)/competities/[id]/planning/page.tsx (line 824)
+
+GIT COMMIT: 0d2c58a
+
+CURRENT STATUS: 301/315 features passing (95.6%)
+
+Both features completed, verified, and marked as passing!
