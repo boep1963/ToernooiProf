@@ -4187,3 +4187,31 @@ FEATURE #301: Moyenne formula displayed as 'Car = Moyenne x 25'
 
 GIT COMMITS: c438917, 464eb1d
 UPDATED STATUS: 301/315 features passing (95.6%)
+
+=== Session - 2026-02-23 (Features #302, #304) ===
+Agent: Coding Agent - Players List Sorting + Formula Text Improvements
+
+ASSIGNED FEATURES: #302, #304
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #302: Spelerslijst sorteren op gekozen volgorde
+- Added sorting logic based on competition sorteren setting
+- sorteren=1: Sort by voornaam → tussenvoegsel → achternaam
+- sorteren=2: Sort by achternaam → voornaam → tussenvoegsel
+- Uses Dutch locale for proper alphabetical sorting
+- Verified with browser automation in both sort modes
+- Zero console errors
+GIT COMMIT: f88364f
+
+Feature #304: Formule-tekst bij Spelers wijzigen naar leesbaar formaat
+- Changed formula display from 'Formule: x25' to 'Formule: Car = Moyenne x 25'
+- Updated in both UI header and print header
+- New format: 'Libre | Formule: Car = Moyenne x 25 | Min. caramboles: 10'
+- Verified with browser automation across multiple competitions
+- Zero console errors
+GIT COMMIT: 485162e
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/spelers/page.tsx
+
+CURRENT STATUS: 301/315 features passing (95.6%)

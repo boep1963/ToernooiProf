@@ -503,3 +503,33 @@
 [BATCH_ENRICH] No players need enrichment
 [PLAYERS] Found 1 players for competition 2
  GET /api/organizations/1205/competitions/2/players 200 in 852ms
+ ✓ Compiled in 486ms (300 modules)
+ ✓ Compiled /_not-found in 428ms (772 modules)
+ GET /competities/3/planning 404 in 638ms
+ GET /competities/2/spelers 404 in 621ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/p.l.m.deboer/Documents/ClubMatch/.next/server/app/(dashboard)/competities/[id]/spelers/page.js'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/p.l.m.deboer/Documents/ClubMatch/.next/server/app/(dashboard)/competities/[id]/spelers/page.js',
+  page: '/competities/2/spelers'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2s (1113 modules)
+ GET /competities/3/planning 200 in 1315ms
+ GET /competities/2/spelers 500 in 2844ms
+ ⨯ Failed to generate static paths for /competities/[id]/planning:
+[Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/webpack-runtime.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/.next/server/app/(dashboard)/competities/[id]/planning/page.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/require.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/load-components.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/build/utils.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/server/dev/static-paths-worker.js
+- /Users/p.l.m.deboer/Documents/ClubMatch/node_modules/next/dist/compiled/jest-worker/processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ✓ Compiled in 2.2s (1127 modules)

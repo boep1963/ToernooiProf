@@ -111,9 +111,8 @@ export default function CompetiteDagplanningPage() {
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [results, setResults] = useState<ResultData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMatchData, setIsLoadingMatchData] = useState(false);
   const [error, setError] = useState('');
-  const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
-  const latestPeriodeRef = useRef<number | null>(null);
 
   // Dagplanning state
   const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
