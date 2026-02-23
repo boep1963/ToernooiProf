@@ -4175,3 +4175,15 @@ GIT COMMIT: 7885ecb
 
 CURRENT STATUS: 297/299 features passing (99.3%)
 
+
+=== Session - 2026-02-23 (Features #300, #301) ===
+Agent: Coding Agent - Period Selection and Moyenne Formula Display
+
+ASSIGNED FEATURES: #300, #301
+STATUS: BOTH COMPLETED AND PASSING
+
+FEATURE #300: Period selector defaults to competition's current period
+FEATURE #301: Moyenne formula displayed as 'Car = Moyenne x 25'
+
+GIT COMMITS: c438917, 464eb1d
+UPDATED STATUS: 301/315 features passing (95.6%)

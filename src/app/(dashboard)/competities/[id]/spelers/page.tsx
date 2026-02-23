@@ -451,7 +451,7 @@ export default function CompetitieSpelersPage() {
       <div className="hidden print:block mb-6">
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]} | Formule: x{multiplier} | Min. caramboles: {competition.min_car} | Periode {selectedPeriod}
+          {DISCIPLINES[competition.discipline]} | Formule: Car = Moyenne x {multiplier} | Min. caramboles: {competition.min_car} | Periode {selectedPeriod}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -467,7 +467,7 @@ export default function CompetitieSpelersPage() {
               Spelers - {competition.comp_naam}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {DISCIPLINES[competition.discipline]} | Formule: x{multiplier} | Min. caramboles: {competition.min_car}
+              {DISCIPLINES[competition.discipline]} | Formule: Car = Moyenne x {multiplier} | Min. caramboles: {competition.min_car}
             </p>
           </div>
           <div className="flex items-center gap-2">
