@@ -1,0 +1,101 @@
+=== SESSION SUMMARY: Features #314 and #315 ===
+Date: 2026-02-23
+Agent: Coding Agent
+Status: ✅ BOTH FEATURES COMPLETED AND PASSING
+
+## FEATURES IMPLEMENTED
+
+### Feature #314: Formule-tekst bij Periodes wijzigen naar leesbaar formaat
+**Requirement:** Change formula text on Periodes page from "Formule: x20" to readable format "Formule: Car = Moyenne x 20"
+
+**Implementation:**
+- Modified: src/app/(dashboard)/competities/[id]/periodes/page.tsx (line 354)
+- Changed: `Formule: x{multiplier}` → `Formule: Car = Moyenne x {multiplier}`
+- Result: Now consistent with Spelers page and competition overview
+
+**Verification:**
+✅ Periodes page displays: "Libre | Formule: Car = Moyenne x 25 | Min. caramboles: 10"
+✅ Formula changes correctly with different multipliers
+✅ Zero console errors
+
+---
+
+### Feature #315: Tekst 'onbekend' verwijderen bij discipline-info in Stand en Uitslagen
+**Requirement:** Remove "onbekend" text from discipline info in Stand and Uitslagen pages when points system is unknown
+
+**Implementation:**
+Modified 3 files at 4 locations total:
+1. src/app/(dashboard)/competities/[id]/stand/page.tsx
+   - Line 257 (print header): Removed "| Onbekend" fallback
+   - Line 271 (screen header): Removed "| Onbekend" fallback
+
+2. src/app/(dashboard)/competities/[id]/uitslagen/per-speler/page.tsx
+   - Line 369 (print header): Removed "| Onbekend" fallback
+   - Line 383 (screen header): Removed "| Onbekend" fallback
+
+**Logic Change:**
+- Before: Display "Onbekend" when points system not recognized
+- After: Hide points system entirely when not recognized
+- Effect: Shows "Discipline | Points System" when known, or just "Discipline" when unknown
+
+**Verification:**
+✅ Stand page displays: "Libre | WRV 2-1-0" (no "onbekend")
+✅ Uitslagen per speler page displays: "Libre | WRV 2-1-0" (no "onbekend")
+✅ Both screen and print headers verified
+✅ Zero console errors
+
+---
+
+## TESTING METHODOLOGY
+
+### Browser Automation Testing
+- Used Playwright MCP tools for UI verification
+- Tested actual user workflows through the browser
+- Verified visual appearance with page snapshots
+- Checked console for JavaScript errors
+- Tested navigation and page loading
+
+### Pages Tested
+1. Periodes page (Feature #314)
+2. Stand page (Feature #315)
+3. Uitslagen per speler page (Feature #315)
+
+### Test Results
+- All pages load successfully
+- All text displays correctly in expected format
+- No console errors detected
+- Navigation working properly
+- Both light and dark themes compatible
+
+---
+
+## PROJECT STATUS
+
+**Before Session:** 312/315 features passing (99.0%)
+**After Session:** 314/315 features passing (99.7%)
+**Features Completed:** 2
+**Remaining Features:** 1
+
+---
+
+## GIT COMMIT
+
+Commit: 59500c8
+Message: "feat: implement Features #314 and #315 - formula text and 'onbekend' removal"
+
+Files Modified:
+- src/app/(dashboard)/competities/[id]/periodes/page.tsx
+- src/app/(dashboard)/competities/[id]/stand/page.tsx
+- src/app/(dashboard)/competities/[id]/uitslagen/per-speler/page.tsx
+
+---
+
+## NOTES
+
+- Both features were UI text improvements for better readability
+- Changes maintain consistency across the application
+- All modifications follow existing code patterns
+- No breaking changes or API modifications
+- Fully backward compatible
+
+Session completed successfully! 🎉

@@ -4317,3 +4317,43 @@ Feature #309: Matrix performance improvements - useMemo, optimistic updates
 Feature #311: Belgian system point calculation in verification
 GIT COMMIT: 25b2eb2
 CURRENT STATUS: 307/315 features passing (97.5%)
+
+=== Session - 2026-02-23 (Features #314, #315) ===
+Agent: Coding Agent - Formula Text and Onbekend Removal
+
+ASSIGNED FEATURES: #314, #315
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #314: Formule-tekst bij Periodes wijzigen naar leesbaar formaat
+- Changed formula display from "Formule: x25" to "Formule: Car = Moyenne x 25"
+- Updated on Periodes page to match format used on Spelers page
+- Now consistent across all pages showing moyenne formula
+- File modified: src/app/(dashboard)/competities/[id]/periodes/page.tsx (line 354)
+
+Feature #315: Tekst 'onbekend' verwijderen bij discipline-info in Stand en Uitslagen
+- Removed "| Onbekend" text when points system is not recognized
+- Modified Stand page (2 locations: print header and screen header)
+- Modified Uitslagen per speler page (2 locations: print header and screen header)
+- Logic: Show "Discipline | Points System" when known, or just "Discipline" when unknown
+- Files modified:
+  - src/app/(dashboard)/competities/[id]/stand/page.tsx (lines 257, 271)
+  - src/app/(dashboard)/competities/[id]/uitslagen/per-speler/page.tsx (lines 369, 383)
+
+VERIFICATION RESULTS (Browser Automation):
+✅ Feature #314:
+  - Periodes page shows: "Libre | Formule: Car = Moyenne x 25 | Min. caramboles: 10"
+  - Formula format is now readable and consistent with other pages
+
+✅ Feature #315:
+  - Stand page shows: "Libre | WRV 2-1-0" (no "onbekend" text)
+  - Uitslagen per speler page shows: "Libre | WRV 2-1-0" (no "onbekend" text)
+  - Verified both screen display and print header sections
+
+✅ Zero console errors on all pages
+✅ All navigation working correctly
+✅ Both light and dark themes verified
+
+GIT COMMIT: 59500c8
+CURRENT STATUS: 314/315 features passing (99.7%)
+
+Both features completed, thoroughly tested with browser automation, and marked as passing\!
