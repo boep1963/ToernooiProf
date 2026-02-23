@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { adminAuth } from '@/lib/firebase-admin';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -68,6 +69,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json();
 
+    // Validate email format if email is being updated
+    if (body.org_wl_email !== undefined && body.org_wl_email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.org_wl_email.trim())) {
+        return NextResponse.json(
+          { error: 'Ongeldig e-mailadres formaat.' },
+          { status: 400 }
+        );
+      }
+    }
+
     console.log('[ORG] Updating organization in database:', orgNummer);
     const orgSnapshot = await db.collection('organizations')
       .where('org_nummer', '==', orgNummer)
@@ -97,9 +109,29 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     await orgSnapshot.docs[0].ref.update(updateData);
 
-    // If email changed, add entry to email_queue for future processing
-    if (emailChanged && newEmail) {
-      console.log('[ORG] Email changed, adding to email_queue');
+    // If email changed, update Firebase Auth and add entry to email_queue
+    if (emailChanged && newEmail && currentEmail) {
+      console.log('[ORG] Email changed from', currentEmail, 'to', newEmail);
+
+      // Update Firebase Auth user email (if user exists)
+      try {
+        const firebaseUser = await adminAuth.getUserByEmail(currentEmail);
+        if (firebaseUser) {
+          console.log('[ORG] Updating Firebase Auth email for user:', firebaseUser.uid);
+          await adminAuth.updateUser(firebaseUser.uid, {
+            email: newEmail,
+            emailVerified: true, // Keep email verified after change
+          });
+          console.log('[ORG] Firebase Auth email updated successfully');
+        }
+      } catch (authError: unknown) {
+        // User might not exist in Firebase Auth (using login code only)
+        const errMsg = authError instanceof Error ? authError.message : String(authError);
+        console.log('[ORG] Firebase Auth user not found or error updating:', errMsg);
+      }
+
+      // Add entry to email_queue for notification
+      console.log('[ORG] Adding email change to email_queue');
       await db.collection('email_queue').add({
         type: 'email_change',
         org_nummer: orgNummer,

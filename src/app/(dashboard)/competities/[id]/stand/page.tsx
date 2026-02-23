@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -57,7 +58,58 @@ export default function CompetitieStandPage() {
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
   const [sortByPercentage, setSortByPercentage] = useState(false); // false = absolute points, true = percentage points
-  const printRef = useRef<HTMLDivElement>(null);
+
+  // Add print styles on mount
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 1.5cm;
+        }
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        /* Hide navigation and UI elements */
+        nav, aside, header, footer, .print\\:hidden {
+          display: none !important;
+        }
+        /* Show print-only elements */
+        .hidden.print\\:block {
+          display: block !important;
+        }
+        /* Show only the main content */
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        /* Table styling */
+        table {
+          page-break-inside: auto;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        /* Preserve colors in print */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const fetchCompetition = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -165,87 +217,7 @@ export default function CompetitieStandPage() {
   }, [standings, sortByPercentage]);
 
   const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const orgName = orgNaam || 'ClubMatch';
-    const compName = competition?.comp_naam || 'Competitie';
-    const discipline = competition ? DISCIPLINES[competition.discipline] : '';
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Stand - ${compName}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; color: #1e293b; }
-          h1 { font-size: 18px; margin-bottom: 4px; }
-          h2 { font-size: 14px; font-weight: normal; color: #64748b; margin-top: 0; margin-bottom: 16px; }
-          .header-info { font-size: 12px; color: #64748b; margin-bottom: 16px; }
-          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          th { background: #f1f5f9; padding: 8px 6px; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
-          th.right, td.right { text-align: right; }
-          th.center, td.center { text-align: center; }
-          td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
-          tr:nth-child(even) { background: #f8fafc; }
-          .rank { font-weight: 700; }
-          .points { font-weight: 700; }
-          .footer { margin-top: 16px; font-size: 10px; color: #94a3b8; }
-          @media print { body { margin: 10mm; } }
-        </style>
-      </head>
-      <body>
-        <h1>${orgName} - ${compName}</h1>
-        <h2>${discipline} | ${PUNTEN_SYSTEMEN[competition?.punten_sys || 1] || ''} | ${selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}</h2>
-        <table>
-          <thead>
-            <tr>
-              <th class="center">#</th>
-              <th>Naam</th>
-              <th class="right">Pnt</th>
-              <th class="center">Part</th>
-              <th class="right">Car.</th>
-              <th class="right">% Car</th>
-              <th class="right">Brt</th>
-              <th class="right">Moy</th>
-              <th class="right">P.moy</th>
-              <th class="right">HS</th>
-              ${sortByPercentage ? '<th class="right">% Pnt</th>' : ''}
-            </tr>
-          </thead>
-          <tbody>
-            ${sortedStandings.map((entry) => `
-              <tr>
-                <td class="center rank">${entry.rank}</td>
-                <td>${entry.playerName}</td>
-                <td class="right points">${entry.punten}</td>
-                <td class="center">${entry.matchesPlayed}</td>
-                <td class="right">${entry.carambolesGemaakt}</td>
-                <td class="right">${entry.percentage.toFixed(2)}</td>
-                <td class="right">${entry.beurten}</td>
-                <td class="right">${entry.moyenne.toFixed(3)}</td>
-                <td class="right">${entry.partijMoyenne.toFixed(2)}</td>
-                <td class="right">${entry.hoogsteSerie}</td>
-                ${sortByPercentage ? `<td class="right points">${entry.percentagePunten?.toFixed(2) || '0.00'}%</td>` : ''}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div class="footer">
-          Afgedrukt op ${new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} | ClubMatch
-        </div>
-      </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    window.print();
   };
 
   if (isLoading && !competition) {
@@ -261,21 +233,36 @@ export default function CompetitieStandPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">Competitie niet gevonden.</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <div className="print:hidden">
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
+      </div>
 
-      <div className="mb-4">
+      {/* Print-only header */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
+        <div className="text-sm mb-2">
+          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
+        </div>
+        <div className="text-sm text-gray-600">
+          Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
+          {new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className="border-b-2 border-gray-300 mt-3 mb-4"></div>
+      </div>
+
+      <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Stand - {competition.comp_naam}
         </h1>
@@ -299,7 +286,7 @@ export default function CompetitieStandPage() {
       )}
 
       {/* Period selector and actions */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
         <div className="flex items-center gap-2">
           <label htmlFor="period-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Periode:
@@ -405,26 +392,30 @@ export default function CompetitieStandPage() {
             </svg>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
-            Er zijn nog geen uitslagen voor deze periode. Voer eerst uitslagen in.
+            Er zijn nog geen uitslagen voor deze periode. Voer eerst uitslagen in via de Matrix.
           </p>
           <button
-            onClick={() => router.push(`/competities/${compNr}/uitslagen`)}
+            onClick={() => router.push(`/competities/${compNr}/matrix`)}
             className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm"
           >
-            Naar uitslagen
+            Naar Matrix
           </button>
         </div>
       )}
 
       {!isLoading && standings.length > 0 && (
-        <div ref={printRef} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10">#</th>
+                  <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10">Pos</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                  <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  {sortByPercentage ? (
+                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
+                  ) : (
+                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Punten">Pnt</th>
+                  )}
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partijen gespeeld">Part</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Caramboles gemaakt">Car.</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage caramboles">% Car</th>
@@ -432,22 +423,23 @@ export default function CompetitieStandPage() {
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Moyenne">Moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Partij Moyenne">P.moy</th>
                   <th className="text-right px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Hoogste serie">HS</th>
-                  {sortByPercentage && (
-                    <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" title="Percentage punten">% Pnt</th>
-                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {sortedStandings.map((entry, index) => (
                   <tr
                     key={entry.playerNr}
-                    className={`hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${
-                      index === 0 ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
-                    }`}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                   >
                     <td className="text-center px-3 py-2.5 text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                      {index === 0 && entry.matchesPlayed > 0 ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-500 text-white text-xs rounded-full">
+                      {entry.matchesPlayed > 0 && entry.rank >= 1 && entry.rank <= 3 ? (
+                        <span
+                          className={`inline-flex items-center justify-center w-6 h-6 text-white text-xs rounded-full ${
+                            entry.rank === 1 ? 'bg-green-700' :
+                            entry.rank === 2 ? 'bg-green-600' :
+                            'bg-green-500'
+                          }`}
+                        >
                           {entry.rank}
                         </span>
                       ) : (
@@ -457,9 +449,15 @@ export default function CompetitieStandPage() {
                     <td className="px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-white">
                       {entry.playerName}
                     </td>
-                    <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
-                      {entry.punten}
-                    </td>
+                    {sortByPercentage ? (
+                      <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
+                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
+                      </td>
+                    ) : (
+                      <td className="text-right px-3 py-2.5 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums">
+                        {entry.punten}
+                      </td>
+                    )}
                     <td className="text-center px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.matchesPlayed}
                     </td>
@@ -481,11 +479,6 @@ export default function CompetitieStandPage() {
                     <td className="text-right px-2 py-2.5 text-sm text-slate-600 dark:text-slate-400 tabular-nums">
                       {entry.hoogsteSerie}
                     </td>
-                    {sortByPercentage && (
-                      <td className="text-right px-3 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums">
-                        {entry.percentagePunten?.toFixed(2) || '0.00'}%
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

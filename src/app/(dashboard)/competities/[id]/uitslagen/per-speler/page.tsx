@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -81,7 +82,8 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 export default function PlayerResultsPage() {
   const params = useParams();
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer, organization } = useAuth();
+  const orgNaam = organization?.org_naam || '';
 
   const compNr = parseInt(params.id as string, 10);
 
@@ -93,6 +95,58 @@ export default function PlayerResultsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [error, setError] = useState('');
+
+  // Add print styles on mount
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 1.5cm;
+        }
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        /* Hide navigation and UI elements */
+        nav, aside, header, footer, .print\\:hidden {
+          display: none !important;
+        }
+        /* Show print-only elements */
+        .hidden.print\\:block {
+          display: block !important;
+        }
+        /* Show only the main content */
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        /* Table styling */
+        table {
+          page-break-inside: auto;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        /* Preserve colors in print */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const formatPlayerName = (player: PlayerData) => {
     return `${player.spa_vnaam} ${player.spa_tv || ''} ${player.spa_anaam}`.replace(/\s+/g, ' ').trim();
@@ -272,6 +326,10 @@ export default function PlayerResultsPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
@@ -285,12 +343,12 @@ export default function PlayerResultsPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">Competitie niet gevonden.</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
@@ -299,9 +357,25 @@ export default function PlayerResultsPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <div className="print:hidden">
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
+      </div>
 
-      <div className="mb-4">
+      {/* Print-only header */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
+        <h2 className="text-xl mb-2">Uitslagen per speler: {selectedPlayer && formatPlayerName(selectedPlayer)}</h2>
+        <div className="text-sm mb-2">
+          {DISCIPLINES[competition.discipline]} | {PUNTEN_SYSTEMEN[competition.punten_sys] || 'Onbekend'}
+        </div>
+        <div className="text-sm text-gray-600">
+          Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
+          {new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className="border-b-2 border-gray-300 mt-3 mb-4"></div>
+      </div>
+
+      <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Uitslagen per speler - {competition.comp_naam}
         </h1>
@@ -311,27 +385,42 @@ export default function PlayerResultsPage() {
       </div>
 
       {/* Player Selection */}
-      <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-        <label htmlFor="player-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Selecteer een speler
-        </label>
-        <select
-          id="player-select"
-          value={selectedPlayerNr || ''}
-          onChange={handlePlayerChange}
-          className="w-full max-w-md px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
-        >
-          <option value="">-- Kies een speler --</option>
-          {players.map((player) => (
-            <option key={player.spc_nummer} value={player.spc_nummer}>
-              {formatPlayerName(player)}
-            </option>
-          ))}
-        </select>
+      <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 print:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <label htmlFor="player-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Selecteer een speler
+            </label>
+            <select
+              id="player-select"
+              value={selectedPlayerNr || ''}
+              onChange={handlePlayerChange}
+              className="w-full max-w-md px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+            >
+              <option value="">-- Kies een speler --</option>
+              {players.map((player) => (
+                <option key={player.spc_nummer} value={player.spc_nummer}>
+                  {formatPlayerName(player)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedPlayerNr && playerResults.length > 0 && (
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm mt-6"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
+        <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between print:hidden">
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

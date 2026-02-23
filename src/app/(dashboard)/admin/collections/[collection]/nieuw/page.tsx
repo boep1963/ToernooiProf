@@ -188,7 +188,7 @@ export default function NewDocumentPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <Link href="/admin" className="hover:text-green-600 dark:hover:text-green-400 transition-colors">
+        <Link href="/admin" className="hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors">
           Admin
         </Link>
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,7 +196,7 @@ export default function NewDocumentPage() {
         </svg>
         <Link
           href={`/admin/collections/${collection}`}
-          className="hover:text-green-600 dark:hover:text-green-400 transition-colors"
+          className="hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors"
         >
           {collection}
         </Link>

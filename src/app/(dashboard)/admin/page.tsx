@@ -59,12 +59,12 @@ export default function AdminPage() {
           <p className="text-red-600 dark:text-red-300">
             U heeft geen beheerderstoegang. Deze pagina is alleen beschikbaar voor systeembeheerders.
           </p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          <Link
+            href="/dashboard"
+            className="mt-4 inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
-            Terug naar dashboard
-          </button>
+            Naar dashboard
+          </Link>
         </div>
       </div>
     );
@@ -213,7 +213,7 @@ export default function AdminPage() {
                       <td className="py-3 px-4 text-right">
                         <Link
                           href={`/admin/collections/${collection.name}`}
-                          className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                          className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:underline transition-colors"
                         >
                           Bekijken
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

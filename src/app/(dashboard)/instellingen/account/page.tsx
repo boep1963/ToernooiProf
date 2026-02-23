@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface OrgDetails {
   org_nummer: number;
@@ -304,24 +305,16 @@ export default function AccountPage() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Breadcrumb + Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push('/instellingen')}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar instellingen"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Account
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 ml-8">
+        <Breadcrumb items={[
+          { label: 'Instellingen', href: '/instellingen' },
+          { label: 'Account' },
+        ]} />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Account
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
           Bekijk en wijzig uw accountgegevens en organisatie-instellingen.
         </p>
       </div>
@@ -512,7 +505,7 @@ export default function AccountPage() {
               Organisatie logo
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Upload een eigen logo voor uw organisatie. Het logo wordt weergegeven in de header en op scoreborden.
+              Upload een eigen logo voor uw organisatie. Het logo wordt weergegeven in de header.
             </p>
 
             {/* Current Logo Display */}

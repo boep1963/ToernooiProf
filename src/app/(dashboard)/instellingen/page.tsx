@@ -5,22 +5,10 @@ import Link from 'next/link';
 
 const settingsLinks = [
   {
-    href: '/instellingen/tafels',
-    title: 'Bediening tafels',
-    description: 'Configureer de bediening van scoreborden per tafel (muis of tablet).',
-    icon: '🖥️',
-  },
-  {
     href: '/instellingen/account',
     title: 'Account',
     description: 'Bekijk en wijzig uw accountgegevens en organisatie-instellingen.',
     icon: '👤',
-  },
-  {
-    href: '/instellingen/advertenties',
-    title: 'Advertenties',
-    description: 'Beheer de slideshow met advertenties op de scoreborden.',
-    icon: '📺',
   },
 ];
 

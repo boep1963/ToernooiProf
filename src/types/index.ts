@@ -143,14 +143,6 @@ export interface ScoreHelperTablet extends ScoreHelper {
   serie_B: number;
 }
 
-// News Reaction (mapped from specialsoftware_reacties)
-export interface NewsReaction {
-  nummer: number;
-  tijd: Date;
-  naam: string;
-  tekst: string;
-}
-
 // Discipline names
 export const DISCIPLINES: Record<number, string> = {
   1: 'Libre',
@@ -169,6 +161,17 @@ export const MOYENNE_MULTIPLIERS: Record<number, number> = {
   5: 40,
   6: 50,
   7: 60,
+};
+
+// Moyenne formula labels for dropdowns (full text)
+export const MOYENNE_FORMULE_LABELS: Record<number, string> = {
+  1: 'Te maken car = Moyenne x 15',
+  2: 'Te maken car = Moyenne x 20',
+  3: 'Te maken car = Moyenne x 25',
+  4: 'Te maken car = Moyenne x 30',
+  5: 'Te maken car = Moyenne x 40',
+  6: 'Te maken car = Moyenne x 50',
+  7: 'Te maken car = Moyenne x 60',
 };
 
 // Standing entry for display

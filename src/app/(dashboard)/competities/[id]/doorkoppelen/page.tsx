@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import { DISCIPLINES } from '@/types';
@@ -148,12 +149,12 @@ export default function DoorkoppelenPage() {
         <CompetitionSubNav compNr={compNr} compNaam="Competitie" />
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <p className="text-red-600 dark:text-red-200 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/competities')}
-            className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+          <Link
+            href="/competities"
+            className="inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
           >
-            Terug naar competities
-          </button>
+            Naar competitieoverzicht
+          </Link>
         </div>
       </div>
     );
@@ -173,7 +174,7 @@ export default function DoorkoppelenPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition?.comp_naam || 'Competitie'} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition?.comp_naam || 'Competitie'} periode={competition?.periode || 1} />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">

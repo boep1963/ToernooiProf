@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import { formatPlayerName } from '@/lib/billiards';
@@ -42,17 +43,21 @@ interface MatchData {
 }
 
 interface ResultData {
+  id: string;
   uitslag_code: string;
   sp_1_nr: number;
   sp_1_naam?: string;
   sp_1_punt: number;
   sp_1_cartem?: number;
   sp_1_cargem?: number;
+  sp_1_hs?: number;
   sp_2_nr: number;
   sp_2_naam?: string;
   sp_2_punt: number;
   sp_2_cartem?: number;
   sp_2_cargem?: number;
+  sp_2_hs?: number;
+  brt?: number;
 }
 
 export default function CompetitieMatrixPage() {
@@ -71,13 +76,20 @@ export default function CompetitieMatrixPage() {
   const [error, setError] = useState('');
   const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
   const latestPeriodeRef = useRef<number | null>(null);
-  const [showDagplanning, setShowDagplanning] = useState(false);
-  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
-  const [tablesCount, setTablesCount] = useState<number>(0);
-  const [matchTableAssignments, setMatchTableAssignments] = useState<Map<string, number>>(new Map());
-  const [isCreatingMatches, setIsCreatingMatches] = useState(false);
-  const [generatedPairings, setGeneratedPairings] = useState<Array<{ player1: PlayerData; player2: PlayerData | null }>>([]);
-  const [showPairings, setShowPairings] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<{ playerANr: number; playerBNr: number; playerAName: string; playerBName: string; resultId?: string; result?: ResultData } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    sp_1_cartem: '',
+    sp_1_cargem: '',
+    sp_1_hs: '',
+    sp_2_cartem: '',
+    sp_2_cargem: '',
+    sp_2_hs: '',
+    brt: '',
+  });
+  const [showVerification, setShowVerification] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -91,7 +103,6 @@ export default function CompetitieMatrixPage() {
     setPlayers([]);
     setMatches([]);
     setResults([]);
-    // Setting selectedPeriode to null will trigger the first useEffect to reload everything
   };
 
   // Phase 1: Load competition data and initialize periode
@@ -176,27 +187,6 @@ export default function CompetitieMatrixPage() {
     loadMatchesAndResults();
   }, [orgNummer, compNr, selectedPeriode]);
 
-  // Fetch tables count when dagplanning modal opens
-  useEffect(() => {
-    if (!showDagplanning || !orgNummer) return;
-
-    const fetchTablesCount = async () => {
-      try {
-        const res = await fetch(`/api/organizations/${orgNummer}/tables/count`);
-        if (res.ok) {
-          const data = await res.json();
-          setTablesCount(data.count || 0);
-          console.log('[DAGPLANNING] Tables count:', data.count);
-        }
-      } catch (error) {
-        console.error('[DAGPLANNING] Error fetching tables count:', error);
-        setTablesCount(0);
-      }
-    };
-
-    fetchTablesCount();
-  }, [showDagplanning, orgNummer]);
-
   // Build matrix data
   const getMatchResult = (playerANr: number, playerBNr: number): { played: boolean; pointsA: number; pointsB: number } | null => {
     // Find the match between these two players
@@ -264,18 +254,22 @@ export default function CompetitieMatrixPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">Competitie niet gevonden.</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
 
-  // Sort players by number
-  const sortedPlayers = [...players].sort((a, b) => a.spc_nummer - b.spc_nummer);
+  // Sort players by name according to competition sorteren setting
+  const sortedPlayers = [...players].sort((a, b) => {
+    const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
+    const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
+    return nameA.localeCompare(nameB, 'nl');
+  });
 
   // Get caramboles field key based on discipline
   const getCarambolesKey = (discipline: number): keyof PlayerData => {
@@ -298,211 +292,115 @@ export default function CompetitieMatrixPage() {
     return `${name} (${car})`;
   };
 
-  // Generate all possible match pairings from selected players
-  const generateMatchPairings = (): Array<{ playerA: PlayerData; playerB: PlayerData; pairingKey: string }> => {
-    const selected = Array.from(selectedPlayers);
-    const pairings: Array<{ playerA: PlayerData; playerB: PlayerData; pairingKey: string }> = [];
+  // Calculate verification data
+  const calculateVerificationData = () => {
+    const cargem1 = Number(formData.sp_1_cargem) || 0;
+    const cargem2 = Number(formData.sp_2_cargem) || 0;
+    const brt = Number(formData.brt) || 1;
 
-    for (let i = 0; i < selected.length; i++) {
-      for (let j = i + 1; j < selected.length; j++) {
-        const playerA = sortedPlayers.find(p => p.spc_nummer === selected[i]);
-        const playerB = sortedPlayers.find(p => p.spc_nummer === selected[j]);
+    // Calculate moyenne (3 decimals, truncated not rounded)
+    const moyenne1 = Math.floor((cargem1 / brt) * 1000) / 1000;
+    const moyenne2 = Math.floor((cargem2 / brt) * 1000) / 1000;
 
-        if (playerA && playerB) {
-          const pairingKey = `${selected[i]}_${selected[j]}`;
-          pairings.push({ playerA, playerB, pairingKey });
+    // Calculate points based on competition's point system
+    const cartem1 = Number(formData.sp_1_cartem) || 0;
+    const cartem2 = Number(formData.sp_2_cartem) || 0;
+
+    let points1 = 0;
+    let points2 = 0;
+    let result = '';
+
+    if (competition) {
+      // Determine winner based on caramboles made vs target
+      const won1 = cargem1 >= cartem1;
+      const won2 = cargem2 >= cartem2;
+
+      if (won1 && !won2) {
+        // Player 1 wins
+        if (competition.punten_sys === 1) { // WRV 2-1-0
+          points1 = 2;
+          points2 = 0;
+        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+          points1 = 3;
+          points2 = 0;
         }
-      }
-    }
-
-    return pairings;
-  };
-
-  // Handle table assignment for a match
-  const handleTableAssignment = (pairingKey: string, tableNr: number) => {
-    const newAssignments = new Map(matchTableAssignments);
-    if (tableNr === 0) {
-      newAssignments.delete(pairingKey);
-    } else {
-      newAssignments.set(pairingKey, tableNr);
-    }
-    setMatchTableAssignments(newAssignments);
-  };
-
-  // Create matches and assign to scoreboards
-  const handleCreateMatches = async () => {
-    if (matchTableAssignments.size === 0) {
-      alert('Selecteer eerst tafels voor de wedstrijden die je wilt aanmaken.');
-      return;
-    }
-
-    setIsCreatingMatches(true);
-    let createdCount = 0;
-    let errors: string[] = [];
-
-    try {
-      for (const pairing of generatedPairings) {
-        if (!pairing.player2) continue; // Skip byes
-
-        const pairingKey = `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}`;
-        const assignedTable = matchTableAssignments.get(pairingKey);
-        if (!assignedTable) continue; // Skip if no table assigned
-
-        const playerA = pairing.player1;
-        const playerB = pairing.player2;
-
-        // Generate match code (same format as auto-generated matches)
-        const matchCode = `${selectedPeriode || 1}_${playerA.spc_nummer}_${playerB.spc_nummer}`;
-
-        // Create match data
-        const matchData = {
-          org_nummer: orgNummer,
-          comp_nr: compNr,
-          nummer_A: playerA.spc_nummer,
-          naam_A: formatName(playerA.spa_vnaam, playerA.spa_tv, playerA.spa_anaam),
-          cartem_A: playerA[carKey] || 0,
-          nummer_B: playerB.spc_nummer,
-          naam_B: formatName(playerB.spa_vnaam, playerB.spa_tv, playerB.spa_anaam),
-          cartem_B: playerB[carKey] || 0,
-          periode: selectedPeriode || 1,
-          uitslag_code: matchCode,
-          gespeeld: 0,
-          tafel: '000000000000',
-        };
-
-        // Create match in database
-        const matchRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches/single`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(matchData),
-        });
-
-        if (!matchRes.ok) {
-          const errorData = await matchRes.json();
-          errors.push(`${matchData.naam_A} vs ${matchData.naam_B}: ${errorData.error || 'Fout'}`);
-          continue;
+        result = `${selectedMatch?.playerAName} wint`;
+      } else if (!won1 && won2) {
+        // Player 2 wins
+        if (competition.punten_sys === 1) { // WRV 2-1-0
+          points1 = 0;
+          points2 = 2;
+        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+          points1 = 0;
+          points2 = 3;
         }
-
-        // Assign match to scoreboard (table queue)
-        const assignRes = await fetch(`/api/organizations/${orgNummer}/scoreboards/${assignedTable}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'assign',
-            comp_nr: compNr,
-            uitslag_code: matchCode,
-          }),
-        });
-
-        if (assignRes.ok) {
-          createdCount++;
+        result = `${selectedMatch?.playerBName} wint`;
+      } else if (won1 && won2) {
+        // Both won - check who made more caramboles
+        if (cargem1 > cargem2) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 2;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 3;
+            points2 = 2;
+          }
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (cargem2 > cargem1) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 2;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 2;
+            points2 = 3;
+          }
+          result = `${selectedMatch?.playerBName} wint`;
         } else {
-          const errorData = await assignRes.json();
-          errors.push(`Tafel ${assignedTable}: ${errorData.error || 'Fout bij toewijzen'}`);
+          // Exact draw
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 1;
+          }
+          result = 'Remise';
         }
-      }
-
-      if (createdCount > 0) {
-        alert(`${createdCount} wedstrijd(en) aangemaakt en toegewezen aan scoreborden!`);
-        setShowDagplanning(false);
-        setSelectedPlayers(new Set());
-        setMatchTableAssignments(new Map());
-      }
-
-      if (errors.length > 0) {
-        console.error('[DAGPLANNING] Errors:', errors);
-        alert(`Fouten bij aanmaken:\n${errors.join('\n')}`);
-      }
-    } catch (error) {
-      console.error('[DAGPLANNING] Error creating matches:', error);
-      alert('Fout bij aanmaken wedstrijden.');
-    } finally {
-      setIsCreatingMatches(false);
-    }
-  };
-
-  // Generate pairings for dagplanning (Feature #241)
-  const generateDagplanningPairings = () => {
-    if (selectedPlayers.size < 2) {
-      return [];
-    }
-
-    // Get selected player objects
-    const selectedPlayerObjects = sortedPlayers.filter(p => selectedPlayers.has(p.spc_nummer));
-
-    // Track who has played against whom in this period
-    const playedAgainst: Map<number, Set<number>> = new Map();
-
-    // Initialize playedAgainst map from results
-    results.forEach(result => {
-      if (!playedAgainst.has(result.sp_1_nr)) {
-        playedAgainst.set(result.sp_1_nr, new Set());
-      }
-      if (!playedAgainst.has(result.sp_2_nr)) {
-        playedAgainst.set(result.sp_2_nr, new Set());
-      }
-      playedAgainst.get(result.sp_1_nr)!.add(result.sp_2_nr);
-      playedAgainst.get(result.sp_2_nr)!.add(result.sp_1_nr);
-    });
-
-    const pairings: Array<{ player1: PlayerData; player2: PlayerData | null }> = [];
-    const paired = new Set<number>();
-
-    // Sort players by number of opponents they've already faced (ascending)
-    // This prioritizes players who haven't played many matches yet
-    const sortedByMatchHistory = [...selectedPlayerObjects].sort((a, b) => {
-      const aCount = playedAgainst.get(a.spc_nummer)?.size || 0;
-      const bCount = playedAgainst.get(b.spc_nummer)?.size || 0;
-      return aCount - bCount;
-    });
-
-    // Pair everyone at least once
-    for (const player1 of sortedByMatchHistory) {
-      if (paired.has(player1.spc_nummer)) continue;
-
-      // Find best opponent for player1
-      let bestOpponent: PlayerData | null = null;
-      let bestScore = -1;
-
-      for (const player2 of sortedByMatchHistory) {
-        if (paired.has(player2.spc_nummer) || player1.spc_nummer === player2.spc_nummer) {
-          continue;
+      } else {
+        // Neither won - check who made more caramboles
+        if (cargem1 > cargem2) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 0;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 2;
+            points2 = 1;
+          }
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (cargem2 > cargem1) {
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 0;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 2;
+          }
+          result = `${selectedMatch?.playerBName} wint`;
+        } else {
+          // Exact draw
+          if (competition.punten_sys === 1) { // WRV 2-1-0
+            points1 = 1;
+            points2 = 1;
+          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+            points1 = 1;
+            points2 = 1;
+          }
+          result = 'Remise';
         }
-
-        // Score potential pairing (higher is better)
-        let score = 0;
-
-        // Heavily prefer players who haven't played each other
-        if (!playedAgainst.get(player1.spc_nummer)?.has(player2.spc_nummer)) {
-          score += 100;
-        }
-
-        // Slightly prefer players with fewer total matches
-        const p2MatchCount = playedAgainst.get(player2.spc_nummer)?.size || 0;
-        score += (50 - p2MatchCount);
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestOpponent = player2;
-        }
-      }
-
-      if (bestOpponent) {
-        pairings.push({ player1, player2: bestOpponent });
-        paired.add(player1.spc_nummer);
-        paired.add(bestOpponent.spc_nummer);
       }
     }
 
-    // Handle odd number: one player gets a bye
-    if (selectedPlayerObjects.length % 2 === 1) {
-      const unpaired = selectedPlayerObjects.find(p => !paired.has(p.spc_nummer));
-      if (unpaired) {
-        pairings.push({ player1: unpaired, player2: null });
-      }
-    }
-
-    return pairings;
+    return { moyenne1, moyenne2, points1, points2, result };
   };
 
   // Handle print
@@ -510,9 +408,149 @@ export default function CompetitieMatrixPage() {
     window.print();
   };
 
+  // Handle Matrix cell click
+  const handleCellClick = (playerANr: number, playerBNr: number) => {
+    const playerA = players.find(p => p.spc_nummer === playerANr);
+    const playerB = players.find(p => p.spc_nummer === playerBNr);
+
+    if (!playerA || !playerB) return;
+
+    const playerAName = formatName(playerA.spa_vnaam, playerA.spa_tv, playerA.spa_anaam);
+    const playerBName = formatName(playerB.spa_vnaam, playerB.spa_tv, playerB.spa_anaam);
+
+    // Find existing result
+    const result = results.find(
+      (r) =>
+        (r.sp_1_nr === playerANr && r.sp_2_nr === playerBNr) ||
+        (r.sp_1_nr === playerBNr && r.sp_2_nr === playerANr)
+    );
+
+    if (result) {
+      // Pre-fill form with existing result
+      const isPlayerAFirst = result.sp_1_nr === playerANr;
+      setFormData({
+        sp_1_cartem: String(isPlayerAFirst ? result.sp_1_cartem : result.sp_2_cartem),
+        sp_1_cargem: String(isPlayerAFirst ? result.sp_1_cargem : result.sp_2_cargem),
+        sp_1_hs: String(isPlayerAFirst ? (result.sp_1_hs || 0) : (result.sp_2_hs || 0)),
+        sp_2_cartem: String(isPlayerAFirst ? result.sp_2_cartem : result.sp_1_cartem),
+        sp_2_cargem: String(isPlayerAFirst ? result.sp_2_cargem : result.sp_1_cargem),
+        sp_2_hs: String(isPlayerAFirst ? (result.sp_2_hs || 0) : (result.sp_1_hs || 0)),
+        brt: String(result.brt || 1),
+      });
+      setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName, resultId: result.id, result });
+    } else {
+      // New result - clear form
+      setFormData({
+        sp_1_cartem: String(playerA[carKey] || 0),
+        sp_1_cargem: '',
+        sp_1_hs: '',
+        sp_2_cartem: String(playerB[carKey] || 0),
+        sp_2_cargem: '',
+        sp_2_hs: '',
+        brt: '',
+      });
+      setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName });
+    }
+
+    setShowVerification(false);
+    setShowResultModal(true);
+  };
+
+  // Handle form submission
+  const handleSubmitResult = async () => {
+    if (!selectedMatch || !selectedPeriode) return;
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const uitslag_code = `${selectedPeriode}_${String(selectedMatch.playerANr).padStart(3, '0')}_${String(selectedMatch.playerBNr).padStart(3, '0')}`;
+
+      const resultData = {
+        uitslag_code,
+        sp_1_nr: selectedMatch.playerANr,
+        sp_1_cartem: Number(formData.sp_1_cartem),
+        sp_1_cargem: Number(formData.sp_1_cargem),
+        sp_1_hs: Number(formData.sp_1_hs),
+        sp_2_nr: selectedMatch.playerBNr,
+        sp_2_cartem: Number(formData.sp_2_cartem),
+        sp_2_cargem: Number(formData.sp_2_cargem),
+        sp_2_hs: Number(formData.sp_2_hs),
+        brt: Number(formData.brt),
+      };
+
+      const response = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Fout bij opslaan uitslag');
+        return;
+      }
+
+      // Reload results
+      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
+      if (resultsRes.ok) {
+        const resultsData = await resultsRes.json();
+        setResults(resultsData.results || []);
+      }
+
+      setShowResultModal(false);
+      setSelectedMatch(null);
+    } catch (err) {
+      setError('Fout bij opslaan uitslag');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Show delete warning modal
+  const handleDeleteClick = () => {
+    if (!selectedMatch?.resultId) return;
+    setShowDeleteWarning(true);
+  };
+
+  // Handle result deletion confirmation
+  const handleConfirmDelete = async () => {
+    if (!selectedMatch?.resultId) return;
+
+    setShowDeleteWarning(false);
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results/${selectedMatch.resultId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Fout bij verwijderen uitslag');
+        return;
+      }
+
+      // Reload results
+      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
+      if (resultsRes.ok) {
+        const resultsData = await resultsRes.json();
+        setResults(resultsData.results || []);
+      }
+
+      setShowResultModal(false);
+      setSelectedMatch(null);
+    } catch (err) {
+      setError('Fout bij verwijderen uitslag');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4 flex items-center justify-between">
         <div>
@@ -521,19 +559,10 @@ export default function CompetitieMatrixPage() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {DISCIPLINES[competition.discipline]} | Wie speelt tegen wie | Periode {selectedPeriode}
-            {isLoadingPeriode && <span className="ml-2 text-green-600 dark:text-green-400">⟳ Laden...</span>}
+            {isLoadingPeriode && <span className="ml-2 text-green-600 dark:text-green-400">&#x27F3; Laden...</span>}
           </p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
-          <button
-            onClick={() => setShowDagplanning(true)}
-            className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            Dagplanning
-          </button>
           <button
             onClick={handlePrint}
             className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
@@ -609,14 +638,14 @@ export default function CompetitieMatrixPage() {
                   ))}
                   <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider align-bottom">
                     <div style={{ writingMode: 'vertical-lr', transform: 'rotate(180deg)' }} className="mx-auto">
-                      Totaal punten
+                      Totaal aantal partijen
                     </div>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {sortedPlayers.map((playerRow) => {
-                  let totalPoints = 0;
+                  let totalMatches = 0;
 
                   return (
                     <tr key={playerRow.spc_nummer} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
@@ -642,7 +671,13 @@ export default function CompetitieMatrixPage() {
                         if (!matchResult) {
                           return (
                             <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                              <span className="text-slate-300 dark:text-slate-600 text-xs">-</span>
+                              <button
+                                onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                                title="Klik om uitslag in te voeren"
+                              >
+                                -
+                              </button>
                             </td>
                           );
                         }
@@ -650,36 +685,42 @@ export default function CompetitieMatrixPage() {
                         if (!matchResult.played) {
                           return (
                             <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                              <span className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500">
-                                ?
-                              </span>
+                              <button
+                                onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded text-xs bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors cursor-pointer"
+                                title="Klik om uitslag in te voeren"
+                              >
+                                -
+                              </button>
                             </td>
                           );
                         }
 
-                        totalPoints += matchResult.pointsA;
+                        totalMatches += 1;
 
                         const isWin = matchResult.pointsA > matchResult.pointsB;
                         const isDraw = matchResult.pointsA === matchResult.pointsB && matchResult.pointsA > 0;
 
                         return (
                           <td key={playerCol.spc_nummer} className="text-center px-2 py-2">
-                            <span
-                              className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold ${
+                            <button
+                              onClick={() => handleCellClick(playerRow.spc_nummer, playerCol.spc_nummer)}
+                              className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold cursor-pointer hover:opacity-80 transition-opacity ${
                                 isWin
                                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                   : isDraw
                                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200'
                               }`}
+                              title="Klik om uitslag te wijzigen"
                             >
                               {matchResult.pointsA}
-                            </span>
+                            </button>
                           </td>
                         );
                       })}
                       <td className="text-center px-3 py-2 text-sm font-bold text-green-700 dark:text-green-400 tabular-nums border-l border-slate-200 dark:border-slate-700">
-                        {totalPoints}
+                        {totalMatches}
                       </td>
                     </tr>
                   );
@@ -703,7 +744,7 @@ export default function CompetitieMatrixPage() {
                   Verloren
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="inline-block w-4 h-4 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-center text-[10px] leading-4">?</span>
+                  <span className="inline-block w-4 h-4 rounded bg-slate-300 dark:bg-slate-600 border border-slate-400 dark:border-slate-500 text-center text-[10px] leading-4 text-slate-500 dark:text-slate-400">-</span>
                   Nog niet gespeeld
                 </span>
               </div>
@@ -732,195 +773,236 @@ export default function CompetitieMatrixPage() {
         </div>
       )}
 
-      {/* Dagplanning Modal */}
-      {showDagplanning && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDagplanning(false)}>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Dagplanning
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {!showPairings ? 'Vink aan welke spelers aanwezig zijn' : 'Voorgestelde partijindeling voor vandaag'}
-                </p>
+      {/* Result Entry/Edit Modal */}
+      {showResultModal && selectedMatch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedMatch.resultId ? 'Uitslag wijzigen' : 'Uitslag invoeren'}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {selectedMatch.playerAName} vs {selectedMatch.playerBName}
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Player 1 */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerAName}</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Te maken
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_cartem}
+                      onChange={(e) => setFormData({ ...formData, sp_1_cartem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Gemaakt
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_cargem}
+                      onChange={(e) => setFormData({ ...formData, sp_1_cargem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Hoogste serie
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_1_hs}
+                      onChange={(e) => setFormData({ ...formData, sp_1_hs: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={() => setShowDagplanning(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                aria-label="Sluiten"
-              >
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              {!showPairings ? (
-                <div className="space-y-2">
-                  {sortedPlayers.map((player) => {
-                    const isSelected = selectedPlayers.has(player.spc_nummer);
-                    return (
-                      <label
-                        key={player.spc_nummer}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            const newSelected = new Set(selectedPlayers);
-                            if (e.target.checked) {
-                              newSelected.add(player.spc_nummer);
-                            } else {
-                              newSelected.delete(player.spc_nummer);
-                            }
-                            setSelectedPlayers(newSelected);
-                          }}
-                          className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-0 dark:bg-slate-700 cursor-pointer"
-                        />
-                        <span className="text-slate-900 dark:text-white font-medium flex-1">
-                          {getPlayerNameWithCar(player)}
-                        </span>
-                      </label>
-                    );
-                  })}
+              {/* Player 2 */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerBName}</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Te maken
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_cartem}
+                      onChange={(e) => setFormData({ ...formData, sp_2_cartem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Gemaakt
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_cargem}
+                      onChange={(e) => setFormData({ ...formData, sp_2_cargem: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Hoogste serie
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.sp_2_hs}
+                      onChange={(e) => setFormData({ ...formData, sp_2_hs: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    />
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {tablesCount > 0 ? (
-                    <div className="p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-sm rounded-lg border border-green-200 dark:border-green-800">
-                      <strong>Scoreborden beschikbaar:</strong> Wijs tafels toe om wedstrijden aan te maken en in de wachtrij van het scorebord te plaatsen.
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 text-sm rounded-lg border border-blue-200 dark:border-blue-800">
-                      <strong>Geen scoreborden:</strong> Deze partij-indeling is alleen ter informatie. Ga naar Instellingen → Tafels om scoreborden te configureren.
-                    </div>
-                  )}
-                  {generatedPairings.map((pairing, index) => {
-                    if (!pairing.player2) return null; // Skip byes for scoreboard feature
-                    const pairingKey = `${pairing.player1.spc_nummer}_${pairing.player2.spc_nummer}`;
-                    const assignedTable = matchTableAssignments.get(pairingKey) || 0;
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/30"
-                      >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                          <span className="text-green-700 dark:text-green-400 font-bold text-sm">{index + 1}</span>
+              </div>
+
+              {/* Beurten */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Aantal beurten
+                </label>
+                <input
+                  type="number"
+                  value={formData.brt}
+                  onChange={(e) => setFormData({ ...formData, brt: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  required
+                  min="1"
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Verification Info */}
+              {showVerification && formData.sp_1_cargem && formData.sp_2_cargem && formData.brt && (() => {
+                const verification = calculateVerificationData();
+                return (
+                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Controle</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerAName}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne1.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points1}</p>
                         </div>
-                        <div className="flex-1 text-base text-slate-900 dark:text-white">
-                          <span className="font-semibold">{getPlayerNameWithCar(pairing.player1)}</span>
-                          <span className="text-slate-500 dark:text-slate-400 mx-3">vs</span>
-                          <span className="font-semibold">{getPlayerNameWithCar(pairing.player2)}</span>
+                        <div>
+                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerBName}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {verification.moyenne2.toFixed(3)}</p>
+                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points2}</p>
                         </div>
-                        {tablesCount > 0 && (
-                          <select
-                            value={assignedTable}
-                            onChange={(e) => handleTableAssignment(pairingKey, parseInt(e.target.value, 10))}
-                            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          >
-                            <option value="0">Geen tafel</option>
-                            {Array.from({ length: tablesCount }, (_, i) => i + 1).map((tableNr) => (
-                              <option key={tableNr} value={tableNr}>
-                                Tafel {tableNr}
-                              </option>
-                            ))}
-                          </select>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <div className="pt-2 border-t border-blue-200 dark:border-blue-700">
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">{verification.result}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30">
-              {!showPairings ? (
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-slate-600 dark:text-slate-400">
-                    {selectedPlayers.size} van {players.length} spelers geselecteerd
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedPlayers(new Set())}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                    >
-                      Wis selectie
-                    </button>
-                    <button
-                      onClick={() => setSelectedPlayers(new Set(players.map(p => p.spc_nummer)))}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                    >
-                      Selecteer alles
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (selectedPlayers.size < 2) {
-                          alert('Selecteer minimaal 2 spelers om een partijindeling te genereren.');
-                          return;
-                        }
-                        const pairings = generateDagplanningPairings();
-                        setGeneratedPairings(pairings);
-                        setShowPairings(true);
-                      }}
-                      disabled={selectedPlayers.size < 2}
-                      className="px-4 py-2 text-sm font-medium bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Genereer partijindeling →
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
+            <div className="p-6 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+              <div>
+                {selectedMatch.resultId && (
                   <button
-                    onClick={() => setShowPairings(false)}
-                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                    onClick={handleDeleteClick}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium disabled:opacity-50"
                   >
-                    ← Terug
+                    Partij verwijderen
                   </button>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setShowDagplanning(false);
-                        setShowPairings(false);
-                        setSelectedPlayers(new Set());
-                        setGeneratedPairings([]);
-                        setMatchTableAssignments(new Map());
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                    >
-                      Sluiten
-                    </button>
-                    {tablesCount > 0 ? (
-                      <button
-                        onClick={handleCreateMatches}
-                        disabled={isCreatingMatches || matchTableAssignments.size === 0}
-                        className="px-4 py-2 text-sm font-medium bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {isCreatingMatches && (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        )}
-                        Wedstrijden aanmaken
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => window.print()}
-                        className="px-4 py-2 text-sm font-medium bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Printen
-                      </button>
-                    )}
-                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowResultModal(false);
+                    setSelectedMatch(null);
+                    setError('');
+                    setShowVerification(false);
+                  }}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={() => setShowVerification(true)}
+                  disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
+                  className="px-4 py-2 border border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Controle
+                </button>
+                <button
+                  onClick={handleSubmitResult}
+                  disabled={isSubmitting || !formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
+                  className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Bezig...' : (selectedMatch.resultId ? 'Wijzigen' : 'Opslaan')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Warning Modal */}
+      {showDeleteWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
                 </div>
-              )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    Uitslag verwijderen
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Een uitslag verwijderen kan niet meer ongedaan gemaakt worden!
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Weet u zeker dat u deze uitslag wilt verwijderen?
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteWarning(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Verwijderen
+              </button>
             </div>
           </div>
         </div>

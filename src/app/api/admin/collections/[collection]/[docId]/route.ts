@@ -31,8 +31,8 @@ export async function GET(
       'tables',
       'device_config',
       'scoreboards',
-      'news',
       'email_queue',
+      'contact_messages',
     ];
 
     if (!validCollections.includes(collection)) {
@@ -101,8 +101,8 @@ export async function PUT(
       'tables',
       'device_config',
       'scoreboards',
-      'news',
       'email_queue',
+      'contact_messages',
     ];
 
     if (!validCollections.includes(collection)) {
@@ -176,8 +176,8 @@ export async function DELETE(
       'tables',
       'device_config',
       'scoreboards',
-      'news',
       'email_queue',
+      'contact_messages',
     ];
 
     if (!validCollections.includes(collection)) {

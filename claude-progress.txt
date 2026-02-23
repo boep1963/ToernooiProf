@@ -3587,3 +3587,591 @@ CURRENT STATUS: 250/250 features passing (100% COMPLETE!)
 
 Session Complete! Feature #250 verified via browser automation and marked as passing.
 All 250 features are now complete and verified!
+
+
+=== Session - 2026-02-22 (Features #254, #255) ===
+Agent: Coding Agent - Print UX + Dashboard Cleanup
+
+FEATURE #254: Printpagina's sluiten zonder verwarring
+STATUS: COMPLETED AND PASSING
+
+Problem: Standings page opened a new browser window for printing, confusing users.
+Solution: Converted to window.print() with embedded print CSS, consistent with all other pages.
+- Added print CSS via useEffect (A4 portrait, margins, color preservation)
+- Added print-only header with org name, competition, discipline, period, timestamp
+- Added print:hidden to UI controls
+- All 4 print pages now use same window.print() pattern
+GIT COMMIT: c2eb362
+
+FEATURE #255: Dashboard - Blok Actieve scoreborden verwijderen
+STATUS: COMPLETED AND PASSING
+
+Changes: Removed scoreboard stats card, tableCount/tableSource state, tables/count API call.
+Grid changed from 3-col to 2-col (Competities + Leden only).
+GIT COMMIT: 94d0664
+
+
+=== Session - 2026-02-22 (Feature #251) ===
+Agent: Coding Agent - Breadcrumb Navigation
+
+FEATURE #251: Consistente menu-structuur met volledige breadcrumb-navigatie
+STATUS: COMPLETED AND PASSING
+
+Created reusable Breadcrumb component (src/components/common/Breadcrumb.tsx) and replaced
+all '< Terug' icon/text back buttons with full breadcrumb paths across 16+ pages.
+
+Changes:
+- Created Breadcrumb.tsx: semantic nav with aria-label, SVG chevron separators, dark theme support
+- Instellingen sub-pages (account, tafels, advertenties): replaced icon back-buttons with Breadcrumb
+- Leden sub-pages (nieuw, bewerken): replaced icon back-buttons with Breadcrumb
+- Competities sub-pages (nieuw, bewerken, + 8 error states): replaced buttons with Link navigation
+- Scoreborden: relabeled exit buttons from "Terug" to "Scoreborden" for clarity
+- Tablet-control: inline dark-theme breadcrumb replacing "← Terug naar scoreborden"
+- Admin pages: replaced "Terug" links with descriptive navigation text
+- CompetitionSubNav: already had proper breadcrumb, left as-is
+GIT COMMIT: 1a1b5ca
+
+CURRENT STATUS: 254/299 features passing (84.9%)
+
+
+=== Session - 2026-02-22 (Features #252, #253) ===
+Agent: Coding Agent - Consistent Hover States and Action Styling
+
+ASSIGNED FEATURES: #252, #253
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #252: Consistente hover-states voor alle klikbare elementen
+- Added global CSS: cursor:pointer for all buttons and anchors
+- Added hover:underline to text-styled toggle buttons, breadcrumb links, table action links
+- 13 files modified across components and pages
+GIT COMMIT: 34c41da
+
+Feature #253: Consistente knoppen vs links styling
+- Established consistent action styling pattern across the app
+- Primary actions: solid green buttons, Destructive: outlined red, Edit: outlined green, Nav: text links
+- Updated table action buttons from text-only to outlined button style
+GIT COMMIT: e1addac
+
+UPDATED STATUS: 256/299 features passing
+
+
+=== Session - 2026-02-22 (Features #256, #257) ===
+Agent: Coding Agent - Dashboard Cleanup (News + Search removal)
+
+ASSIGNED FEATURES: #256, #257
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #256: Dashboard - Blok Nieuws geheel verwijderen
+- Removed entire News section from Dashboard page (articles, comments, create form)
+- Deleted all /api/news/* routes (4 files: CRUD for articles and comments)
+- Removed NewsReaction type from types/index.ts
+- Removed 'news' and 'news_reactions' from admin collection whitelists (3 files)
+- Removed news_reactions from verify-collections test data
+- Cleaned up db.ts collection initialization lists (removed news/news_reactions)
+- Zero console errors, no mock data patterns found
+
+Feature #257: Dashboard - Blok Snelzoeken geheel verwijderen
+- Removed Snelzoeken (Quick Search) block from Dashboard page
+- Removed all search state variables and handler functions
+- Deleted /api/organizations/[orgNr]/search/route.ts (only used by dashboard)
+- Dashboard now shows: Welcome card + Stats cards (Competities, Leden) only
+- Zero console errors, no mock data patterns found
+GIT COMMIT: 3c53869
+
+CURRENT STATUS: 254/299 features passing
+
+
+=== Session - 2026-02-22 (Features #260, #261) ===
+Agent: Coding Agent - Moyenne-formule labels + Beurten text rename
+
+FEATURE #260: Moyenne-formule tekst uitschrijven bij nieuwe competitie
+STATUS: COMPLETED AND PASSING
+
+Changes:
+- Added MOYENNE_FORMULE_LABELS constant to src/types/index.ts with full text labels
+- Updated new competition form (nieuw/page.tsx) dropdown from "xN" to "Te maken car = Moyenne x N"
+- Updated edit competition form (bewerken/page.tsx) dropdown with same labels
+- All 7 options now show full descriptive text matching PHP original
+- Verified in both light and dark themes, zero console errors
+GIT COMMIT: 3305dbc
+
+FEATURE #261: Tekst 'Maximale beurten' wijzigen naar 'Maximaal aantal beurten'
+STATUS: COMPLETED AND PASSING
+
+Changes:
+- Competition list table header: "Max Brt" -> "Max aantal beurten"
+- New/edit competition form labels and detail page updated by parallel agent
+- All instances of "Maximale beurten" and "Max brt" removed from codebase
+- Verified across all pages, zero console errors
+
+CURRENT STATUS: 261/299 features passing (87.3%)
+
+
+=== Session - 2026-02-22 (Features #258, #259) ===
+Agent: Coding Agent - Contact Form Extension + Competition Overview Simplification
+
+FEATURE #258: Contactformulier uitbreiden met programmakeuze en onderwerp
+STATUS: COMPLETED AND PASSING
+- Added Afzendergegevens card: Vereniging, Contactpersoon, E-mailadres, Inlogcode
+- Added required Programma dropdown: ClubMatch, ToernooiProf
+- Changed Onderwerp to: Vraag (default), Klacht, Suggestie
+- Created /api/contact/reply for admin replies via email_queue
+- Added contact_messages to admin panel with reply modal and beantwoord status
+- Added org_code to session API response
+GIT COMMIT: 93fc07e
+
+FEATURE #259: Competitie-overzicht kolommen vereenvoudigen
+STATUS: COMPLETED AND PASSING
+- Removed columns: Punten, Moyenne, Min Car, Max brt, Vast Brt
+- Kept columns: Nr, Naam, Datum, Discipline, Acties
+- Cleaned up unused constants and interface fields
+GIT COMMIT: 607b49f
+
+CURRENT STATUS: 262/299 features passing (87.6%)
+
+
+=== Session - 2026-02-22 (Features #262, #263) ===
+Agent: Coding Agent - Competition Labels and Period Indicator
+
+ASSIGNED FEATURES: #262, #263
+STATUS: BOTH COMPLETED AND PASSING
+
+FEATURE #262: Competitie-info labels update
+- Updated info card labels: "Max beurten" to "Max aantal beurten", "Vast beurten" to "Vast aantal beurten"
+- Updated form labels on edit and new competition pages for consistency
+GIT COMMIT: 6cf76dc
+
+FEATURE #263: Periode-indicator in alle competitieschermen
+- Added optional periode prop to CompetitionSubNav component
+- Shows "Periode X van 5" in green text in breadcrumb area on all 12 competition sub-pages
+- Removed Periode from info card, replaced with Min. caramboles
+- Added periode to validation API response and spelers interface
+GIT COMMIT: 03d5304
+
+UPDATED STATUS: 264/299 features passing
+
+
+=== Session - 2026-02-22 (Features #268, #269) ===
+Agent: Coding Agent - Dagplanning Print & Leave Warning
+
+FEATURE #268: Dagplanning - Printmogelijkheid
+STATUS: COMPLETED AND PASSING (already implemented)
+- Print button already existed on Step 2 of Dagplanning page
+- Print CSS styles for A4 portrait layout with margins
+- Print-only header with competition name, discipline, period, date
+- Print-only pairings table visible only when printing
+- Verified in browser: button visible, zero console errors
+
+FEATURE #269: Dagplanning - Waarschuwing bij verlaten en automatisch verwijderen
+STATUS: COMPLETED AND PASSING
+Changes made to src/app/(dashboard)/competities/[id]/planning/page.tsx:
+- Added showLeaveWarning and pendingNavigation state variables
+- Added beforeunload event handler (browser close/refresh warning)
+- Added click event interception for internal navigation links
+- Added handleConfirmLeave: clears dagplanning data, navigates to destination
+- Added handleCancelLeave: closes modal, stays on page
+- Added handleAfsluiten: shows warning when data exists, direct nav otherwise
+- Added "Afsluiten" button (red outline with X icon) to Step 2 action bar
+- Added warning modal with Dutch text:
+  "Als u deze pagina verlaat, vervalt de aangemaakte dagplanning."
+  "Print, zo nodig, de planning eerst uit!"
+  "NB: U kunt altijd, op elk moment, een nieuwe dagplanning maken."
+- Modal has 3 buttons: Annuleren, Eerst printen, Pagina verlaten
+- Afsluiten navigates to /competities (Competitie-overzicht) after confirm
+- Sidebar link clicks intercepted and show warning modal
+- Zero console errors, no mock data patterns
+
+UPDATED STATUS: 266/299 features passing
+
+
+=== Session - 2026-02-22 (Features #271, #272) ===
+Agent: Coding Agent - Remove Uitslagen Menu + Competition Edit Restrictions
+
+ASSIGNED FEATURES: #271, #272
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #271: Menu Uitslagen geheel verwijderen
+- Removed 3 Uitslagen menu items from CompetitionSubNav
+- Deleted uitslagen directory and all 3 pages
+- Updated Stand page to redirect to Matrix
+- Fixed all broken links
+GIT COMMIT: 79e6b7b
+
+Feature #272: Competitie bewerken - Beperk wijzigbare velden (ALREADY IMPLEMENTED)
+- Editable: comp_naam, comp_datum, sorteren
+- Read-only: discipline, punten_sys, moy_form, min_car, max_beurten, vast_beurten
+- Verified via browser automation
+- Zero console errors
+
+FINAL STATUS: 270/299 features passing (90.3%)
+
+=== Session - 2026-02-22 (Features #267, #270) ===
+Agent: Coding Agent - Dagplanning Help Tips and Cleanup
+
+ASSIGNED FEATURES: #267, #270
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #267: Dagplanning - Helptekst met tips voor even/oneven spelers
+- Added Tips button to Dagplanning page header (blue outline with info icon)
+- Implemented modal with two tips for even/odd player counts
+- Tips displayed in blue info boxes with proper styling
+- Verified via browser automation - modal opens and closes correctly
+
+Feature #270: Dagplanning - Scorebord- en tafelverwijzingen verwijderen
+- Removed reference to table assignment from code comment
+- Page is clean without any scoreboard/table functionality references
+- Verified via browser automation - page displays cleanly
+
+VERIFICATION RESULTS:
+✅ Tips button visible and clickable
+✅ Modal displays both tips with correct Dutch text
+✅ Modal closes when Begrepen clicked
+✅ No scoreboard/table references in UI or comments
+✅ Zero console errors
+✅ No mock data patterns found
+
+GIT COMMIT: 79e6b7b (auto-committed)
+CURRENT STATUS: 270/299 features passing (90.3%)
+
+
+=== Session - 2026-02-22 (Features #273, #274) ===
+Agent: Coding Agent - Period-Based Player Management
+
+ASSIGNED FEATURES: #273, #274
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #273: Spelers per periode tonen met correcte moyennes
+- Added period selector dropdown (Periode 1-5) to spelers page
+- Players with moyenne 0.000 in selected period are automatically hidden
+- Shows correct moyenne and caramboles for each period
+- Footer displays "X spelers in periode Y (Z totaal in competitie)"
+- Empty state message when no players have valid moyenne in selected period
+
+Feature #274: Speler toevoegen in latere periode - correcte moyenne-toewijzing
+- Modified POST /api/organizations/:orgNr/competitions/:compNr/players
+- Moyenne assignment now based on competition's current period:
+  - Periods BEFORE current: 0.000 (player didn't exist yet)
+  - Periods FROM current onwards: moyenne from Ledenbeheer
+- Example: Adding player in period 3 results in:
+  - spc_moyenne_1: 0, spc_moyenne_2: 0
+  - spc_moyenne_3: 2.500, spc_moyenne_4: 2.500, spc_moyenne_5: 2.500
+
+Key Discovery: 
+spc_moyenne_1 through spc_moyenne_5 represent PERIODS (not disciplines)
+spc_car_1 through spc_car_5 represent period caramboles (not disciplines)
+This aligns with PHP reference code behavior.
+
+Verification Results:
+✅ Period selector displays correctly
+✅ Period 1: 7 players shown
+✅ Period 2: 1 player shown (newly added Test Speler)
+✅ Period 3-5: 1 player shown (Test Speler only)
+✅ Old players (added before changes) have 0.000 in periods 2-5, so they're hidden
+✅ New player (Test Speler) appears in all periods 1-5
+✅ Zero console errors
+✅ No mock data patterns
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/spelers/page.tsx
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/players/route.ts
+
+GIT COMMIT: a0d6e1a
+
+CURRENT STATUS: 270/299 features passing (90.3%)
+
+Both features completed, verified via browser automation, and marked as passing\!
+
+=== Session - 2026-02-22 (Features #279, #280) ===
+Agent: Coding Agent - Matrix Enhancements
+
+ASSIGNED FEATURES: #279, #280
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #279: Matrix - Spelernamen altijd op gekozen volgorde
+Changes:
+- Modified player sorting in Matrix from spc_nummer to alphabetical by formatted name
+- Players now sorted using formatName() which respects competition's sorteren setting
+- Line 250-254: Changed from sort by number to sort by localeCompare of formatted names
+- Verified via browser: names appear alphabetically
+
+Feature #280: Matrix - Uitslagenbeheer via klikbare vakjes  
+Implementation:
+- Added state management for modal: showResultModal, selectedMatch, formData, isSubmitting
+- Created handleCellClick(): Opens modal, pre-fills form for existing results or clears for new
+- Created handleSubmitResult(): POST to results API, reloads data, closes modal
+- Created handleDeleteResult(): DELETE via API with confirmation, reloads data
+- Updated all non-diagonal cells from static spans to clickable buttons
+- Added comprehensive modal UI with form fields and buttons
+- Updated ResultData interface to include id, brt, sp_1_hs, sp_2_hs
+
+Verification Results (Browser Automation):
+✅ Matrix page loads successfully with player data
+✅ Feature #279: Players sorted alphabetically by formatted name
+✅ Feature #280: Matrix cells are clickable buttons
+✅ Modal opens when clicking a cell
+✅ Form fields work correctly
+✅ Zero console errors
+
+Files Modified:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx (329 insertions, 8 deletions)
+
+GIT COMMIT: a89bc47
+CURRENT STATUS: 275/299 features passing (92.0%)
+
+
+=== Session - 2026-02-22 (Features #275, #276) ===
+Agent: Coding Agent - Player Deletion Improvements
+
+ASSIGNED FEATURES: #275, #276
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #275: Player deletion - ALREADY WORKING
+Feature #276: Auto-remove players with 0.000 moyenne - IMPLEMENTED
+GIT COMMIT: 9146771
+CURRENT STATUS: 276/299 features passing (92.3%)
+
+
+=== Session - 2026-02-22 (Feature #1) ===
+Agent: Coding Agent - Firestore Connection Verification
+
+ASSIGNED FEATURE: #1
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #1: Firestore connection established
+Verify that the application connects to Firestore successfully on startup and the health endpoint reports database status.
+
+VERIFICATION RESULTS:
+
+1. Server Startup ✅
+   - Started dev server using ./init.sh
+   - Server running on http://localhost:3002
+   - Compilation successful in 1827ms
+
+2. Firestore Connection Confirmation ✅
+   - Server logs show: "[DB] Connected to Google Firestore"
+   - Connection established via Firebase Admin SDK
+
+3. Health Endpoint Response ✅
+   - GET /api/health returned HTTP 200
+   - Response: status=ok, database=connected, databaseType=firestore, isFirestore=true
+   - 15 collections accessible
+
+4. Code Quality ✅
+   - Zero console errors
+   - No mock data patterns
+   - Proper error handling in health endpoint
+
+CURRENT STATUS: 276/299 features passing (92.3%)
+
+Feature #1 verified via browser automation and marked as passing.
+
+
+=== Session - 2026-02-22 (Features #281, #287) ===
+Agent: Coding Agent - Matrix Color Codes & Stand Column Rename
+
+ASSIGNED FEATURES: #281, #287
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #281: Matrix - Kleurcodes voor partijstatus
+- Changed unplayed match indicator from '?' to '-'
+- Applied silver-grey background to unplayed matches
+- Verified in both light and dark themes
+- Zero console errors
+GIT COMMIT: f57be76
+
+Feature #287: Stand - Kolom '#' hernoemen naar 'Pos'
+- Changed first column header from '#' to 'Pos'
+- Verified in both light and dark themes
+- Zero console errors
+GIT COMMIT: cccf11d
+
+CURRENT STATUS: 280/299 features passing (93.6%)
+
+=== Session - 2026-02-22 (Features #277, #278) ===
+Agent: Coding Agent - Players Print and Matrix Cleanup
+
+ASSIGNED FEATURES: #277, #278
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #277: Spelerslijst printen - COMPLETED
+- Added print button to players list page
+- Print CSS styles for A4 portrait layout
+- Print-only header with org, competition, period info
+- Button disabled when no players
+GIT COMMIT: 26cbe90
+
+Feature #278: Knop Dagplanning verwijderen - ALREADY COMPLETED
+- Already removed in commit fffbeaf (feature #264)
+- Verified no dagplanning references in matrix page
+
+CURRENT STATUS: 276/299 features passing (92.3%)
+Both features verified and marked as passing\!
+
+=== Session - 2026-02-22 (Features #282, #283) ===
+Agent: Coding Agent - Matrix Improvements
+
+ASSIGNED FEATURES: #282, #283
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #282: Matrix - Kolom 'Totaal punten' vervangen door 'Totaal aantal partijen'
+Feature #283: Uitslagformulier - Extra informatie na controle
+
+GIT COMMIT: b108b43
+CURRENT STATUS: 280/299 features passing (93.6%)
+
+
+=== Session - 2026-02-22 (Features #284, #285) ===
+Agent: Coding Agent - Result Deletion Warning and Results Page Cleanup
+
+ASSIGNED FEATURES: #284, #285
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #284: Uitslagformulier - Waarschuwingstekst bij verwijderen
+- Added delete warning modal with required text
+- Replaced window.confirm() with proper modal dialog
+- Modal shows: Een uitslag verwijderen kan niet meer ongedaan gemaakt worden\!
+
+Feature #285: Results page - Already complete
+- Uitslagen directory removed in Feature #271
+- No results page exists anymore
+- All result management via Matrix (Feature #280)
+
+GIT COMMIT: 107d745
+CURRENT STATUS: 282/299 features passing (94.3%)
+
+Both features completed and verified\!
+
+=== Session - 2026-02-22 (Feature #288) ===
+Agent: Coding Agent - Stand Top 3 Colored Circles
+
+FEATURE #288: Stand - Top 3 posities met gekleurde rondjes
+STATUS: COMPLETED AND PASSING
+
+Implementation:
+- Modified standings page to show colored circles for top 3 positions
+- Position 1: dark green (bg-green-700), Position 2: medium green (bg-green-600), Position 3: light green (bg-green-500)
+- Circles only appear when matchesPlayed > 0
+- Verified in both light and dark themes
+- Zero console errors, no mock data patterns
+
+GIT COMMIT: 5ad6bcb
+CURRENT STATUS: 287/299 features passing (96.0%)
+
+
+=== Session - 2026-02-22 (Features #286, #289) ===
+Agent: Coding Agent - Player Results Print + P.moy Fix
+
+ASSIGNED FEATURES: #286, #289
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #286: Uitslagen per speler - Printmogelijkheid toevoegen
+- Recreated /competities/[id]/uitslagen/per-speler page (was deleted in feature #271)
+- Added print functionality with A4 portrait print styles
+- Print button appears when player is selected and has results
+- Added print-only header with org name, competition, player, discipline, timestamp
+- Added 'Uitslagen per speler' to CompetitionSubNav menu
+- Verified via browser automation: page loads correctly, zero console errors
+GIT COMMIT: 3cfb271
+
+Feature #289: Stand - P.moy berekening corrigeren
+Problem: P.moy was calculating average caramboles per match (incorrect)
+Solution: P.moy now calculates highest moyenne from matches where player WON or DREW
+Changes:
+- Added partijMoyennes array to track individual match moyennes
+- Only matches with player_points >= opponent_points are included
+- If player lost all matches, P.moy = 0.00
+- Updated standings API route to implement correct calculation
+Verification:
+- Test Speler (won): P.moy = 0.50 ✅
+- Test Laag0.2 (lost): P.moy = 0.00 ✅
+- Zero console errors
+GIT COMMIT: 51061e5
+
+CURRENT STATUS: 287/299 features passing (96.0%)
+
+Files Modified:
+- src/app/(dashboard)/competities/[id]/uitslagen/per-speler/page.tsx (new)
+- src/components/CompetitionSubNav.tsx
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/standings/[period]/route.ts
+
+Both features verified with browser automation and marked as passing.
+
+=== Session - 2026-02-22 (Features #290, #291) ===
+Agent: Coding Agent - Stand % Punten Column + Period Creation
+
+FEATURE #290: COMPLETED ✅ - Replace Punten column with % Punten when sorting by percentage
+FEATURE #291: COMPLETED ✅ - No automatic match generation on period creation (already implemented)
+STATUS: 288/299 features passing (96.3%)
+
+=== Session - 2026-02-22 (Features #292, #293) ===
+Agent: Coding Agent - Period Moyennes and Controle Page Spacing
+
+ASSIGNED FEATURES: #292, #293
+STATUS: BOTH COMPLETED AND PASSING
+
+FEATURE #292: Already implemented - moyennes saved per period, player page shows period-specific moyennes
+FEATURE #293: Added spacing between Fouten, Waarschuwingen, Informatie in Controles info block
+
+GIT COMMIT: e35d427
+CURRENT STATUS: 292/299 features passing (97.7%)
+
+=== Session - 2026-02-22 (Feature #1 Re-verification) ===
+Agent: Coding Agent - Firestore Connection Verification
+
+ASSIGNED FEATURE: #1
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #1: Firestore connection established
+- Re-verified all steps from the feature requirements
+- Server started successfully on port 3001
+- Server logs confirm: [DB] Connected to Google Firestore
+- Health endpoint accessible at /api/health
+- Response shows: database: connected, databaseType: firestore
+- 15 collections accessible via Firestore
+- HTTP 200 response confirmed via browser automation
+
+VERIFICATION RESULTS:
+✅ Step 1: Development server started using background process
+✅ Step 2: Firestore connection message in logs
+✅ Step 3: GET /api/health endpoint accessible
+✅ Step 4: Response includes database status: connected
+✅ Step 5: HTTP 200 response verified
+
+GIT COMMIT: 3f231d8
+CURRENT STATUS: 293/299 features passing (98.0%)
+
+=== Session - 2026-02-22 (Features #294, #295) ===
+Agent: Coding Agent - Ledenbeheer Improvements
+
+ASSIGNED FEATURES: #294, #295
+STATUS: BOTH COMPLETED AND PASSING
+Feature #294: Members sorted alphabetically by full name using localeCompare
+Feature #295: Print button added with A4 portrait print styles and print-only header
+VERIFICATION: Members page loads, alphabetical sort confirmed, print button visible, zero console errors
+CURRENT STATUS: 293/299 features passing (98.0%)
+
+
+=== Session - 2026-02-22 (Features #298, #299) ===
+Agent: Coding Agent - Settings Cleanup and Email Validation
+
+ASSIGNED FEATURES: #298, #299
+STATUS: BOTH COMPLETED AND PASSING
+
+Feature #298: Instellingen - Advertenties verwijderen
+COMPLETED - Removed all Advertenties functionality from Settings
+- Removed Advertenties menu item from Instellingen page
+- Deleted /instellingen/advertenties page
+- Deleted all 3 advertisements API routes
+- Removed Advertenties reference from help page
+GIT COMMIT: bc5d999
+
+Feature #299: Account - E-mailadres wijziging validatie
+COMPLETED - Email change validation with Firebase Auth integration
+- Added server-side email format validation
+- Update email in organizations collection
+- Update email in Firebase Auth when changed
+- All 6 feature requirements met
+GIT COMMIT: 7885ecb
+
+CURRENT STATUS: 297/299 features passing (99.3%)
+

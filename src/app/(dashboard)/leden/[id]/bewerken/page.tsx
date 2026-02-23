@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface MemberData {
   id: string;
@@ -199,21 +200,13 @@ export default function BewerkLid() {
     return (
       <div>
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <button
-              type="button"
-              onClick={() => router.push('/leden')}
-              className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-              aria-label="Terug naar leden"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Lid bewerken
-            </h1>
-          </div>
+          <Breadcrumb items={[
+            { label: 'Ledenbeheer', href: '/leden' },
+            { label: 'Lid bewerken' },
+          ]} />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Lid bewerken
+          </h1>
         </div>
         <div role="alert" className="p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800">
           {loadError}
@@ -225,22 +218,14 @@ export default function BewerkLid() {
   return (
     <div>
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push('/leden')}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar leden"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Lid bewerken
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 ml-8">
+        <Breadcrumb items={[
+          { label: 'Ledenbeheer', href: '/leden' },
+          { label: 'Lid bewerken' },
+        ]} />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Lid bewerken
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
           Wijzig de gegevens van het lid en sla de wijzigingen op.
         </p>
       </div>

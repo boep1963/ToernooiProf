@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
+import Breadcrumb from '@/components/common/Breadcrumb';
 
 export default function NieuwLid() {
   const router = useRouter();
@@ -181,22 +182,14 @@ export default function NieuwLid() {
   return (
     <div>
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <button
-            type="button"
-            onClick={() => router.push('/leden')}
-            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-            aria-label="Terug naar leden"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Nieuw lid toevoegen
-          </h1>
-        </div>
-        <p className="text-slate-600 dark:text-slate-400 ml-8">
+        <Breadcrumb items={[
+          { label: 'Ledenbeheer', href: '/leden' },
+          { label: 'Nieuw lid' },
+        ]} />
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Nieuw lid toevoegen
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
           Vul de gegevens in om een nieuw lid aan te maken.
         </p>
       </div>

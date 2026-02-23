@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'ClubMatch - Biljart Competitie Beheer',
-  description: 'Beheersysteem voor biljartcompetities - beheer leden, competities, uitslagen en scoreborden',
+  description: 'Beheersysteem voor biljartcompetities - beheer leden, competities en uitslagen',
 };
 
 export default function RootLayout({

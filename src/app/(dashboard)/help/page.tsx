@@ -192,12 +192,12 @@ const helpTopics: HelpTopic[] = [
         <div>
           <h4 className="font-semibold mb-2">Uitslag invoeren</h4>
           <p>
-            U kunt twee spelers kiezen en een uitslag invoeren van een gespeelde wedstrijd. U kunt er ook voor kiezen om eerst een partij aan te maken die u oproept op een scorebord, waarna de uitslag automatisch wordt opgenomen.
+            U kunt twee spelers kiezen en een uitslag invoeren van een gespeelde wedstrijd.
           </p>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Uitslag wijzigen</h4>
-          <p>U kunt elke uitslag wijzigen, zowel handmatig ingevoerde als uitslagen vanuit de scoreborden.</p>
+          <p>U kunt elke uitslag wijzigen.</p>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Uitslag verwijderen</h4>
@@ -258,35 +258,6 @@ const helpTopics: HelpTopic[] = [
     ),
   },
   {
-    id: 'scoreborden',
-    title: 'Scoreborden',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    relatedLink: { href: '/scoreborden', label: 'Ga naar Scoreborden' },
-    content: (
-      <div className="space-y-4">
-        <p>
-          Met de scoreborden kunt u live partijen bijhouden en tonen op een scherm. De scoreborden zijn bedoeld voor gebruik op een tablet of computer naast de biljarttafel.
-        </p>
-        <div>
-          <h4 className="font-semibold mb-2">Partij starten</h4>
-          <p>Kies een competitie en een geplande wedstrijd. Het scorebord toont de namen van de spelers, het aantal te maken caramboles en de lopende score.</p>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Bediening</h4>
-          <p>U kunt het scorebord bedienen met muis of tablet. Deze instelling kunt u wijzigen bij Instellingen.</p>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Advertenties / Slideshow</h4>
-          <p>Op het scorebord kunt u een slideshow tonen met adverteerders of mededelingen wanneer er geen partij actief is.</p>
-        </div>
-      </div>
-    ),
-  },
-  {
     id: 'instellingen',
     title: 'Instellingen',
     icon: (
@@ -302,11 +273,7 @@ const helpTopics: HelpTopic[] = [
         <ul className="list-disc list-inside ml-2 space-y-2">
           <li><strong>Logo:</strong> Upload uw eigen clublogo.</li>
           <li><strong>Organisatienaam:</strong> Wijzig de naam van uw organisatie.</li>
-          <li><strong>Aantal tafels:</strong> Stel het aantal beschikbare biljarttafels in.</li>
           <li><strong>Nieuwsbrief:</strong> Kies of u de nieuwsbrief wilt ontvangen.</li>
-          <li><strong>Bediening:</strong> Kies of de scoreborden met muis of tablet bediend worden.</li>
-          <li><strong>Advertenties:</strong> Beheer de slideshow-afbeeldingen voor de scoreborden.</li>
-          <li><strong>Avatars:</strong> Beheer spelerfoto&apos;s die op de scoreborden worden getoond.</li>
           <li><strong>Account:</strong> Bekijk uw accountgegevens of verwijder uw account.</li>
         </ul>
       </div>

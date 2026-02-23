@@ -13,34 +13,8 @@ interface CompetitionItem {
   comp_naam: string;
   comp_datum: string;
   discipline: number;
-  punten_sys: number;
-  moy_form: number;
-  min_car: number;
-  max_beurten: number;
-  vast_beurten: number;
-  sorteren: number;
 }
 
-const PUNTEN_SYSTEMEN: Record<number, string> = {
-  1: 'WRV 2-1-0',
-  2: '10-punten',
-  3: 'Belgisch',
-};
-
-const MOYENNE_FORMULES: Record<number, string> = {
-  1: 'x15',
-  2: 'x20',
-  3: 'x25',
-  4: 'x30',
-  5: 'x40',
-  6: 'x50',
-  7: 'x60',
-};
-
-const SORTEER_OPTIES: Record<number, string> = {
-  1: 'Voornaam eerst',
-  2: 'Achternaam eerst',
-};
 
 export default function CompetitiesPage() {
   const { orgNummer } = useAuth();
@@ -252,11 +226,6 @@ export default function CompetitiesPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Punten</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Min Car</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Max Brt</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vast Brt</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
               </thead>
@@ -273,18 +242,13 @@ export default function CompetitiesPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.comp_datum)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{PUNTEN_SYSTEMEN[comp.punten_sys] || PUNTEN_SYSTEMEN[1]}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{MOYENNE_FORMULES[comp.moy_form] || MOYENNE_FORMULES[3]}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.min_car || 0}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.max_beurten || 0}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{comp.vast_beurten || 0}</td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => {
                           setDeleteConfirm(comp.comp_nr);
                           fetchDeleteStats(comp.comp_nr);
                         }}
-                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
                       >
                         Verwijderen
                       </button>

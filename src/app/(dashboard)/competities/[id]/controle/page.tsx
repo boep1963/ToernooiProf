@@ -16,6 +16,7 @@ interface ValidationReport {
   competition: {
     comp_nr: number;
     comp_naam: string;
+    periode: number;
   };
   timestamp: string;
   totalIssues: number;
@@ -151,7 +152,7 @@ export default function CompetitionControlePage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={report.competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={report.competition.comp_naam} periode={report.competition.periode} />
 
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -193,9 +194,9 @@ export default function CompetitionControlePage() {
               <span className="font-medium"> spelersgegevens</span> (duplicaten, ontbrekende namen),
               <span className="font-medium"> wedstrijdplanning</span> (conflicten, missende wedstrijden), en
               <span className="font-medium"> uitslagen</span> (onmogelijke scores, inconsistenties).
-              <strong className="block mt-1">Fouten</strong> zijn kritieke problemen die opgelost moeten worden.
-              <strong>Waarschuwingen</strong> zijn aandachtspunten die mogelijk actie vereisen.
-              <strong>Informatie</strong> items zijn slechts ter info en geen problemen.
+              <strong className="block mt-2">Fouten</strong> zijn kritieke problemen die opgelost moeten worden.
+              <strong className="block mt-1">Waarschuwingen</strong> zijn aandachtspunten die mogelijk actie vereisen.
+              <strong className="block mt-1">Informatie</strong> items zijn slechts ter info en geen problemen.
             </p>
           </div>
         </div>

@@ -113,12 +113,12 @@ export default function CompetitieDetailPage() {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">{error || 'Competitie niet gevonden.'}</p>
-        <button
-          onClick={() => router.push('/competities')}
-          className="mt-4 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
+        <Link
+          href="/competities"
+          className="mt-4 inline-block px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors"
         >
-          Terug naar competities
-        </button>
+          Naar competitieoverzicht
+        </Link>
       </div>
     );
   }
@@ -127,9 +127,8 @@ export default function CompetitieDetailPage() {
 
   const navItems = [
     { label: 'Spelers', href: `/competities/${compNr}/spelers`, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', desc: 'Beheer spelers in deze competitie' },
-    { label: 'Planning', href: `/competities/${compNr}/planning`, icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', desc: 'Wedstrijdplanning en schema' },
+    { label: 'Dagplanning', href: `/competities/${compNr}/planning`, icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', desc: 'Dagplanning voor aanwezige spelers' },
     { label: 'Matrix', href: `/competities/${compNr}/matrix`, icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', desc: 'Wie speelt tegen wie' },
-    { label: 'Uitslagen', href: `/competities/${compNr}/uitslagen`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', desc: 'Bekijk en voer uitslagen in' },
     { label: 'Stand', href: `/competities/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Klassement en stand' },
     { label: 'Periodes', href: `/competities/${compNr}/periodes`, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'Periode-overgangen beheren' },
     { label: 'Controle', href: `/competities/${compNr}/controle`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', desc: 'Data validatie en controle' },
@@ -138,7 +137,7 @@ export default function CompetitieDetailPage() {
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} />
+      <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
 
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -172,14 +171,14 @@ export default function CompetitieDetailPage() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Moyenne-formule</p>
-            <p className="text-sm text-slate-900 dark:text-white">x{multiplier} (min. {competition.min_car} car.)</p>
+            <p className="text-sm text-slate-900 dark:text-white">x{multiplier}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max beurten</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Max aantal beurten</p>
             <p className="text-sm text-slate-900 dark:text-white">{competition.max_beurten}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast beurten</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Vast aantal beurten</p>
             <p className="text-sm text-slate-900 dark:text-white">{competition.vast_beurten === 0 ? 'Nee' : 'Ja'}</p>
           </div>
           <div>
@@ -187,13 +186,8 @@ export default function CompetitieDetailPage() {
             <p className="text-sm text-slate-900 dark:text-white">{SORTEREN_LABELS[competition.sorteren] || '-'}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Periode</p>
-            <p className="text-sm text-slate-900 dark:text-white">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-green-700 text-white text-xs font-bold rounded">
-                {competition.periode || 1}
-              </span>
-              <span className="ml-1 text-slate-500 dark:text-slate-400">van 5</span>
-            </p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Min. caramboles</p>
+            <p className="text-sm text-slate-900 dark:text-white">{competition.min_car}</p>
           </div>
         </div>
       </div>
