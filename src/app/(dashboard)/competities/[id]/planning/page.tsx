@@ -32,6 +32,11 @@ interface PlayerData {
   spc_car_3?: number;
   spc_car_4?: number;
   spc_car_5?: number;
+  spc_moyenne_1?: number;
+  spc_moyenne_2?: number;
+  spc_moyenne_3?: number;
+  spc_moyenne_4?: number;
+  spc_moyenne_5?: number;
 }
 
 interface MatchData {
@@ -128,7 +133,7 @@ export default function CompetiteDagplanningPage() {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
   };
 
-  // Phase 1: Load competition data and initialize periode
+  // Phase 1: Load competition data and players (fast - no heavy data)
   useEffect(() => {
     if (!orgNummer || isNaN(compNr)) return;
 
@@ -149,12 +154,21 @@ export default function CompetiteDagplanningPage() {
 
         const compData = await compRes.json();
         setCompetition(compData);
-        setSelectedPeriode(compData.periode || 1);
 
         if (playersRes.ok) {
           const playersData = await playersRes.json();
-          setPlayers(playersData.players || []);
+          // Filter players: only show players with non-zero moyenne in current period
+          const currentPeriod = compData.periode || 1;
+          const moyenneKey = `spc_moyenne_${currentPeriod}` as keyof PlayerData;
+          const filteredPlayers = (playersData.players || []).filter((player: PlayerData) => {
+            const moyenne = player[moyenneKey] as number | undefined;
+            return moyenne !== undefined && moyenne > 0;
+          });
+          setPlayers(filteredPlayers);
         }
+
+        // Show UI immediately after players are loaded
+        setIsLoading(false);
       } catch {
         setError('Er is een fout opgetreden bij het laden.');
         setIsLoading(false);
@@ -164,20 +178,20 @@ export default function CompetiteDagplanningPage() {
     loadCompetition();
   }, [orgNummer, compNr]);
 
-  // Phase 2: Load matches and results once periode is determined
+  // Phase 2: Load matches and results on-demand (deferred for performance)
+  // This loads in the background after the UI is already shown
   useEffect(() => {
-    if (!orgNummer || isNaN(compNr) || selectedPeriode === null) return;
-
-    latestPeriodeRef.current = selectedPeriode;
+    if (!orgNummer || isNaN(compNr) || !competition) return;
 
     const loadMatchesAndResults = async () => {
+      setIsLoadingMatchData(true);
+      const currentPeriod = competition.periode || 1;
+
       try {
         const [matchesRes, resultsRes] = await Promise.all([
-          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${selectedPeriode}`),
-          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`),
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?periode=${currentPeriod}`),
+          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${currentPeriod}`),
         ]);
-
-        if (latestPeriodeRef.current !== selectedPeriode) return;
 
         if (matchesRes.ok) {
           const matchesData = await matchesRes.json();
@@ -189,18 +203,16 @@ export default function CompetiteDagplanningPage() {
           setResults(resultsData.results || []);
         }
       } catch {
-        if (latestPeriodeRef.current === selectedPeriode) {
-          setError('Er is een fout opgetreden bij het laden van wedstrijden.');
-        }
+        // Silently fail - matches/results are not critical for initial load
       } finally {
-        if (latestPeriodeRef.current === selectedPeriode) {
-          setIsLoading(false);
-        }
+        setIsLoadingMatchData(false);
       }
     };
 
-    loadMatchesAndResults();
-  }, [orgNummer, compNr, selectedPeriode]);
+    // Defer loading of match data slightly to prioritize UI rendering
+    const timer = setTimeout(loadMatchesAndResults, 100);
+    return () => clearTimeout(timer);
+  }, [orgNummer, compNr, competition]);
 
   // Check if dagplanning has active data that would be lost on navigation
   const hasDagplanningData = showPairings && generatedPairings.length > 0;
@@ -255,14 +267,14 @@ export default function CompetiteDagplanningPage() {
     setShowLeaveWarning(false);
 
     // Navigate to the pending destination or competition overview
-    const destination = pendingNavigation || `/competities`;
+    const destination = pendingNavigation || `/competities/${compNr}`;
     setPendingNavigation(null);
 
     // Use setTimeout to allow state to clear before navigation
     setTimeout(() => {
       router.push(destination);
     }, 0);
-  }, [pendingNavigation, router]);
+  }, [pendingNavigation, router, compNr]);
 
   // Handle cancel leave
   const handleCancelLeave = useCallback(() => {
@@ -273,12 +285,12 @@ export default function CompetiteDagplanningPage() {
   // Handle "Afsluiten" button - show warning and navigate to competition overview
   const handleAfsluiten = useCallback(() => {
     if (hasDagplanningData) {
-      setPendingNavigation(`/competities`);
+      setPendingNavigation(`/competities/${compNr}`);
       setShowLeaveWarning(true);
     } else {
-      router.push(`/competities`);
+      router.push(`/competities/${compNr}`);
     }
-  }, [hasDagplanningData, router]);
+  }, [hasDagplanningData, router, compNr]);
 
   // Sort players according to competition sort setting (voornaam or achternaam)
   const sortedPlayers = [...players].sort((a, b) => {
@@ -580,7 +592,7 @@ export default function CompetiteDagplanningPage() {
         </h1>
         <div className="text-sm text-gray-700 space-y-1">
           <p><strong>Discipline:</strong> {DISCIPLINES[competition.discipline]}</p>
-          <p><strong>Periode:</strong> {selectedPeriode}</p>
+          <p><strong>Periode:</strong> {competition.periode || 1}</p>
           <p><strong>Afgedrukt:</strong> {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <hr className="mt-4 border-gray-300" />
@@ -623,7 +635,7 @@ export default function CompetiteDagplanningPage() {
               Dagplanning - {competition.comp_naam}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {DISCIPLINES[competition.discipline]} | Periode {selectedPeriode}
+              {DISCIPLINES[competition.discipline]} | Periode {competition.periode || 1}
             </p>
           </div>
           <button
@@ -654,37 +666,6 @@ export default function CompetiteDagplanningPage() {
           <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
-        </div>
-      )}
-
-      {/* Periode selector */}
-      {competition.periode > 1 && (
-        <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 px-4 py-3 print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Periode:</span>
-            <div className="flex gap-1">
-              {Array.from({ length: competition.periode }, (_, i) => i + 1).map((periodeNr) => (
-                <button
-                  key={periodeNr}
-                  onClick={() => {
-                    setSelectedPeriode(periodeNr);
-                    // Reset dagplanning state when switching periods
-                    setShowPairings(false);
-                    setSelectedPlayers(new Set());
-                    setMatchesPerPlayer(1);
-                    setGeneratedPairings([]);
-                  }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    selectedPeriode === periodeNr
-                      ? 'bg-slate-800 dark:bg-slate-600 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  Periode {periodeNr}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

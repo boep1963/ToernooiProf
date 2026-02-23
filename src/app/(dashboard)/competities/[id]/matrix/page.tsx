@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -264,12 +264,14 @@ export default function CompetitieMatrixPage() {
     );
   }
 
-  // Sort players by name according to competition sorteren setting
-  const sortedPlayers = [...players].sort((a, b) => {
-    const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
-    const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
-    return nameA.localeCompare(nameB, 'nl');
-  });
+  // Sort players by name according to competition sorteren setting (memoized for performance)
+  const sortedPlayers = useMemo(() => {
+    return [...players].sort((a, b) => {
+      const nameA = formatName(a.spa_vnaam, a.spa_tv, a.spa_anaam);
+      const nameB = formatName(b.spa_vnaam, b.spa_tv, b.spa_anaam);
+      return nameA.localeCompare(nameB, 'nl');
+    });
+  }, [players, competition?.sorteren]);
 
   // Get caramboles field key based on discipline
   const getCarambolesKey = (discipline: number): keyof PlayerData => {
@@ -311,91 +313,122 @@ export default function CompetitieMatrixPage() {
     let result = '';
 
     if (competition) {
-      // Determine winner based on caramboles made vs target
-      const won1 = cargem1 >= cartem1;
-      const won2 = cargem2 >= cartem2;
+      if (competition.punten_sys === 3) {
+        // Belgian system (12-point system)
+        // Basic points: floor(cargem / cartem * 10)
+        points1 = Math.floor((cargem1 / cartem1) * 10);
+        points2 = Math.floor((cargem2 / cartem2) * 10);
 
-      if (won1 && !won2) {
-        // Player 1 wins
-        if (competition.punten_sys === 1) { // WRV 2-1-0
-          points1 = 2;
-          points2 = 0;
-        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-          points1 = 3;
-          points2 = 0;
+        // If one player reaches 10 and the other doesn't: winner gets 12
+        if (points1 === 10 && points2 < 10) {
+          points1 = 12;
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (points2 === 10 && points1 < 10) {
+          points2 = 12;
+          result = `${selectedMatch?.playerBName} wint`;
+        } else if (points1 === 10 && points2 === 10) {
+          // Both reached 10: draw with 11 points each
+          points1 = 11;
+          points2 = 11;
+          result = 'Remise';
+        } else {
+          // Normal case: determine winner by points
+          if (points1 > points2) {
+            result = `${selectedMatch?.playerAName} wint`;
+          } else if (points2 > points1) {
+            result = `${selectedMatch?.playerBName} wint`;
+          } else {
+            result = 'Remise';
+          }
         }
-        result = `${selectedMatch?.playerAName} wint`;
-      } else if (!won1 && won2) {
-        // Player 2 wins
-        if (competition.punten_sys === 1) { // WRV 2-1-0
-          points1 = 0;
-          points2 = 2;
-        } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-          points1 = 0;
-          points2 = 3;
-        }
-        result = `${selectedMatch?.playerBName} wint`;
-      } else if (won1 && won2) {
-        // Both won - check who made more caramboles
-        if (cargem1 > cargem2) {
+      } else {
+        // WRV systems (1 and 2)
+        // Determine winner based on caramboles made vs target
+        const won1 = cargem1 >= cartem1;
+        const won2 = cargem2 >= cartem2;
+
+        if (won1 && !won2) {
+          // Player 1 wins
           if (competition.punten_sys === 1) { // WRV 2-1-0
             points1 = 2;
-            points2 = 1;
+            points2 = 0;
           } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
             points1 = 3;
-            points2 = 2;
+            points2 = 0;
           }
           result = `${selectedMatch?.playerAName} wint`;
-        } else if (cargem2 > cargem1) {
+        } else if (!won1 && won2) {
+          // Player 2 wins
           if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 1;
+            points1 = 0;
             points2 = 2;
           } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 2;
+            points1 = 0;
             points2 = 3;
           }
           result = `${selectedMatch?.playerBName} wint`;
+        } else if (won1 && won2) {
+          // Both won - check who made more caramboles
+          if (cargem1 > cargem2) {
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 2;
+              points2 = 1;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 3;
+              points2 = 2;
+            }
+            result = `${selectedMatch?.playerAName} wint`;
+          } else if (cargem2 > cargem1) {
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 1;
+              points2 = 2;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 2;
+              points2 = 3;
+            }
+            result = `${selectedMatch?.playerBName} wint`;
+          } else {
+            // Exact draw
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 1;
+              points2 = 1;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 1;
+              points2 = 1;
+            }
+            result = 'Remise';
+          }
         } else {
-          // Exact draw
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 1;
-            points2 = 1;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 1;
-            points2 = 1;
+          // Neither won - check who made more caramboles
+          if (cargem1 > cargem2) {
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 1;
+              points2 = 0;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 2;
+              points2 = 1;
+            }
+            result = `${selectedMatch?.playerAName} wint`;
+          } else if (cargem2 > cargem1) {
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 0;
+              points2 = 1;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 1;
+              points2 = 2;
+            }
+            result = `${selectedMatch?.playerBName} wint`;
+          } else {
+            // Exact draw
+            if (competition.punten_sys === 1) { // WRV 2-1-0
+              points1 = 1;
+              points2 = 1;
+            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
+              points1 = 1;
+              points2 = 1;
+            }
+            result = 'Remise';
           }
-          result = 'Remise';
-        }
-      } else {
-        // Neither won - check who made more caramboles
-        if (cargem1 > cargem2) {
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 1;
-            points2 = 0;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 2;
-            points2 = 1;
-          }
-          result = `${selectedMatch?.playerAName} wint`;
-        } else if (cargem2 > cargem1) {
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 0;
-            points2 = 1;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 1;
-            points2 = 2;
-          }
-          result = `${selectedMatch?.playerBName} wint`;
-        } else {
-          // Exact draw
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 1;
-            points2 = 1;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 1;
-            points2 = 1;
-          }
-          result = 'Remise';
         }
       }
     }
@@ -491,11 +524,25 @@ export default function CompetitieMatrixPage() {
         return;
       }
 
-      // Reload results
-      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
-      if (resultsRes.ok) {
-        const resultsData = await resultsRes.json();
-        setResults(resultsData.results || []);
+      // Optimistic update: Update results state directly without refetching
+      const savedResult = await response.json();
+
+      // Check if this is an update or new result
+      const existingIndex = results.findIndex(
+        r => r.sp_1_nr === selectedMatch.playerANr && r.sp_2_nr === selectedMatch.playerBNr ||
+             r.sp_1_nr === selectedMatch.playerBNr && r.sp_2_nr === selectedMatch.playerANr
+      );
+
+      if (existingIndex >= 0) {
+        // Update existing result
+        setResults(prev => {
+          const updated = [...prev];
+          updated[existingIndex] = { ...savedResult, id: results[existingIndex].id };
+          return updated;
+        });
+      } else {
+        // Add new result
+        setResults(prev => [...prev, savedResult]);
       }
 
       setShowResultModal(false);
@@ -532,12 +579,8 @@ export default function CompetitieMatrixPage() {
         return;
       }
 
-      // Reload results
-      const resultsRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results?periode=${selectedPeriode}`);
-      if (resultsRes.ok) {
-        const resultsData = await resultsRes.json();
-        setResults(resultsData.results || []);
-      }
+      // Optimistic update: Remove result from state directly without refetching
+      setResults(prev => prev.filter(r => r.id !== selectedMatch.resultId));
 
       setShowResultModal(false);
       setSelectedMatch(null);
