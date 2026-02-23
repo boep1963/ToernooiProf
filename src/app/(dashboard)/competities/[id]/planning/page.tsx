@@ -821,7 +821,7 @@ export default function CompetiteDagplanningPage() {
         </div>
       ) : (
         /* Step 2: Generated pairings */
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden print:hidden">
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Stap 2: Partijindeling voor vandaag

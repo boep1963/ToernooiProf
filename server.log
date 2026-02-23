@@ -376,3 +376,7 @@
 [COMPETITION] Querying database for competition: 1 in org: 1205
  GET /api/organizations/1205/competitions/1 200 in 327ms
  GET /api/organizations/1205/competitions/1 200 in 378ms
+ ✓ Compiled in 1152ms (821 modules)
+ GET /competities/3/spelers 200 in 159ms
+ GET /competities/3/spelers 200 in 161ms
+ GET /competities/1 200 in 161ms
