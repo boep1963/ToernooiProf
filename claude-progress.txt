@@ -4646,3 +4646,47 @@ GIT COMMIT: e7130eb
 
 All feature requirements from app_spec.txt have been implemented and verified.
 The ClubMatch application is now feature-complete with full PHP parity achieved.
+
+=== Session - 2026-02-24 (Features #323, #324) ===
+Agent: Coding Agent - Matrix Controle Fix + Wizard Flow
+
+ASSIGNED FEATURES: #323, #324
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #323: Fix Controle puntberekening toont altijd 0 punten
+COMPLETED - Fixed type conversion issue and refactored to use shared functions
+- Root cause: competition.punten_sys compared with === but Firestore stores as string
+- Solution: Convert to Number() before comparisons
+- Refactored: Replaced 137 lines of duplicated logic with shared functions from lib/billiards.ts
+- Uses: calculateWRVPoints, calculate10PointScore, calculateBelgianScore
+- Verified with browser automation:
+  * Points calculated correctly: P1=2, P2=0
+  * Moyenne calculated correctly: P1=3.500, P2=2.500 (3 decimals, truncated)
+  * Winner text displayed: "BackButton, Feature112 wint"
+  * Zero console errors
+- Created test-feature-323.mjs to verify type conversion works
+GIT COMMIT: a4ec2f5
+
+Feature #324: Uitslag-modal wizard: Formulier → Controle → Opslaan
+COMPLETED - Implemented 2-step wizard flow for result modal
+- Added modalStep state (1=Form, 2=Controle)
+- Step 1 (Form):
+  * Shows input fields for both players + beurten
+  * Buttons: "Annuleren" and "Controle" only (no Opslaan)
+  * Controle button only enabled when required fields filled (cargem, brt)
+  * "Partij verwijderen" button available when editing
+- Step 2 (Controle):
+  * Shows read-only summary of entered data
+  * Displays calculated moyenne and points for both players
+  * Shows result (win/draw) in green box
+  * Buttons: "Terug" (back to Step 1) and "Opslaan"/"Wijzigen"
+- Wizard flow enforces verification before saving
+- Terug button preserves form values when going back
+- Modal step resets to 1 when opening/closing
+- Verified complete flow: Form → Controle → Terug → Modify → Controle → Opslaan
+- Zero compilation errors, zero console errors
+INCLUDED IN: Commit a4ec2f5 (committed together with Feature #323)
+
+CURRENT STATUS: 324/325 features passing (99.7%)
+
+Both features verified with browser automation and marked as passing\!

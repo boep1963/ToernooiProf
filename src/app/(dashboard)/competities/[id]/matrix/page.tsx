@@ -534,7 +534,7 @@ export default function CompetitieMatrixPage() {
             Matrix - {competition.comp_naam}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {DISCIPLINES[competition.discipline]} | Wie speelt tegen wie | Periode {selectedPeriode}
+            {DISCIPLINES[competition.discipline]} | Matrix en Uitslagbeheer | Periode {selectedPeriode}
             {isLoadingPeriode && <span className="ml-2 text-green-600 dark:text-green-400">&#x27F3; Laden...</span>}
           </p>
         </div>
@@ -727,6 +727,11 @@ export default function CompetitieMatrixPage() {
                   <span className="inline-block w-4 h-4 rounded bg-slate-300 dark:bg-slate-600 border border-slate-400 dark:border-slate-500 text-center text-[10px] leading-4 text-slate-500 dark:text-slate-400">-</span>
                   Nog niet gespeeld
                 </span>
+              </div>
+
+              {/* Instruction text */}
+              <div className="text-xs text-slate-600 dark:text-slate-400 italic">
+                Klik op betreffende vlakje voor uitslag invoeren of wijzigen
               </div>
 
               {/* Periode selector */}
