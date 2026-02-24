@@ -298,6 +298,33 @@ export default function CompetitieMatrixPage() {
     return `${name} (${car})`;
   };
 
+  // Validatie voor Controle-stap: caramboles en hoogste serie
+  const validateControleForm = (): { valid: boolean; message?: string } => {
+    const cartem1 = Number(formData.sp_1_cartem) || 0;
+    const cargem1 = Number(formData.sp_1_cargem) || 0;
+    const hs1 = Number(formData.sp_1_hs) || 0;
+    const cartem2 = Number(formData.sp_2_cartem) || 0;
+    const cargem2 = Number(formData.sp_2_cargem) || 0;
+    const hs2 = Number(formData.sp_2_hs) || 0;
+
+    if (cargem1 > cartem1) {
+      return { valid: false, message: `${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).` };
+    }
+    if (cargem2 > cartem2) {
+      return { valid: false, message: `${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).` };
+    }
+    if (cargem1 < cartem1 && cargem2 < cartem2) {
+      return { valid: false, message: 'Minimaal één speler moet het aantal te maken caramboles hebben gehaald.' };
+    }
+    if (cartem1 > 0 && hs1 > cartem1) {
+      return { valid: false, message: `${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet meer zijn dan te maken (${cartem1}).` };
+    }
+    if (cartem2 > 0 && hs2 > cartem2) {
+      return { valid: false, message: `${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet meer zijn dan te maken (${cartem2}).` };
+    }
+    return { valid: true };
+  };
+
   // Calculate verification data
   const calculateVerificationData = () => {
     const cargem1 = Number(formData.sp_1_cargem) || 0;
@@ -1002,7 +1029,15 @@ export default function CompetitieMatrixPage() {
                       Annuleren
                     </button>
                     <button
-                      onClick={() => setModalStep(2)}
+                      onClick={() => {
+                        const v = validateControleForm();
+                        if (!v.valid) {
+                          setError(v.message ?? 'Controle mislukt.');
+                          return;
+                        }
+                        setError('');
+                        setModalStep(2);
+                      }}
                       disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
                       className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
