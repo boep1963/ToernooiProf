@@ -4,6 +4,7 @@ import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore, formatPlayerName } from '@/lib/billiards';
 import { parseDutchDate } from '@/lib/dateUtils';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
+import standingsCache from '@/lib/standingsCache';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -592,6 +593,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       await matchSnapshot.docs[0].ref.update({ gespeeld: 1 });
       console.log('[RESULTS] Match marked as played');
     }
+
+    // Invalidate standings cache for this competition
+    standingsCache.invalidateCompetition(orgNummer, compNumber);
+    console.log('[RESULTS] Invalidated standings cache for competition', compNumber);
 
     return NextResponse.json({
       id: resultId,

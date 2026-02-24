@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import standingsCache from '@/lib/standingsCache';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; id: string }>;
@@ -54,7 +55,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Delete the result
     await resultDoc.ref.delete();
 
-    console.log(`[RESULTS DELETE] Result ${id} deleted successfully`);
+    // Invalidate standings cache for this competition
+    standingsCache.invalidateCompetition(orgNummer, compNumber);
+    console.log(`[RESULTS DELETE] Result ${id} deleted successfully, cache invalidated`);
 
     return NextResponse.json({
       message: 'Uitslag succesvol verwijderd',

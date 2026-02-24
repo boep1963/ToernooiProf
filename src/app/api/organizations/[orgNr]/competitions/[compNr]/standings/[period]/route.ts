@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { formatPlayerName } from '@/lib/billiards';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
+import standingsCache from '@/lib/standingsCache';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; period: string }>;
@@ -30,6 +31,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     console.log(`[STANDINGS] Calculating standings for competition ${compNumber}, period ${periodNumber}, org ${orgNummer}`);
+
+    // Check cache first
+    const cachedStandings = standingsCache.get(orgNummer, compNumber, periodNumber);
+    if (cachedStandings) {
+      console.log('[STANDINGS] Returning cached standings');
+      return NextResponse.json(cachedStandings);
+    }
 
     // Fetch competition details
     const compSnapshot = await db.collection('competitions')
@@ -244,7 +252,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     console.log(`[STANDINGS] Calculated standings for ${rankedStandings.length} players`);
 
-    return NextResponse.json({
+    const responseData = {
       standings: rankedStandings,
       count: rankedStandings.length,
       competition: {
@@ -254,7 +262,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         punten_sys: compData?.punten_sys || 1,
         periode: periodNumber,
       },
-    });
+    };
+
+    // Cache the response for 30 seconds
+    standingsCache.set(orgNummer, compNumber, periodNumber, responseData);
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('[STANDINGS] Error calculating standings:', error);
     return NextResponse.json(
