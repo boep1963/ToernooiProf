@@ -43,22 +43,22 @@ export async function GET(
 
     const players = playersSnapshot.docs.map((doc) => doc.data());
 
-    // 3. For each player, get their results and calculate moyennes per period
+    // 3. Fetch all results for this competition ONCE (performance optimization)
+    const resultsSnapshot = await db
+      .collection('results')
+      .where('org_nummer', '==', org_nummer)
+      .where('comp_nr', '==', comp_nr)
+      .get();
+
+    const allResults = resultsSnapshot.docs.map((doc) => doc.data());
+
+    // 4. For each player, calculate moyennes per period
     const playerMoyennes = [];
 
     for (const player of players) {
       const spc_nummer = player.spc_nummer;
 
-      // Get all results for this player
-      const resultsSnapshot = await db
-        .collection('results')
-        .where('org_nummer', '==', org_nummer)
-        .where('comp_nr', '==', comp_nr)
-        .get();
-
-      const allResults = resultsSnapshot.docs.map((doc) => doc.data());
-
-      // Filter results for this player
+      // Filter results for this player (in-memory filtering)
       const playerResults = allResults.filter(
         (r: any) => r.sp_1_nr === spc_nummer || r.sp_2_nr === spc_nummer
       );
@@ -181,6 +181,20 @@ export async function POST(
       );
     }
 
+    // Fetch all results ONCE (performance optimization)
+    const resultsSnapshot = await db
+      .collection('results')
+      .where('org_nummer', '==', org_nummer)
+      .where('comp_nr', '==', comp_nr)
+      .get();
+
+    const allResults = resultsSnapshot.docs.map((doc) => doc.data());
+
+    // Filter by period if not period 6 (total)
+    const relevantResults = period === 6
+      ? allResults
+      : allResults.filter((r: any) => r.periode === period);
+
     let updated = 0;
 
     for (const spc_nummer of playerIds) {
@@ -197,65 +211,25 @@ export async function POST(
       const playerDoc = playerSnapshot.docs[0];
       const player = playerDoc.data();
 
-      // 2. Calculate moyenne for selected period
-      let moyenneToTransfer = 0;
+      // 2. Calculate moyenne for selected period (using in-memory filtering)
+      const playerResults = relevantResults.filter(
+        (r: any) => r.sp_1_nr === spc_nummer || r.sp_2_nr === spc_nummer
+      );
 
-      if (period === 6) {
-        // Total moyenne - calculate from all results
-        const resultsSnapshot = await db
-          .collection('results')
-          .where('org_nummer', '==', org_nummer)
-          .where('comp_nr', '==', comp_nr)
-          .get();
+      let totalCar = 0;
+      let totalBrt = 0;
 
-        const allResults = resultsSnapshot.docs.map((doc) => doc.data());
-        const playerResults = allResults.filter(
-          (r: any) => r.sp_1_nr === spc_nummer || r.sp_2_nr === spc_nummer
-        );
-
-        let totalCar = 0;
-        let totalBrt = 0;
-
-        for (const result of playerResults) {
-          const r = result as any;
-          if (r.sp_1_nr === spc_nummer) {
-            totalCar += r.sp_1_cargem || 0;
-          } else {
-            totalCar += r.sp_2_cargem || 0;
-          }
-          totalBrt += r.brt || 0;
+      for (const result of playerResults) {
+        const r = result as any;
+        if (r.sp_1_nr === spc_nummer) {
+          totalCar += r.sp_1_cargem || 0;
+        } else {
+          totalCar += r.sp_2_cargem || 0;
         }
-
-        moyenneToTransfer = totalBrt > 0 ? totalCar / totalBrt : 0;
-      } else {
-        // Specific period moyenne - calculate from results in that period
-        const resultsSnapshot = await db
-          .collection('results')
-          .where('org_nummer', '==', org_nummer)
-          .where('comp_nr', '==', comp_nr)
-          .where('periode', '==', period)
-          .get();
-
-        const periodResults = resultsSnapshot.docs.map((doc) => doc.data());
-        const playerResults = periodResults.filter(
-          (r: any) => r.sp_1_nr === spc_nummer || r.sp_2_nr === spc_nummer
-        );
-
-        let periodCar = 0;
-        let periodBrt = 0;
-
-        for (const result of playerResults) {
-          const r = result as any;
-          if (r.sp_1_nr === spc_nummer) {
-            periodCar += r.sp_1_cargem || 0;
-          } else {
-            periodCar += r.sp_2_cargem || 0;
-          }
-          periodBrt += r.brt || 0;
-        }
-
-        moyenneToTransfer = periodBrt > 0 ? periodCar / periodBrt : 0;
+        totalBrt += r.brt || 0;
       }
+
+      const moyenneToTransfer = totalBrt > 0 ? totalCar / totalBrt : 0;
 
       // 3. Update member moyenne in members table
       const memberSnapshot = await db

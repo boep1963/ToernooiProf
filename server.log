@@ -126,3 +126,5 @@
  GET /api/organizations/1205/competitions/3/players 200 in 1406ms
 [RESULTS] Found 0 results for competition 3 (after filters)
  GET /api/organizations/1205/competitions/3/results 200 in 2255ms
+ ✓ Compiled in 481ms (293 modules)
+ ✓ Compiled in 207ms (293 modules)
