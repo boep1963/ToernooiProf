@@ -10,6 +10,12 @@ const settingsLinks = [
     description: 'Bekijk en wijzig uw accountgegevens en organisatie-instellingen.',
     icon: '👤',
   },
+  {
+    href: '/instellingen/backups',
+    title: 'Backups',
+    description: 'Bekijk en herstel backups van uw Firestore database.',
+    icon: '💾',
+  },
 ];
 
 export default function InstellingenPage() {

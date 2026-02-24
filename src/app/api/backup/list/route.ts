@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listBackups } from '@/lib/backup';
-import { getServerSession } from '@/lib/auth';
 
 /**
  * GET /api/backup/list
@@ -11,9 +10,32 @@ import { getServerSession } from '@/lib/auth';
 export async function GET(request: NextRequest) {
   try {
     // Verify user is authenticated
-    const session = await getServerSession();
+    const sessionCookie = request.cookies.get('clubmatch-session');
 
-    if (!session) {
+    if (!sessionCookie?.value) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized - please login',
+        },
+        { status: 401 }
+      );
+    }
+
+    let session: { orgNummer?: number };
+    try {
+      session = JSON.parse(sessionCookie.value);
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid session',
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!session.orgNummer) {
       return NextResponse.json(
         {
           success: false,
