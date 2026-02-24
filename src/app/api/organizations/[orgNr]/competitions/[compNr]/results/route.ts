@@ -452,58 +452,63 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const sorteren = (compData?.sorteren as number) || 1;
 
-    const player1Snapshot = await queryWithOrgComp(
+    // Batch fetch both players from competition_players (1 query instead of 2)
+    const playerNrs = [Number(sp_1_nr), Number(sp_2_nr)];
+    const playersSnapshot = await queryWithOrgComp(
       db.collection('competition_players'),
       orgNummer,
       compNumber,
-      [{ field: 'spc_nummer', op: '==', value: Number(sp_1_nr) }],
+      [{ field: 'spc_nummer', op: 'in', value: playerNrs }],
       'spc_org',
       'spc_competitie'
     );
 
-    const player2Snapshot = await queryWithOrgComp(
-      db.collection('competition_players'),
-      orgNummer,
-      compNumber,
-      [{ field: 'spc_nummer', op: '==', value: Number(sp_2_nr) }],
-      'spc_org',
-      'spc_competitie'
-    );
+    // Split results by player number
+    const playerDataMap = new Map<number, FirebaseFirestore.DocumentData>();
+    playersSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      playerDataMap.set(Number(data.spc_nummer), data);
+    });
 
-    if (!player1Snapshot.empty) {
-      const p1Data = player1Snapshot.docs[0].data();
+    const p1Data = playerDataMap.get(Number(sp_1_nr));
+    const p2Data = playerDataMap.get(Number(sp_2_nr));
+
+    // Extract moyennes
+    if (p1Data) {
       const moyenneField = `spc_moyenne_${discipline}`;
-      p1Moyenne = Number(p1Data?.[moyenneField] as number) || 0;
+      p1Moyenne = Number(p1Data[moyenneField]) || 0;
     }
 
-    if (!player2Snapshot.empty) {
-      const p2Data = player2Snapshot.docs[0].data();
+    if (p2Data) {
       const moyenneField = `spc_moyenne_${discipline}`;
-      p2Moyenne = Number(p2Data?.[moyenneField] as number) || 0;
+      p2Moyenne = Number(p2Data[moyenneField]) || 0;
     }
 
-    // Fetch player names from members collection
-    const member1Snapshot = await queryWithOrgComp(
+    // Batch fetch both players from members collection (1 query instead of 2)
+    const membersSnapshot = await queryWithOrgComp(
       db.collection('members'),
       orgNummer,
       null,
-      [{ field: 'spa_nummer', op: '==', value: Number(sp_1_nr) }],
+      [{ field: 'spa_nummer', op: 'in', value: playerNrs }],
       'spa_org'
     );
-    if (!member1Snapshot.empty) {
-      const m1Data = member1Snapshot.docs[0].data();
+
+    // Split results by player number
+    const memberDataMap = new Map<number, FirebaseFirestore.DocumentData>();
+    membersSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      memberDataMap.set(Number(data.spa_nummer), data);
+    });
+
+    const m1Data = memberDataMap.get(Number(sp_1_nr));
+    const m2Data = memberDataMap.get(Number(sp_2_nr));
+
+    // Format player names
+    if (m1Data) {
       sp_1_naam = formatPlayerName(m1Data.spa_vnaam, m1Data.spa_tv, m1Data.spa_anaam, sorteren);
     }
 
-    const member2Snapshot = await queryWithOrgComp(
-      db.collection('members'),
-      orgNummer,
-      null,
-      [{ field: 'spa_nummer', op: '==', value: Number(sp_2_nr) }],
-      'spa_org'
-    );
-    if (!member2Snapshot.empty) {
-      const m2Data = member2Snapshot.docs[0].data();
+    if (m2Data) {
       sp_2_naam = formatPlayerName(m2Data.spa_vnaam, m2Data.spa_tv, m2Data.spa_anaam, sorteren);
     }
 
