@@ -4430,3 +4430,77 @@ GIT COMMITS:
 CURRENT STATUS: 317/322 features passing (98.4%)
 
 Both features completed, verified through code review, and marked as passing!
+
+
+=== Session - 2026-02-24 (Features #318, #319) ===
+Agent: Coding Agent - Performance Optimization
+
+ASSIGNED FEATURES: #318, #319
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #318: Fix N+1 query bij speler verwijdering
+Problem: Player deletion fetched ALL results and ALL matches for the competition,
+then filtered client-side for sp_1_nr/sp_2_nr and nummer_A/nummer_B.
+
+Solution:
+- Replaced single query + client-side filter with TWO targeted queries per collection
+- Results: query sp_1_nr == player + query sp_2_nr == player
+- Matches: query nummer_A == player + query nummer_B == player
+- Deduplicate by document ID using Map
+
+Performance Impact:
+- Before: 2 queries fetching ALL documents (e.g., 600 total docs)
+- After: 4 queries fetching ONLY player's documents (e.g., 15 relevant docs)
+- Data transfer reduced by ~97% for large competitions
+
+GIT COMMIT: 8c8f61a
+
+Feature #319: Elimineer dualTypeQuery - normaliseer datatypes bij import
+Problem: dualTypeQuery generates 2^n queries to handle string/number type inconsistencies.
+Example: 3 numeric filters = 8 queries instead of 1.
+
+Solution:
+1. Created migration script (migrate-normalize-numbers.mjs)
+   - Normalizes all numeric fields to number type across 11 collections
+   - Handles 40+ numeric fields with batched updates
+   - Tested on empty dev DB (0 documents needed migration)
+
+2. Verified write operations
+   - Found 117 occurrences of parseInt/Number/parseFloat
+   - All API routes properly convert to numbers before saving
+
+3. Replaced queryWithOrgComp implementation
+   - Before: return dualTypeQuery(baseQuery, filters) → 2^n queries
+   - After: Standard Firestore query with chained .where() → 1 query
+   - Maintained backward compatibility (34 call sites unchanged)
+
+4. Deprecated dualTypeQuery
+   - Added @deprecated JSDoc with performance warning
+   - Kept for legacy/import scripts
+
+Performance Impact:
+| Filters | Before | After | Improvement |
+|---------|--------|-------|-------------|
+| 1       | 2      | 1     | 50%         |
+| 2       | 4      | 1     | 75%         |
+| 3       | 8      | 1     | 87.5%       |
+| 4       | 16     | 1     | 93.75%      |
+
+Real-world impact:
+- Competition queries: 4 queries → 1 query (75% reduction)
+- Result filtering: 8+ queries → 1 query (87.5%+ reduction)
+- Combined with Feature #316 & #317: Massive query optimization across app
+
+GIT COMMIT: fe4d72f
+
+FILES MODIFIED:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/players/route.ts
+- src/lib/firestoreUtils.ts
+- package.json (added dotenv devDependency)
+- migrate-normalize-numbers.mjs (NEW)
+- get-test-login.mjs (NEW)
+- FEATURE-319-IMPLEMENTATION.md (NEW)
+
+CURRENT STATUS: 319/322 features passing (99.1%)
+
+Both features verified and marked as passing\!
