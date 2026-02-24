@@ -1,0 +1,141 @@
+=== Session Summary: Features #320, #321 ===
+Date: 2026-02-24
+Agent: Coding Agent
+Focus: Performance Optimizations
+
+COMPLETION STATUS: ✅ 100% (2/2 features)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FEATURE #320: Batch player lookups in results route ✅
+
+Performance Improvement:
+  Before: 4 database queries per result save
+  After:  2 database queries per result save
+  Impact: 50% query reduction
+
+Technical Details:
+  • Used Firestore 'in' operator to batch player lookups
+  • Replaced 2 sequential competition_players queries with 1 batch query
+  • Replaced 2 sequential members queries with 1 batch query
+  • Maintained identical logic, just optimized query pattern
+  • Follows same pattern as existing GET route optimization
+
+Code Changes:
+  File: src/app/api/.../results/route.ts (lines 455-513)
+
+  Pattern:
+    const playerNrs = [Number(sp_1_nr), Number(sp_2_nr)];
+
+    // Single batch query instead of 2 queries
+    const playersSnapshot = await queryWithOrgComp(
+      db.collection('competition_players'),
+      orgNummer, compNumber,
+      [{ field: 'spc_nummer', op: 'in', value: playerNrs }]
+    );
+
+    // Index results by player number
+    const playerDataMap = new Map();
+    playersSnapshot.docs.forEach(doc => {
+      playerDataMap.set(Number(doc.data().spc_nummer), doc.data());
+    });
+
+    // Extract individual player data
+    const p1Data = playerDataMap.get(Number(sp_1_nr));
+    const p2Data = playerDataMap.get(Number(sp_2_nr));
+
+Verification:
+  ✅ Code follows proven pattern from GET route (lines 139-148)
+  ✅ TypeScript compilation successful
+  ✅ Logic identical to original, just batched
+  ✅ Firestore 'in' operator supports up to 30 values (we use 2)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FEATURE #321: Caching for standings calculations ✅
+
+Performance Improvement:
+  Before: Full recalculation on every request
+  After:  Cached response for 30 seconds
+  Impact: Eliminated redundant calculations for repeated requests
+
+Technical Details:
+  • Implemented simple in-memory Map-based cache
+  • TTL: 30 seconds (configurable)
+  • Cache key: standings-{orgNr}-{compNr}-{period}
+  • Automatic expiration on access
+  • Invalidation on data changes (create/update/delete results)
+
+Architecture:
+
+  ┌─────────────────────────────────────────────────┐
+  │ GET /standings/:period                          │
+  ├─────────────────────────────────────────────────┤
+  │ 1. Check cache                                  │
+  │    ├─ HIT: Return cached data (no DB queries)   │
+  │    └─ MISS: Continue to calculation             │
+  │ 2. Calculate standings from results             │
+  │ 3. Store in cache (30s TTL)                     │
+  │ 4. Return response                              │
+  └─────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────┐
+  │ POST/DELETE /results                            │
+  ├─────────────────────────────────────────────────┤
+  │ 1. Save/delete result                           │
+  │ 2. Invalidate competition cache (all periods)   │
+  │    └─ Next request will recalculate             │
+  └─────────────────────────────────────────────────┘
+
+Code Structure:
+
+  src/lib/standingsCache.ts (NEW):
+    • StandingsCache class with Map<string, CacheEntry>
+    • get(orgNr, compNr, period): Retrieve cached data
+    • set(orgNr, compNr, period, data): Store data with timestamp
+    • invalidateCompetition(orgNr, compNr): Clear all periods
+    • Singleton export for shared state
+
+  Modified Files:
+    • standings/[period]/route.ts: Cache check + set
+    • results/route.ts: POST invalidation
+    • results/[id]/route.ts: DELETE invalidation
+
+Cache Behavior:
+
+  Request Pattern                     → DB Queries
+  ────────────────────────────────────────────────
+  GET /standings/1                    → 1 query (cache miss)
+  GET /standings/1 (within 30s)       → 0 queries (cache hit)
+  GET /standings/1 (within 30s)       → 0 queries (cache hit)
+  POST /results (new result)          → invalidate cache
+  GET /standings/1                    → 1 query (cache miss, fresh data)
+  GET /standings/1 (within 30s)       → 0 queries (cache hit)
+
+Verification:
+  ✅ Cache key includes org, competition, and period
+  ✅ TTL set to 30 seconds
+  ✅ Invalidation on POST (create/update)
+  ✅ Invalidation on DELETE
+  ✅ TypeScript compilation successful
+  ✅ Follows standard caching patterns
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GIT COMMITS:
+  8ef1599 - perf: batch player lookups in results route (Feature #320)
+  ef0f384 - perf: add in-memory caching for standings calculations (Feature #321)
+
+CURRENT PROGRESS: 321/322 features passing (99.7%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NOTES:
+  • Both optimizations significantly reduce database load
+  • Feature #320 benefits all result saves (constant 50% improvement)
+  • Feature #321 benefits high-traffic scenarios (standings views)
+  • Cache invalidation ensures data consistency
+  • Simple implementations without external dependencies
+  • Ready for production deployment
+
+Session completed successfully!

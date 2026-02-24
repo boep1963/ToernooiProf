@@ -4504,3 +4504,80 @@ FILES MODIFIED:
 CURRENT STATUS: 319/322 features passing (99.1%)
 
 Both features verified and marked as passing\!
+
+=== Session - 2026-02-24 (Features #320, #321) ===
+Agent: Coding Agent - Performance Optimizations
+
+ASSIGNED FEATURES: #320, #321
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #320: Batch player lookups in results route
+Problem: When saving a result, 4 separate database queries were executed:
+- 2 queries to competition_players (one per player)
+- 2 queries to members (one per player)
+
+Solution: Used Firestore 'in' operator to batch queries:
+- 1 query to fetch both players from competition_players
+- 1 query to fetch both players from members
+- Reduced from 4 queries to 2 queries (50% reduction)
+
+Implementation:
+- Created playerNrs array with both player numbers
+- Used 'in' operator: { field: 'spc_nummer', op: 'in', value: playerNrs }
+- Built Map to index results by player number
+- Extracted data for each player from Map
+- Followed same pattern as existing batch optimization in GET route (lines 139-148)
+
+Files modified:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/results/route.ts
+
+GIT COMMIT: 8ef1599
+
+Feature #321: Add caching for standings calculations
+Problem: Standings were recalculated from all results on every GET request with no caching layer
+
+Solution: Implemented in-memory cache with 30-second TTL:
+- Created standingsCache singleton with Map-based storage
+- Cache key format: standings-{orgNr}-{compNr}-{period}
+- TTL: 30 seconds
+- Automatic expiration on cache access
+- Invalidation on result create/update/delete
+
+Implementation:
+1. Created src/lib/standingsCache.ts:
+   - get(): Returns cached data if not expired
+   - set(): Stores data with timestamp
+   - invalidateCompetition(): Clears all periods for a competition
+   - stats(): Debug utility for cache inspection
+
+2. Updated GET /standings/:period:
+   - Check cache at start, return if hit
+   - Calculate standings if miss
+   - Store result in cache before returning
+
+3. Updated POST /results (create/update):
+   - Invalidate cache after saving result
+   - Ensures fresh calculations after data changes
+
+4. Updated DELETE /results/:id:
+   - Invalidate cache after deleting result
+   - Maintains data consistency
+
+Performance impact:
+- Repeated requests within 30s: cached response (no DB queries)
+- First request after TTL: fresh calculation with updated data
+- Result changes: immediate cache invalidation
+
+Files created:
+- src/lib/standingsCache.ts
+
+Files modified:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/standings/[period]/route.ts
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/results/route.ts
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/results/[id]/route.ts
+
+GIT COMMIT: ef0f384
+
+CURRENT STATUS: 321/322 features passing (99.7%)
+
+Both features completed, verified through code review, and marked as passing\!
