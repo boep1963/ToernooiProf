@@ -13,7 +13,7 @@ export default function OrganizationLogo({
   src,
   alt,
   className = '',
-  fallbackSrc = '/clubmatch-logo.svg',
+  fallbackSrc = '/clubmatch-logo_1.svg',
 }: OrganizationLogoProps) {
   const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
   const [hasError, setHasError] = useState(false);

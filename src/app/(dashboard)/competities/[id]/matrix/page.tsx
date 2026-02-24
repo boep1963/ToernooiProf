@@ -80,6 +80,7 @@ export default function CompetitieMatrixPage() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<{ playerANr: number; playerBNr: number; playerAName: string; playerBName: string; resultId?: string; result?: ResultData } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalStep, setModalStep] = useState<1 | 2>(1); // Wizard: 1=Formulier, 2=Controle
   const [formData, setFormData] = useState({
     sp_1_cartem: '',
     sp_1_cargem: '',
@@ -415,6 +416,7 @@ export default function CompetitieMatrixPage() {
     }
 
     setShowVerification(false);
+    setModalStep(1); // Reset wizard to step 1
     setShowResultModal(true);
   };
 
@@ -476,6 +478,7 @@ export default function CompetitieMatrixPage() {
 
       setShowResultModal(false);
       setSelectedMatch(null);
+      setModalStep(1); // Reset wizard to step 1
     } catch (err) {
       setError('Fout bij opslaan uitslag');
     } finally {
@@ -513,6 +516,7 @@ export default function CompetitieMatrixPage() {
 
       setShowResultModal(false);
       setSelectedMatch(null);
+      setModalStep(1); // Reset wizard to step 1
     } catch (err) {
       setError('Fout bij verwijderen uitslag');
     } finally {
@@ -749,13 +753,16 @@ export default function CompetitieMatrixPage() {
         </div>
       )}
 
-      {/* Result Entry/Edit Modal */}
+      {/* Result Entry/Edit Modal - Wizard Flow */}
       {showResultModal && selectedMatch && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {selectedMatch.resultId ? 'Uitslag wijzigen' : 'Uitslag invoeren'}
+                {modalStep === 1
+                  ? (selectedMatch.resultId ? 'Uitslag wijzigen' : 'Uitslag invoeren')
+                  : 'Controle'
+                }
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {selectedMatch.playerAName} vs {selectedMatch.playerBName}
@@ -763,6 +770,9 @@ export default function CompetitieMatrixPage() {
             </div>
 
             <div className="p-6 space-y-6">
+              {modalStep === 1 ? (
+                <>
+                  {/* STEP 1: FORM */}
               {/* Player 1 */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerAName}</h3>
@@ -864,80 +874,157 @@ export default function CompetitieMatrixPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm">
-                  {error}
-                </div>
-              )}
-
-              {/* Verification Info */}
-              {showVerification && formData.sp_1_cargem && formData.sp_2_cargem && formData.brt && (() => {
-                const verification = calculateVerificationData();
-                return (
-                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Controle</h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerAName}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {formatDecimal(verification.moyenne1)}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points1}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium text-blue-800 dark:text-blue-200">{selectedMatch?.playerBName}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Moyenne: {formatDecimal(verification.moyenne2)}</p>
-                          <p className="text-blue-700 dark:text-blue-300">Punten: {verification.points2}</p>
-                        </div>
-                      </div>
-                      <div className="pt-2 border-t border-blue-200 dark:border-blue-700">
-                        <p className="font-semibold text-blue-900 dark:text-blue-100">{verification.result}</p>
-                      </div>
+                  {error && (
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm">
+                      {error}
                     </div>
-                  </div>
-                );
-              })()}
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* STEP 2: CONTROLE - Read-only summary with calculations */}
+                  {(() => {
+                    const verification = calculateVerificationData();
+                    return (
+                      <div className="space-y-6">
+                        {/* Entered Data Summary */}
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerAName}</h3>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Te maken:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_1_cartem}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Gemaakt:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_1_cargem}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Hoogste serie:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_1_hs}</span>
+                              </div>
+                              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-600 dark:text-slate-400">Moyenne:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.moyenne1)}</span>
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                  <span className="text-slate-600 dark:text-slate-400">Punten:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{verification.points1}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerBName}</h3>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Te maken:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_2_cartem}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Gemaakt:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_2_cargem}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-600 dark:text-slate-400">Hoogste serie:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formData.sp_2_hs}</span>
+                              </div>
+                              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-600 dark:text-slate-400">Moyenne:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.moyenne2)}</span>
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                  <span className="text-slate-600 dark:text-slate-400">Punten:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{verification.points2}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Beurten */}
+                        <div className="flex justify-between text-sm pb-4 border-b border-slate-200 dark:border-slate-700">
+                          <span className="text-slate-600 dark:text-slate-400">Aantal beurten:</span>
+                          <span className="font-medium text-slate-900 dark:text-white">{formData.brt}</span>
+                        </div>
+
+                        {/* Result */}
+                        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                          <p className="text-center text-lg font-bold text-green-900 dark:text-green-100">
+                            {verification.result}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
             </div>
 
             <div className="p-6 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-              <div>
-                {selectedMatch.resultId && (
-                  <button
-                    onClick={handleDeleteClick}
-                    disabled={isSubmitting}
-                    className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium disabled:opacity-50"
-                  >
-                    Partij verwijderen
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowResultModal(false);
-                    setSelectedMatch(null);
-                    setError('');
-                    setShowVerification(false);
-                  }}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
-                >
-                  Annuleren
-                </button>
-                <button
-                  onClick={() => setShowVerification(true)}
-                  disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
-                  className="px-4 py-2 border border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Controle
-                </button>
-                <button
-                  onClick={handleSubmitResult}
-                  disabled={isSubmitting || !formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
-                  className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Bezig...' : (selectedMatch.resultId ? 'Wijzigen' : 'Opslaan')}
-                </button>
-              </div>
+              {modalStep === 1 ? (
+                <>
+                  {/* STEP 1 BUTTONS */}
+                  <div>
+                    {selectedMatch.resultId && (
+                      <button
+                        onClick={handleDeleteClick}
+                        disabled={isSubmitting}
+                        className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        Partij verwijderen
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowResultModal(false);
+                        setSelectedMatch(null);
+                        setError('');
+                        setShowVerification(false);
+                        setModalStep(1);
+                      }}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      onClick={() => setModalStep(2)}
+                      disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
+                      className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Controle
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* STEP 2 BUTTONS */}
+                  <div></div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setModalStep(1)}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      Terug
+                    </button>
+                    <button
+                      onClick={handleSubmitResult}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? 'Bezig...' : (selectedMatch.resultId ? 'Wijzigen' : 'Opslaan')}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
