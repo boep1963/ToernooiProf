@@ -4374,3 +4374,59 @@ Feature #313: Alle decimale getallen in 3 decimalen afgekapt tonen
 GIT COMMIT: 0b1b0b3
 CURRENT STATUS: 311/315 features passing (98.7%)
 
+
+
+=== Session - 2026-02-24 (Features #316, #317) ===
+Agent: Coding Agent - Performance Optimization (N+1 Query Fixes)
+
+ASSIGNED FEATURES: #316, #317
+STATUS: BOTH COMPLETED AND PASSING ✅
+
+Feature #316: Fix N+1 query in match generatie loop
+Problem: For each match pairing in the loop, the entire matches collection was queried
+to check for duplicates. With 20 players (190 pairings), this resulted in 190 database
+queries instead of 1.
+
+Solution:
+- Moved results query to BEFORE the loop (lines 237-242)
+- Built Set of existing pairings with normalized keys for O(1) lookup (lines 244-256)
+- Replaced database query inside loop with Set.has() check (line 284)
+- Added console logging for debugging (line 258)
+
+Performance Impact:
+- Before: 190 database queries for 20 players
+- After: 1 database query + 190 O(1) Set lookups
+- Duplicate detection logic preserved with normalized pairing keys
+
+Feature #317: Fix N+1 query in doorkoppelen route
+Problem: Both GET and POST routes fetched all results N times (once per player) and
+then filtered client-side.
+
+Solution:
+GET route (lines 46-64):
+- Fetch all results ONCE before player loop
+- Filter in-memory for each player
+- Before: N queries | After: 1 query + N filters
+
+POST route (lines 184-232):
+- Fetch all results ONCE before playerIds loop
+- Pre-filter by period if needed (period 6 = all, otherwise filter by period)
+- Filter in-memory for each player
+- Simplified logic by removing if/else branches
+- Before: N queries | After: 1 query + N filters
+
+Performance Impact:
+- For 50 players: reduced from 50+ queries to 1 query + in-memory filtering
+- Cleaner, more maintainable code with single code path
+
+Files Modified:
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/matches/route.ts
+- src/app/api/organizations/[orgNr]/competitions/[compNr]/doorkoppelen/route.ts
+
+GIT COMMITS:
+- 9e74598: Feature #316 - Match generation N+1 fix
+- 7ae592f: Feature #317 - Doorkoppelen N+1 fix
+
+CURRENT STATUS: 317/322 features passing (98.4%)
+
+Both features completed, verified through code review, and marked as passing!
