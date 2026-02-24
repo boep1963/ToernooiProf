@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { restoreBackup, createBackup } from '@/lib/backup';
+import { validateSuperAdmin } from '@/lib/admin';
 
 /**
  * POST /api/backup/restore
  *
  * Restores Firestore data from a Cloud Storage backup.
- * Requires authenticated session (organization admin).
+ * Requires super admin access.
  * Automatically creates a pre-restore backup as safety measure.
  *
  * Request body:
@@ -15,41 +16,13 @@ import { restoreBackup, createBackup } from '@/lib/backup';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify user is authenticated
-    const sessionCookie = request.cookies.get('clubmatch-session');
-
-    if (!sessionCookie?.value) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - please login',
-        },
-        { status: 401 }
-      );
+    // Verify user is a super admin
+    const validation = await validateSuperAdmin(request);
+    if (validation instanceof NextResponse) {
+      return validation; // Return 401/403 error response
     }
 
-    let session: { orgNummer?: number };
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid session',
-        },
-        { status: 401 }
-      );
-    }
-
-    if (!session.orgNummer) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - please login',
-        },
-        { status: 401 }
-      );
-    }
+    const { orgNummer } = validation;
 
     // Parse request body
     const body = await request.json();
@@ -65,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Backup API] Restore requested by user ${session.orgNummer} for backup: ${backupName}`);
+    console.log(`[Backup API] Restore requested by super admin ${orgNummer} for backup: ${backupName}`);
 
     // Create a pre-restore backup as safety measure
     console.log('[Backup API] Creating pre-restore backup...');

@@ -1,51 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listBackups } from '@/lib/backup';
+import { validateSuperAdmin } from '@/lib/admin';
 
 /**
  * GET /api/backup/list
  *
  * Lists all available backups from Cloud Storage.
- * Requires authenticated session (organization admin).
+ * Requires super admin access.
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify user is authenticated
-    const sessionCookie = request.cookies.get('clubmatch-session');
-
-    if (!sessionCookie?.value) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - please login',
-        },
-        { status: 401 }
-      );
+    // Verify user is a super admin
+    const validation = await validateSuperAdmin(request);
+    if (validation instanceof NextResponse) {
+      return validation; // Return 401/403 error response
     }
 
-    let session: { orgNummer?: number };
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid session',
-        },
-        { status: 401 }
-      );
-    }
-
-    if (!session.orgNummer) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized - please login',
-        },
-        { status: 401 }
-      );
-    }
-
-    console.log('[Backup API] Listing backups for user:', session.orgNummer);
+    const { orgNummer } = validation;
+    console.log('[Backup API] Listing backups for super admin:', orgNummer);
 
     // List all backups
     const backups = await listBackups();

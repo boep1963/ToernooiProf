@@ -2,23 +2,32 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 
-const settingsLinks = [
+const allSettingsLinks = [
   {
     href: '/instellingen/account',
     title: 'Account',
     description: 'Bekijk en wijzig uw accountgegevens en organisatie-instellingen.',
     icon: '👤',
+    requiresAdmin: false,
   },
   {
     href: '/instellingen/backups',
     title: 'Backups',
     description: 'Bekijk en herstel backups van uw Firestore database.',
     icon: '💾',
+    requiresAdmin: true,
   },
 ];
 
 export default function InstellingenPage() {
+  const { isSuperAdmin } = useSuperAdmin();
+
+  // Filter links based on admin status
+  const settingsLinks = allSettingsLinks.filter(
+    (link) => !link.requiresAdmin || isSuperAdmin
+  );
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
