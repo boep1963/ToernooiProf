@@ -234,6 +234,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Build player lookup for fast access
     const playerLookup = new Map(players.map((p) => [p.nummer, p]));
 
+    // Fetch all existing matches for this competition and period ONCE (performance optimization)
+    const existingMatchesSnapshot = await db.collection('matches')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .where('periode', '==', periode)
+      .get();
+
+    // Build Set of existing pairings for O(1) duplicate detection
+    const existingPairings = new Set<string>();
+    existingMatchesSnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (!data) return;
+      const numA = Number(data.nummer_A);
+      const numB = Number(data.nummer_B);
+      // Store normalized key (smaller number first)
+      const key = numA < numB
+        ? `${periode}_${numA}_${numB}`
+        : `${periode}_${numB}_${numA}`;
+      existingPairings.add(key);
+    });
+
+    console.log(`[MATCHES] Found ${existingPairings.size} existing pairings in period ${periode}`);
+
     // Create match documents
     const createdMatches: Record<string, unknown>[] = [];
     const createdPairings = new Set<string>(); // Track created pairings to prevent duplicates
@@ -257,27 +280,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           continue;
         }
 
-        // Check if this pairing already exists in the database
-        const existingPairing = await db.collection('matches')
-          .where('org_nummer', '==', orgNummer)
-          .where('comp_nr', '==', compNumber)
-          .where('periode', '==', periode)
-          .get();
-
-        let isDuplicate = false;
-        existingPairing.forEach((doc) => {
-          const data = doc.data();
-          if (!data) return;
-          const numA = Number(data.nummer_A);
-          const numB = Number(data.nummer_B);
-          // Check both directions: A vs B and B vs A
-          if ((numA === playerANr && numB === playerBNr) ||
-              (numA === playerBNr && numB === playerANr)) {
-            isDuplicate = true;
-          }
-        });
-
-        if (isDuplicate) {
+        // Check if this pairing already exists in the database (O(1) lookup)
+        if (existingPairings.has(pairingKey)) {
           console.log(`[MATCHES] Skipping duplicate pairing (already in DB): ${playerA.naam} vs ${playerB.naam} in period ${periode}`);
           continue;
         }
