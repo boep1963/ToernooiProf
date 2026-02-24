@@ -314,20 +314,27 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // CASCADE DELETE: Delete all related data
 
     // 1. Delete results where this player participated (sp_1_nr OR sp_2_nr)
+    // Use two queries instead of fetching all results and filtering client-side
     console.log(`[PLAYERS] Deleting results for player ${memberNummer}...`);
-    const resultsSnapshot = await queryWithOrgComp(
+    const resultsAsPlayer1 = await queryWithOrgComp(
       db.collection('results'),
       orgNummer,
       compNumber,
-      [] // Get all results, we'll filter client-side for OR condition
+      [{ field: 'sp_1_nr', op: '==', value: memberNummer }]
     );
 
-    const resultsToDelete = resultsSnapshot.docs.filter((doc) => {
-      const data = doc.data();
-      const sp1 = Number(data?.sp_1_nr);
-      const sp2 = Number(data?.sp_2_nr);
-      return sp1 === memberNummer || sp2 === memberNummer;
-    });
+    const resultsAsPlayer2 = await queryWithOrgComp(
+      db.collection('results'),
+      orgNummer,
+      compNumber,
+      [{ field: 'sp_2_nr', op: '==', value: memberNummer }]
+    );
+
+    // Combine results and deduplicate by document ID
+    const resultsMap = new Map();
+    resultsAsPlayer1.docs.forEach(doc => resultsMap.set(doc.id, doc));
+    resultsAsPlayer2.docs.forEach(doc => resultsMap.set(doc.id, doc));
+    const resultsToDelete = Array.from(resultsMap.values());
 
     console.log(`[PLAYERS] Found ${resultsToDelete.length} results to delete`);
     for (const resultDoc of resultsToDelete) {
@@ -335,20 +342,27 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // 2. Delete matches where this player is involved (nummer_A OR nummer_B)
+    // Use two queries instead of fetching all matches and filtering client-side
     console.log(`[PLAYERS] Deleting matches for player ${memberNummer}...`);
-    const matchesSnapshot = await queryWithOrgComp(
+    const matchesAsPlayerA = await queryWithOrgComp(
       db.collection('matches'),
       orgNummer,
       compNumber,
-      [] // Get all matches, we'll filter client-side for OR condition
+      [{ field: 'nummer_A', op: '==', value: memberNummer }]
     );
 
-    const matchesToDelete = matchesSnapshot.docs.filter((doc) => {
-      const data = doc.data();
-      const numA = Number(data?.nummer_A);
-      const numB = Number(data?.nummer_B);
-      return numA === memberNummer || numB === memberNummer;
-    });
+    const matchesAsPlayerB = await queryWithOrgComp(
+      db.collection('matches'),
+      orgNummer,
+      compNumber,
+      [{ field: 'nummer_B', op: '==', value: memberNummer }]
+    );
+
+    // Combine matches and deduplicate by document ID
+    const matchesMap = new Map();
+    matchesAsPlayerA.docs.forEach(doc => matchesMap.set(doc.id, doc));
+    matchesAsPlayerB.docs.forEach(doc => matchesMap.set(doc.id, doc));
+    const matchesToDelete = Array.from(matchesMap.values());
 
     console.log(`[PLAYERS] Found ${matchesToDelete.length} matches to delete`);
     for (const matchDoc of matchesToDelete) {
