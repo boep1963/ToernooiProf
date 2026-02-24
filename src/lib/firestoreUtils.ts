@@ -12,10 +12,17 @@
 import { CollectionReference, Query, QuerySnapshot } from 'firebase-admin/firestore';
 
 /**
+ * @deprecated After Feature #319, this function is no longer needed.
+ * All numeric fields have been normalized to number type via migration.
+ * Use standard Firestore queries instead.
+ *
  * Execute a query that tolerates both string and number types for specified fields.
  *
  * This function runs multiple queries (one for each type variant) and merges
  * the results, deduplicating by document ID.
+ *
+ * PERFORMANCE WARNING: This generates 2^n queries where n = number of numeric filters.
+ * Example: 3 numeric filters = 8 queries instead of 1.
  *
  * @param baseQuery - The base Firestore query/collection
  * @param filters - Array of filter objects with field, operator, and value
@@ -110,13 +117,16 @@ export async function dualTypeQuery(
  * Simpler version that only handles org_nummer and comp_nr fields.
  * Use this for most common cases.
  *
+ * NOTE: After Feature #319 migration, this function uses standard Firestore queries
+ * instead of dualTypeQuery since all numeric fields are now normalized to number type.
+ *
  * @param baseQuery - The base Firestore query/collection
- * @param orgNummer - Organization number (will query both as number and string)
- * @param compNr - Competition number (will query both as number and string)
+ * @param orgNummer - Organization number
+ * @param compNr - Competition number
  * @param additionalFilters - Additional filters to apply
  * @param orgField - Custom field name for organization (default: 'org_nummer')
  * @param compField - Custom field name for competition (default: 'comp_nr')
- * @returns Merged query snapshot
+ * @returns Query snapshot
  */
 export async function queryWithOrgComp(
   baseQuery: CollectionReference | Query,
@@ -126,17 +136,29 @@ export async function queryWithOrgComp(
   orgField: string = 'org_nummer',
   compField: string = 'comp_nr'
 ): Promise<{ docs: FirebaseFirestore.DocumentSnapshot[]; size: number; empty: boolean }> {
-  const filters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [
-    { field: orgField, op: '==', value: orgNummer }
-  ];
+  // Build standard Firestore query (no dual-type handling needed after migration)
+  let query: any = baseQuery;
 
+  // Apply org filter
+  query = query.where(orgField, '==', orgNummer);
+
+  // Apply comp filter if provided
   if (compNr !== null) {
-    filters.push({ field: compField, op: '==', value: compNr });
+    query = query.where(compField, '==', compNr);
   }
 
-  filters.push(...additionalFilters);
+  // Apply additional filters
+  for (const filter of additionalFilters) {
+    query = query.where(filter.field, filter.op, filter.value);
+  }
 
-  return dualTypeQuery(baseQuery, filters);
+  // Execute single query and return
+  const snapshot = await query.get();
+  return {
+    docs: snapshot.docs,
+    size: snapshot.size,
+    empty: snapshot.empty
+  };
 }
 
 /**
