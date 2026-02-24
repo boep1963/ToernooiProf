@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
-import { formatPlayerName } from '@/lib/billiards';
+import { formatPlayerName, calculateWRVPoints, calculate10PointScore, calculateBelgianScore } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import { formatDecimal } from '@/lib/formatUtils';
 
@@ -316,122 +316,48 @@ export default function CompetitieMatrixPage() {
     let result = '';
 
     if (competition) {
-      if (competition.punten_sys === 3) {
-        // Belgian system (12-point system)
-        // Basic points: floor(cargem / cartem * 10)
-        points1 = Math.floor((cargem1 / cartem1) * 10);
-        points2 = Math.floor((cargem2 / cartem2) * 10);
+      // FIX #323: Convert punten_sys to number to handle both string and number from Firestore
+      const puntenSys = Number(competition.punten_sys) || 1;
+      const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
 
-        // If one player reaches 10 and the other doesn't: winner gets 12
-        if (points1 === 10 && points2 < 10) {
-          points1 = 12;
+      if (sysType === 3) {
+        // Belgian system - use shared calculation from lib/billiards.ts
+        const belgian = calculateBelgianScore(cargem1, cartem1, cargem2, cartem2);
+        points1 = belgian.points1;
+        points2 = belgian.points2;
+
+        if (points1 > points2) {
           result = `${selectedMatch?.playerAName} wint`;
-        } else if (points2 === 10 && points1 < 10) {
-          points2 = 12;
+        } else if (points2 > points1) {
           result = `${selectedMatch?.playerBName} wint`;
-        } else if (points1 === 10 && points2 === 10) {
-          // Both reached 10: draw with 11 points each
-          points1 = 11;
-          points2 = 11;
-          result = 'Remise';
         } else {
-          // Normal case: determine winner by points
-          if (points1 > points2) {
-            result = `${selectedMatch?.playerAName} wint`;
-          } else if (points2 > points1) {
-            result = `${selectedMatch?.playerBName} wint`;
-          } else {
-            result = 'Remise';
-          }
+          result = 'Remise';
+        }
+      } else if (sysType === 2) {
+        // 10-point system - use shared calculation from lib/billiards.ts
+        points1 = calculate10PointScore(cargem1, cartem1);
+        points2 = calculate10PointScore(cargem2, cartem2);
+
+        if (points1 > points2) {
+          result = `${selectedMatch?.playerAName} wint`;
+        } else if (points2 > points1) {
+          result = `${selectedMatch?.playerBName} wint`;
+        } else {
+          result = 'Remise';
         }
       } else {
-        // WRV systems (1 and 2)
-        // Determine winner based on caramboles made vs target
-        const won1 = cargem1 >= cartem1;
-        const won2 = cargem2 >= cartem2;
+        // WRV system - use shared calculation from lib/billiards.ts
+        // For Controle preview, we don't have maxBeurten/vastBeurten/moyennes, so use defaults
+        const wrv = calculateWRVPoints(cargem1, cartem1, cargem2, cartem2, 0, brt, false, puntenSys);
+        points1 = wrv.points1;
+        points2 = wrv.points2;
 
-        if (won1 && !won2) {
-          // Player 1 wins
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 2;
-            points2 = 0;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 3;
-            points2 = 0;
-          }
+        if (points1 > points2) {
           result = `${selectedMatch?.playerAName} wint`;
-        } else if (!won1 && won2) {
-          // Player 2 wins
-          if (competition.punten_sys === 1) { // WRV 2-1-0
-            points1 = 0;
-            points2 = 2;
-          } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-            points1 = 0;
-            points2 = 3;
-          }
+        } else if (points2 > points1) {
           result = `${selectedMatch?.playerBName} wint`;
-        } else if (won1 && won2) {
-          // Both won - check who made more caramboles
-          if (cargem1 > cargem2) {
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 2;
-              points2 = 1;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 3;
-              points2 = 2;
-            }
-            result = `${selectedMatch?.playerAName} wint`;
-          } else if (cargem2 > cargem1) {
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 1;
-              points2 = 2;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 2;
-              points2 = 3;
-            }
-            result = `${selectedMatch?.playerBName} wint`;
-          } else {
-            // Exact draw
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 1;
-              points2 = 1;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 1;
-              points2 = 1;
-            }
-            result = 'Remise';
-          }
         } else {
-          // Neither won - check who made more caramboles
-          if (cargem1 > cargem2) {
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 1;
-              points2 = 0;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 2;
-              points2 = 1;
-            }
-            result = `${selectedMatch?.playerAName} wint`;
-          } else if (cargem2 > cargem1) {
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 0;
-              points2 = 1;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 1;
-              points2 = 2;
-            }
-            result = `${selectedMatch?.playerBName} wint`;
-          } else {
-            // Exact draw
-            if (competition.punten_sys === 1) { // WRV 2-1-0
-              points1 = 1;
-              points2 = 1;
-            } else if (competition.punten_sys === 2) { // WRV 3-2-1-0
-              points1 = 1;
-              points2 = 1;
-            }
-            result = 'Remise';
-          }
+          result = 'Remise';
         }
       }
     }
