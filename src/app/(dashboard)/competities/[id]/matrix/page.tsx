@@ -783,10 +783,11 @@ export default function CompetitieMatrixPage() {
                 <h3 className="font-semibold text-slate-900 dark:text-white">{selectedMatch.playerAName}</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ">
                       Te maken
                     </label>
                     <input
+                      disabled={true}
                       type="number"
                       value={formData.sp_1_cartem}
                       onChange={(e) => setFormData({ ...formData, sp_1_cartem: e.target.value })}
@@ -829,6 +830,7 @@ export default function CompetitieMatrixPage() {
                       Te maken
                     </label>
                     <input
+                      disabled={true}
                       type="number"
                       value={formData.sp_2_cartem}
                       onChange={(e) => setFormData({ ...formData, sp_2_cartem: e.target.value })}
