@@ -4690,3 +4690,42 @@ INCLUDED IN: Commit a4ec2f5 (committed together with Feature #323)
 CURRENT STATUS: 324/325 features passing (99.7%)
 
 Both features verified with browser automation and marked as passing\!
+
+=== Session - 2026-02-24 (Feature #325) ===
+Agent: Coding Agent - Matrix UX Text Updates
+
+ASSIGNED FEATURE: #325
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #325: Matrix paginateksten aanpassen
+Two text changes on the Matrix page to improve UX clarity.
+
+IMPLEMENTATION:
+1. Changed subtitle from "Wie speelt tegen wie" to "Matrix en Uitslagbeheer"
+   - Location: src/app/(dashboard)/competities/[id]/matrix/page.tsx line 537
+   - The new text better describes the dual functionality (matrix view + result management)
+
+2. Added instruction text at the color legend
+   - Added: "Klik op betreffende vlakje voor uitslag invoeren of wijzigen"
+   - Location: Between color legend and period selector (after line 730)
+   - Styled with: text-xs text-slate-600 dark:text-slate-400 italic
+   - Provides clear guidance to users on how to interact with the matrix
+
+VERIFICATION (Browser Automation):
+✅ Subtitle shows "Matrix en Uitslagbeheer" in light mode
+✅ Subtitle shows "Matrix en Uitslagbeheer" in dark mode (white text, clearly visible)
+✅ Instruction text visible in light mode (below color legend)
+✅ Instruction text visible in dark mode (gray italic text, clearly readable)
+✅ No print:hidden classes added - both texts appear in print view
+✅ Zero console errors on Matrix page
+✅ Zero console errors related to changes
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx (lines 537, 732-735)
+
+GIT COMMIT: 6bfbbd4
+
+CURRENT STATUS: 325/325 features passing (100.0%)
+
+🎉 PROJECT COMPLETE - ALL 325 FEATURES PASSING\! 🎉
+
