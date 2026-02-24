@@ -4,6 +4,7 @@ import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateCaramboles, getMoyenneField } from '@/lib/billiards';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -56,10 +57,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     console.log(`[PLAYERS] Found ${enrichedPlayers.length} players for competition ${compNumber}`);
-    return NextResponse.json({
+    return cachedJsonResponse({
       players: enrichedPlayers,
       count: enrichedPlayers.length,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[PLAYERS] Error fetching players:', error);
     return NextResponse.json(

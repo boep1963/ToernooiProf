@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { adminAuth } from '@/lib/firebase-admin';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const orgData = orgSnapshot.docs[0].data();
 
-    return NextResponse.json({
+    return cachedJsonResponse({
       org_nummer: orgData?.org_nummer,
       org_code: orgData?.org_code || '',
       org_naam: orgData?.org_naam,
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       org_logo: orgData?.org_logo || '',
       aantal_tafels: orgData?.aantal_tafels || 4,
       nieuwsbrief: orgData?.nieuwsbrief || 0,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[ORG] Error fetching organization:', error);
     return NextResponse.json(

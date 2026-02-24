@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { formatPlayerName } from '@/lib/billiards';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
 import standingsCache from '@/lib/standingsCache';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; period: string }>;
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const cachedStandings = standingsCache.get(orgNummer, compNumber, periodNumber);
     if (cachedStandings) {
       console.log('[STANDINGS] Returning cached standings');
-      return NextResponse.json(cachedStandings);
+      return cachedJsonResponse(cachedStandings, 'default');
     }
 
     // Fetch competition details
@@ -267,7 +268,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Cache the response for 30 seconds
     standingsCache.set(orgNummer, compNumber, periodNumber, responseData);
 
-    return NextResponse.json(responseData);
+    return cachedJsonResponse(responseData, 'default');
   } catch (error) {
     console.error('[STANDINGS] Error calculating standings:', error);
     return NextResponse.json(

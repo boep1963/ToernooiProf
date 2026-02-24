@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -30,11 +31,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     console.log(`[MEMBERS] Found ${members.length} members for org ${orgNumber}`);
-    return NextResponse.json({
+    return cachedJsonResponse({
       members,
       count: members.length,
       org_nummer: orgNumber,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[MEMBERS] Error fetching members:', error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface ValidationIssue {
   type: 'error' | 'warning' | 'info';
@@ -278,7 +279,7 @@ export async function GET(
       },
     };
 
-    return NextResponse.json(report, { status: 200 });
+    return cachedJsonResponse(report, 'short', 200);
   } catch (error) {
     console.error('Error validating competition:', error);
     return NextResponse.json(

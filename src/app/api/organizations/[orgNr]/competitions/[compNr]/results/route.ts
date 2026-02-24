@@ -5,6 +5,7 @@ import { calculateWRVPoints, calculate10PointScore, calculateBelgianScore, forma
 import { parseDutchDate } from '@/lib/dateUtils';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
 import standingsCache from '@/lib/standingsCache';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -278,10 +279,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     console.log(`[RESULTS] Found ${filteredResults.length} results for competition ${compNumber} (after filters)`);
-    return NextResponse.json({
+    return cachedJsonResponse({
       results: filteredResults,
       count: filteredResults.length,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[RESULTS] Error fetching results:', error);
     return NextResponse.json(

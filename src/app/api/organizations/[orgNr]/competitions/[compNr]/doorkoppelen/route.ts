@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { formatDecimal } from '@/lib/formatUtils';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 export async function GET(
   request: NextRequest,
@@ -121,7 +122,7 @@ export async function GET(
     // Sort by player name
     playerMoyennes.sort((a, b) => a.playerName.localeCompare(b.playerName));
 
-    return NextResponse.json(playerMoyennes, { status: 200 });
+    return cachedJsonResponse(playerMoyennes, 'default', 200);
   } catch (error) {
     console.error('Error fetching player moyennes:', error);
     return NextResponse.json(

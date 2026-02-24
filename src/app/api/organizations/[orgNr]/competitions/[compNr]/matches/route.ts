@@ -4,6 +4,7 @@ import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, formatPlayerName } from '@/lib/billiards';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -69,10 +70,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     console.log(`[MATCHES] Found ${matches.length} matches for competition ${compNumber}`);
-    return NextResponse.json({
+    return cachedJsonResponse({
       matches,
       count: matches.length,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[MATCHES] Error fetching matches:', error);
     return NextResponse.json(

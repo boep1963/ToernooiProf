@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const orgData = orgSnapshot.docs[0].data();
 
-    return NextResponse.json({
+    return cachedJsonResponse({
       orgNummer: session.orgNummer,
       verified: orgData?.verified === true || orgData?.verified === undefined,
       organization: {
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
         aantal_tafels: orgData?.aantal_tafels || 4,
         theme_preference: orgData?.theme_preference,
       },
-    });
+    }, 'no-cache');
   } catch (error) {
     console.error('[SESSION] Error checking session:', error);
     return NextResponse.json(

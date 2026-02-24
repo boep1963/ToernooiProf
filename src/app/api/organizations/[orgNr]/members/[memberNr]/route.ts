@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; memberNr: string }>;
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const doc = snapshot.docs[0];
-    return NextResponse.json({ id: doc.id, ...doc.data() });
+    return cachedJsonResponse({ id: doc.id, ...doc.data() }, 'default');
   } catch (error) {
     console.error('[MEMBER] Error fetching member:', error);
     return NextResponse.json(

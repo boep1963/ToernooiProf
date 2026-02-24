@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { calculateCaramboles } from '@/lib/billiards';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -56,12 +57,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       players.push({ id: doc.id, ...doc.data() });
     });
 
-    return NextResponse.json({
+    return cachedJsonResponse({
       periode: currentPeriode,
       players,
       max_periode: 5,
       can_create: currentPeriode < 5,
-    });
+    }, 'default');
   } catch (error) {
     console.error('[PERIODS] Error fetching period info:', error);
     return NextResponse.json(

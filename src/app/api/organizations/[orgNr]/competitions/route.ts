@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     logQueryResult('competitions', orgNummer, competitions.length);
     console.log(`[COMPETITIONS] Found ${competitions.length} competitions`);
-    return NextResponse.json(competitions);
+    return cachedJsonResponse(competitions, 'default');
   } catch (error) {
     console.error('[COMPETITIONS] Error fetching competitions:', error);
     return NextResponse.json(

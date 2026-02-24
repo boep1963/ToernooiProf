@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { initializeCollections } from '@/lib/db';
+import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 export async function GET() {
   try {
@@ -17,7 +18,7 @@ export async function GET() {
 
     console.log(`[HEALTH] Database: ${healthResult.type} (${healthResult.status}), Collections: ${collectionNames.length}`);
 
-    return NextResponse.json({
+    return cachedJsonResponse({
       status: 'ok',
       database: healthResult.status,
       databaseType: healthResult.type,
@@ -25,7 +26,7 @@ export async function GET() {
       isFirestore: db.isFirestore,
       newlyInitialized: initialized.length > 0 ? initialized : undefined,
       timestamp: new Date().toISOString(),
-    });
+    }, 'no-cache');
   } catch (error) {
     console.error('[HEALTH] Health check failed:', error);
     return NextResponse.json(
