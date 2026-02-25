@@ -5560,3 +5560,101 @@ Files: Matrix page.tsx modified, verification doc created.
 GIT COMMIT: bdb2bef (with Feature #339)
 
 ✅ Feature #338 verified and marked as passing\!
+
+
+=== Session - 2026-02-25 (Feature #341) ===
+Agent: Coding Agent - Result Verification Overview
+
+ASSIGNED FEATURE: #341
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #341: Resultaatoverzicht na validatie met berekende statistieken
+COMPLETED - Added percentage calculation to the result verification overview
+
+IMPLEMENTATION:
+The Controle step (Step 2) of the result form modal now displays the percentage
+for each player, calculated as (gemaakte caramboles / te maken caramboles × 100%),
+truncated to 3 decimals (not rounded).
+
+CHANGES MADE:
+1. Updated calculateVerificationData() function:
+   - Added percentage1 calculation: Math.floor((cargem1 / cartem1) * 100 * 1000) / 1000
+   - Added percentage2 calculation: Math.floor((cargem2 / cartem2) * 100 * 1000) / 1000
+   - Safe null check: cartem > 0 to avoid division by zero
+   - Returned percentage1 and percentage2 in result object
+
+2. Updated UI for Player A section:
+   - Added Percentage row between Moyenne and Punten
+   - Display: {formatDecimal(verification.percentage1)}%
+   - Blue color styling (text-blue-700 dark:text-blue-400)
+
+3. Updated UI for Player B section:
+   - Added Percentage row between Moyenne and Punten
+   - Display: {formatDecimal(verification.percentage2)}%
+   - Same blue color styling for consistency
+
+VERIFICATION (Browser Automation):
+✅ Opened Matrix page for Competition #3
+✅ Clicked on match cell (BackButton vs BackButtonTest)
+✅ Filled result form:
+   - Player A: Te maken=63, Gemaakt=50, Hoogste serie=10
+   - Player B: Te maken=63, Gemaakt=63, Hoogste serie=15
+   - Aantal beurten: 20
+✅ Clicked "Controle" button
+✅ Verification overview displayed correctly:
+   **Player A:**
+   - Te maken: 63 ✓
+   - Gemaakt: 50 ✓
+   - Hoogste serie: 10 ✓
+   - Moyenne: 2.500 ✓ (50/20, truncated)
+   - **Percentage: 79.365%** ✓ (50/63 × 100 = 79.365079..., truncated to 3 decimals)
+   - Punten: 0 ✓
+   
+   **Player B:**
+   - Te maken: 63 ✓
+   - Gemaakt: 63 ✓
+   - Hoogste serie: 15 ✓
+   - Moyenne: 3.150 ✓ (63/20, truncated)
+   - **Percentage: 100.000%** ✓ (63/63 × 100 = 100.000%)
+   - Punten: 2 ✓
+   
+   **Additional:**
+   - Aantal beurten: 20 (shown once) ✓
+   - Result: "BackButtonTest, Feature136 wint" ✓
+
+✅ Screenshot captured: page-2026-02-25T11-25-26-056Z.png
+✅ Console check: 0 errors, 0 warnings
+✅ TypeScript compilation: Success
+✅ Production build: Success (Matrix page: 6.65 kB)
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx
+  * Lines 365-377: Added percentage1 and percentage2 calculations
+  * Line 424: Added percentage1 and percentage2 to return object
+  * Lines 1004-1016: Added Percentage display for Player A
+  * Lines 1032-1048: Added Percentage display for Player B
+
+CALCULATION DETAILS:
+The percentage calculation uses Math.floor() to truncate (not round) to 3 decimals:
+- Formula: Math.floor((achieved / target) * 100 * 1000) / 1000
+- Example: 50/63 × 100 = 79.365079365... → 79.365%
+- Zero division protection: cartem > 0 ? ... : 0
+
+GIT COMMIT: b558110
+
+CURRENT STATUS: 339/343 features passing (98.8%)
+
+✅ Feature #341 verified and marked as passing\!
+
+The result verification overview now displays ALL required statistics:
+- Player names ✓
+- Te maken caramboles ✓
+- Gemaakte caramboles ✓
+- Aantal beurten (shown once) ✓
+- Hoogste serie ✓
+- Moyenne (truncated to 3 decimals) ✓
+- Percentage (truncated to 3 decimals) ✓ NEW\!
+- Behaalde punten ✓
+- Winner or draw indication ✓
+
+Production-ready, zero errors, fully tested with browser automation.
