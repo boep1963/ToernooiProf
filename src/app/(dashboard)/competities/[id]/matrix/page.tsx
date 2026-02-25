@@ -410,8 +410,9 @@ export default function CompetitieMatrixPage() {
         }
       } else {
         // WRV system - use shared calculation from lib/billiards.ts
-        // For Controle preview, we don't have maxBeurten/vastBeurten/moyennes, so use defaults
-        const wrv = calculateWRVPoints(cargem1, cartem1, cargem2, cartem2, 0, brt, false, puntenSys);
+        // Feature #343: Pass actual vast_beurten value to ensure percentage-based winner determination
+        const vastBeurten = competition.vast_beurten === 1;
+        const wrv = calculateWRVPoints(cargem1, cartem1, cargem2, cartem2, 0, brt, vastBeurten, puntenSys);
         points1 = wrv.points1;
         points2 = wrv.points2;
 
