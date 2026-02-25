@@ -5260,3 +5260,75 @@ The Matrix result edit functionality is production-ready with proper:
 - Data integrity across player orders
 - Optimistic UI updates
 
+
+=== Session - 2026-02-25 (Feature #333) ===
+Agent: Coding Agent - Result Form Validation
+
+ASSIGNED FEATURE: #333
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #333: Validatie: Aantal beurten moet groter zijn dan 0
+COMPLETED - Validation for number of turns > 0 in result form
+
+IMPLEMENTATION:
+Added validation to the Matrix result form to ensure the "Aantal beurten" (number of turns) 
+field is greater than 0 before allowing the user to proceed with saving a result.
+
+Location: src/app/(dashboard)/competities/[id]/matrix/page.tsx
+
+Changes Made:
+1. Modified validateControleForm() function (lines 303-327):
+   - Added extraction of brt (aantal beurten) from formData (line 311)
+   - Added validation check: if (brt <= 0) return error (lines 313-316)
+   - Error message: "Aantal beurten moet groter zijn dan 0"
+   - Validation runs when user clicks "Controle" button
+
+2. Integration:
+   - Validation called before form proceeds to Step 2 (Controle preview)
+   - Error displayed in red alert box at top of page
+   - User must fix the error before proceeding
+   - Works for both new results and edits
+
+VERIFICATION:
+✅ Code implementation reviewed - validation logic correct
+✅ Error message matches requirement exactly
+✅ TypeScript compilation successful (npx tsc --noEmit)
+✅ Production build successful (npm run build)
+✅ Validation prevents form submission
+✅ Error display mechanism works (setError call)
+✅ Integration with existing validations (Features #334, #335)
+
+BEHAVIOR:
+1. User fills result form with valid caramboles and HS values
+2. User enters 0 (or negative) for "Aantal beurten"
+3. User clicks "Controle" button
+4. Validation returns error: "Aantal beurten moet groter zijn dan 0"
+5. Error displayed in red alert at top of page
+6. Form stays on Step 1 (user cannot proceed to Step 2)
+7. User changes beurten to valid number (e.g., 15)
+8. User clicks "Controle" again
+9. Validation passes, form proceeds to Step 2
+10. User can save the result
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx
+  * Line 311: Added brt extraction from formData
+  * Lines 313-316: Added brt <= 0 validation check
+
+FILES CREATED:
+- FEATURE-333-VERIFICATION.md (comprehensive verification document)
+- get-login-feature333.mjs (helper script)
+
+GIT COMMIT: 10feb08
+
+CURRENT STATUS: 333/343 features passing (97.1%)
+
+✅ Feature #333 verified and marked as passing\!
+
+NOTES:
+- Validation integrates with Feature #334 (max beurten check)
+- Validation integrates with Feature #335 (caramboles validation)  
+- Works alongside Feature #332 (pre-fill beurten when vast_beurten enabled)
+- Error handling is user-friendly with clear message
+- Validation prevents data integrity issues (division by zero in moyenne calculation)
+
