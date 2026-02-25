@@ -1,25 +1,17 @@
 #!/usr/bin/env node
-import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import * as dotenv from 'dotenv';
 
-// Load service account from .env.local
-const envContent = readFileSync('.env.local', 'utf8');
-const serviceAccountMatch = envContent.match(/FIREBASE_SERVICE_ACCOUNT_KEY='([^']+)'/);
-if (!serviceAccountMatch) {
-  console.error('❌ FIREBASE_SERVICE_ACCOUNT_KEY not found in .env.local');
-  process.exit(1);
-}
+dotenv.config({ path: '.env.local' });
 
-const serviceAccount = JSON.parse(serviceAccountMatch[1]);
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
+initializeApp({
+  credential: cert(serviceAccount)
+});
 
-const db = admin.firestore();
+const db = getFirestore();
 
 async function setupTest() {
   const orgNummer = 9337;
@@ -33,7 +25,7 @@ async function setupTest() {
     org_naam: 'Test Org Feature 337',
     org_login_code: loginCode,
     org_wl_email: 'test337@example.com',
-    created_at: admin.firestore.FieldValue.serverTimestamp()
+    created_at: FieldValue.serverTimestamp()
   });
   console.log(`✅ Created organization ${orgNummer}`);
 
@@ -47,7 +39,7 @@ async function setupTest() {
       punten_sys: 3,  // Belgian system
       max_beurten: 25,
       vast_beurten: 0,  // Not fixed turns
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: FieldValue.serverTimestamp()
     });
 
   const compId = compRef.id;
@@ -61,7 +53,7 @@ async function setupTest() {
       spa_anaam: 'PlayerA',
       spa_tv: '',
       spc_car_1: 30,  // moyenne for Libre
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: FieldValue.serverTimestamp()
     });
 
   const player2Ref = await db.collection('organizations').doc(String(orgNummer))
@@ -71,7 +63,7 @@ async function setupTest() {
       spa_anaam: 'PlayerB',
       spa_tv: '',
       spc_car_1: 30,
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: FieldValue.serverTimestamp()
     });
 
   console.log(`✅ Created players ${player1Ref.id} and ${player2Ref.id}`);
@@ -109,7 +101,7 @@ async function setupTest() {
       wp_speler2: 2,
       wp_periode: 1,
       wp_wed: 1,
-      created_at: admin.firestore.FieldValue.serverTimestamp()
+      created_at: FieldValue.serverTimestamp()
     });
 
   console.log(`✅ Created match between players`);

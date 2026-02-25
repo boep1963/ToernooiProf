@@ -272,7 +272,7 @@ export default function LoginPage() {
       <footer className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none">
         <p className="text-xs text-slate-400 dark:text-slate-500">
           Dank aan Hans Eekels voor zijn basis van deze applicatie gedurende 1990-2026 (windows en web).
-          <br className="sm:hidden" /> Herschreven door Pierre de Boer op verzoek van Hans Eekels.
+          <br className="sm:hidden" /> Samen herschreven met Pierre de Boer.
         </p>
       </footer>
     </div>

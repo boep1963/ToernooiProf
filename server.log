@@ -26,3 +26,17 @@
 [DB] Connected to Google Firestore
 [AUTH] No organization found for login code
  POST /api/auth/login-code 401 in 1590ms
+ GET / 200 in 223ms
+ GET /favicon.ico 200 in 63ms
+ GET /inloggen 200 in 279ms
+ GET /favicon.ico 200 in 24ms
+ GET /inloggen 200 in 89ms
+ GET /favicon.ico 200 in 10ms
+[AUTH] Querying database for login code...
+[AUTH] No organization found for login code
+ POST /api/auth/login-code 401 in 346ms
+ ✓ Compiled in 521ms (894 modules)
+ GET /inloggen 200 in 110ms
+ GET /inloggen 200 in 22ms
+ GET /inloggen 200 in 19ms
+ GET /inloggen 200 in 425ms
