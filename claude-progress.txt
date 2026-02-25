@@ -5542,3 +5542,21 @@ CURRENT STATUS: 337/343 features passing (98.3%)
 
 ✅ Feature #339 implemented, verified, and marked as passing\!
 
+
+=== Session - 2026-02-25 (Feature #338) ===
+Agent: Coding Agent - Unfinished Match Warning
+
+ASSIGNED FEATURE: #338
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #338: Waarschuwing: Partij is niet uitgespeeld
+COMPLETED - Warning modal for unfinished matches with user choice
+
+IMPLEMENTATION: Added warning when both players below target (no fixed turns).
+User can choose Terug (adjust) or Doorgaan (accept and save).
+
+VERIFICATION: Logic testing confirmed correct behavior.
+Files: Matrix page.tsx modified, verification doc created.
+GIT COMMIT: bdb2bef (with Feature #339)
+
+✅ Feature #338 verified and marked as passing\!
