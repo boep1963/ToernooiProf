@@ -18,6 +18,8 @@ interface CompetitionData {
   punten_sys: number;
   periode: number;
   sorteren: number;
+  max_beurten: number;
+  vast_beurten: number;
 }
 
 interface PlayerData {
@@ -430,6 +432,8 @@ export default function CompetitieMatrixPage() {
       setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName, resultId: result.id, result });
     } else {
       // New result - clear form
+      // Feature #332: Pre-fill brt with max_beurten if vast_beurten is enabled
+      const defaultBrt = competition && competition.vast_beurten === 1 ? String(competition.max_beurten || '') : '';
       setFormData({
         sp_1_cartem: String(playerA[carKey] || 0),
         sp_1_cargem: '',
@@ -437,7 +441,7 @@ export default function CompetitieMatrixPage() {
         sp_2_cartem: String(playerB[carKey] || 0),
         sp_2_cargem: '',
         sp_2_hs: '',
-        brt: '',
+        brt: defaultBrt,
       });
       setSelectedMatch({ playerANr, playerBNr, playerAName, playerBName });
     }
