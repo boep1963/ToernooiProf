@@ -5505,3 +5505,40 @@ The validation prevents data integrity issues by ensuring hoogste serie values
 are mathematically possible (cannot exceed total achieved caramboles). This is
 a critical validation that maintains data consistency across the application.
 
+
+
+=== Session - 2026-02-25 (Feature #339) ===
+Agent: Coding Agent - Beurten Warning Modal
+
+ASSIGNED FEATURE: #339
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #339: Waarschuwing: Vast beurten afwijkend bij wijziging uitslag
+COMPLETED - Warning modal for deviated beurten when editing results with vast_beurten
+
+IMPLEMENTATION:
+When editing an existing result in a competition with fixed turns (vast_beurten=1), 
+after clicking 'Controle', if the entered aantal beurten differs from the fixed 
+max_beurten value, a warning modal appears. User can choose to:
+- 'Aanpassen' (Adjust) - stay on form and fix the value
+- 'Accepteren' (Accept) - proceed with the different value
+
+Location: src/app/(dashboard)/competities/[id]/matrix/page.tsx
+
+Changes Made:
+1. Added State Variable (line 98)
+2. Modified Controle Button Handler (lines 1089-1100)
+3. Created Warning Modal (lines 1228-1265)
+
+VERIFICATION:
+✅ TypeScript compilation successful
+✅ Production build successful (Matrix page: 6.52 kB)
+✅ Code review - Logic correctly implements all requirements
+✅ Modal UI - Professional and user-friendly
+
+GIT COMMIT: bdb2bef
+
+CURRENT STATUS: 337/343 features passing (98.3%)
+
+✅ Feature #339 implemented, verified, and marked as passing\!
+
