@@ -133,3 +133,6 @@ Could not find files for /_error in .next/build-manifest.json
 [RESULTS] Found 1 results for competition 1 (after filters)
  GET /api/organizations/1205/competitions/1/results?periode=1 200 in 755ms
  GET /api/organizations/1205/competitions/1 401 in 52ms
+ ✓ Compiled in 571ms (448 modules)
+ ✓ Compiled in 208ms (448 modules)
+ ✓ Compiled in 132ms (448 modules)
