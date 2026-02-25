@@ -8,40 +8,67 @@
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1519ms
- ○ Compiling / ...
- ✓ Compiled / in 1876ms (689 modules)
- GET / 200 in 2124ms
- GET / 200 in 44ms
- ✓ Compiled in 231ms (241 modules)
- ✓ Compiled in 147ms (241 modules)
+ ✓ Ready in 1657ms
+ ○ Compiling /api/auth/login-code ...
+ ✓ Compiled /api/auth/login-code in 526ms (349 modules)
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] No organization found for login code
+ POST /api/auth/login-code 401 in 1213ms
+[AUTH] Querying database for login code...
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 9337
+ POST /api/auth/login-code 200 in 787ms
  ○ Compiling /inloggen ...
- ✓ Compiled /inloggen in 1115ms (857 modules)
- GET /inloggen 200 in 1425ms
- ✓ Compiled /favicon.ico in 219ms (620 modules)
- GET /favicon.ico 200 in 337ms
- GET /inloggen 200 in 260ms
- ✓ Compiled /api/auth/login-code in 326ms (880 modules)
+ ✓ Compiled /inloggen in 1066ms (882 modules)
+ GET /inloggen 200 in 1424ms
+ ✓ Compiled /favicon.ico in 90ms (616 modules)
+ GET /favicon.ico 200 in 131ms
 [AUTH] Querying database for login code...
 [DB] Connected to Google Firestore
-[AUTH] No organization found for login code
- POST /api/auth/login-code 401 in 1590ms
- GET / 200 in 223ms
- GET /favicon.ico 200 in 63ms
- GET /inloggen 200 in 279ms
- GET /favicon.ico 200 in 24ms
- GET /inloggen 200 in 89ms
- GET /favicon.ico 200 in 10ms
-[AUTH] Querying database for login code...
-[AUTH] No organization found for login code
- POST /api/auth/login-code 401 in 346ms
- ✓ Compiled in 521ms (894 modules)
- GET /inloggen 200 in 110ms
- GET /inloggen 200 in 22ms
- GET /inloggen 200 in 19ms
- GET /inloggen 200 in 425ms
- GET /favicon.ico 200 in 26ms
-[AUTH] Querying database for login code...
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 9337
+ POST /api/auth/login-code 200 in 901ms
+ ✓ Compiled /dashboard in 294ms (905 modules)
+ GET /dashboard 200 in 485ms
+ GET /favicon.ico 200 in 33ms
+ ✓ Compiled /api/auth/session in 183ms (908 modules)
+[SESSION] Querying database for organization: 9337
 [DB] Connected to Google Firestore
-[AUTH] No organization found for login code
- POST /api/auth/login-code 401 in 214ms
+ GET /api/auth/session 200 in 382ms
+ ✓ Compiled /api/organizations/[orgNr]/matches/count in 355ms (917 modules)
+[COMPETITIONS] Querying database for competitions of org: 9337
+[DB] Connected to Google Firestore
+[MATCHES_COUNT] Counting matches for org: 9337
+[MEMBERS] Querying database for members of org: 9337
+[orgNumberUtils] Query returned 0 results for collection "competitions" with org_nummer=9337. This might indicate a type mismatch (number vs string) in Firestore.
+[COMPETITIONS] Found 0 competitions
+ GET /api/organizations/9337/competitions 200 in 1492ms
+[orgNumberUtils] Query returned 0 results for collection "matches" with org_nummer=9337. This might indicate a type mismatch (number vs string) in Firestore.
+[MATCHES_COUNT] No matches found, falling back to results collection
+[MEMBERS] Found 0 members for org 9337
+ GET /api/organizations/9337/members 200 in 1990ms
+[orgNumberUtils] Query returned 0 results for collection "results" with org_nummer=9337. This might indicate a type mismatch (number vs string) in Firestore.
+[MATCHES_COUNT] Found 0 results with 0 unique match codes
+[MATCHES_COUNT] Final count: 0 from results for org 9337
+ GET /api/organizations/9337/matches/count 200 in 2194ms
+[MATCHES_COUNT] Counting matches for org: 9337
+[orgNumberUtils] Query returned 0 results for collection "matches" with org_nummer=9337. This might indicate a type mismatch (number vs string) in Firestore.
+[MATCHES_COUNT] No matches found, falling back to results collection
+[orgNumberUtils] Query returned 0 results for collection "results" with org_nummer=9337. This might indicate a type mismatch (number vs string) in Firestore.
+[MATCHES_COUNT] Found 0 results with 0 unique match codes
+[MATCHES_COUNT] Final count: 0 from results for org 9337
+ GET /api/organizations/9337/matches/count 200 in 840ms
+ ✓ Compiled /competities/[id]/matrix in 408ms (932 modules)
+ GET /competities/sqMWf4Uid1c4kga9rrEA/matrix 200 in 923ms
+ GET /favicon.ico 200 in 16ms
+[SESSION] Querying database for organization: 9337
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 213ms
+ ✓ Compiled in 276ms (288 modules)
+ GET /competities/sqMWf4Uid1c4kga9rrEA/matrix 200 in 31ms
+ ✓ Compiled in 589ms (911 modules)
+ GET /competities/sqMWf4Uid1c4kga9rrEA/matrix 200 in 201ms
+ ✓ Compiled in 350ms (288 modules)
+ GET /competities/sqMWf4Uid1c4kga9rrEA/matrix 200 in 34ms
+ ✓ Compiled in 198ms (288 modules)
