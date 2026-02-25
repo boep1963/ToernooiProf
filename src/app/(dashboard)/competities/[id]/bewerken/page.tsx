@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
@@ -29,11 +30,15 @@ interface CompetitionData {
   sorteren: number;
 }
 
-export default function CompetitieBewerkenPage() {
+export default function CompetitieBewerkenPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
-  const params = useParams();
   const { orgNummer } = useAuth();
-  const compNr = parseInt(params.id as string, 10);
+  const compNr = parseInt(id, 10);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

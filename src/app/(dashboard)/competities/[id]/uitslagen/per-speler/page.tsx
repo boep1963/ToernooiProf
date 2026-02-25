@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
@@ -80,13 +81,17 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
-export default function PlayerResultsPage() {
-  const params = useParams();
+export default function PlayerResultsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { orgNummer, organization } = useAuth();
   const orgNaam = organization?.org_naam || '';
 
-  const compNr = parseInt(params.id as string, 10);
+  const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [players, setPlayers] = useState<PlayerData[]>([]);

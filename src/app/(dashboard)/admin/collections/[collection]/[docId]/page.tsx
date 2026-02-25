@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 
 interface DocumentData {
@@ -15,12 +16,14 @@ interface DocumentResponse {
   document: DocumentData;
 }
 
-export default function DocumentDetailPage() {
+export default function DocumentDetailPage({
+  params,
+}: {
+  params: Promise<{ collection: string; docId: string }>;
+}) {
+  const { collection, docId } = use(params);
   const { isSuperAdmin } = useSuperAdmin();
   const router = useRouter();
-  const params = useParams();
-  const collection = params.collection as string;
-  const docId = params.docId as string;
 
   const [document, setDocument] = useState<DocumentData | null>(null);
   const [editedData, setEditedData] = useState<Record<string, any>>({});

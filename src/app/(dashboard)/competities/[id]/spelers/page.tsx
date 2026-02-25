@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS } from '@/types';
@@ -64,13 +65,17 @@ const DISCIPLINE_TO_MOY_KEY: Record<number, keyof PlayerData> = {
   1: 'spc_moyenne_1', 2: 'spc_moyenne_2', 3: 'spc_moyenne_3', 4: 'spc_moyenne_4', 5: 'spc_moyenne_5',
 };
 
-export default function CompetitieSpelersPage() {
-  const params = useParams();
+export default function CompetitieSpelersPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { orgNummer, organization } = useAuth();
   const orgNaam = organization?.org_naam || '';
 
-  const compNr = parseInt(params.id as string, 10);
+  const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [players, setPlayers] = useState<PlayerData[]>([]);

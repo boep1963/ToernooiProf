@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import Breadcrumb from '@/components/common/Breadcrumb';
@@ -20,11 +21,14 @@ interface MemberData {
   spa_moy_kad: number;
 }
 
-export default function BewerkLid() {
+export default function BewerkLid({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: memberId } = use(params);
   const router = useRouter();
-  const params = useParams();
   const { orgNummer } = useAuth();
-  const memberId = params.id as string;
 
   const [isLoadingMember, setIsLoadingMember] = useState(true);
   const [loadError, setLoadError] = useState('');

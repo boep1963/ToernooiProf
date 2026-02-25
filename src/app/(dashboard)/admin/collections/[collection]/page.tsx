@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 
 interface Document {
@@ -34,12 +35,15 @@ interface CollectionStats {
   estimatedBytes: number;
 }
 
-export default function CollectionDetailPage() {
+export default function CollectionDetailPage({
+  params,
+}: {
+  params: Promise<{ collection: string }>;
+}) {
+  const { collection } = use(params);
   const { isSuperAdmin } = useSuperAdmin();
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const collection = params.collection as string;
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);

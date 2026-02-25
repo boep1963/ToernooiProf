@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -35,12 +36,16 @@ interface ValidationReport {
   };
 }
 
-export default function CompetitionControlePage() {
-  const params = useParams();
+export default function CompetitionControlePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { orgNummer } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
-  const compNr = parseInt(params.id as string, 10);
+  const compNr = parseInt(id, 10);
 
   const [report, setReport] = useState<ValidationReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);

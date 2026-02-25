@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 
 interface Field {
@@ -12,11 +13,14 @@ interface Field {
   value: string;
 }
 
-export default function NewDocumentPage() {
+export default function NewDocumentPage({
+  params,
+}: {
+  params: Promise<{ collection: string }>;
+}) {
+  const { collection } = use(params);
   const { isSuperAdmin } = useSuperAdmin();
   const router = useRouter();
-  const params = useParams();
-  const collection = params.collection as string;
 
   const [useAutoId, setUseAutoId] = useState(true);
   const [customId, setCustomId] = useState('');

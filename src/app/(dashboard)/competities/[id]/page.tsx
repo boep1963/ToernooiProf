@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
@@ -69,12 +70,16 @@ const SORTEREN_LABELS: Record<number, string> = {
   2: 'Achternaam eerst',
 };
 
-export default function CompetitieDetailPage() {
-  const params = useParams();
+export default function CompetitieDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { orgNummer } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
-  const compNr = parseInt(params.id as string, 10);
+  const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
