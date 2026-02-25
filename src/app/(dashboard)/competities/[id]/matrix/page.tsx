@@ -315,6 +315,20 @@ export default function CompetitieMatrixPage() {
       return { valid: false, message: 'Aantal beurten moet groter zijn dan 0' };
     }
 
+    // Feature #336: Validatie: hoogste serie niet groter dan gemaakte caramboles
+    if (hs1 > cargem1) {
+      return {
+        valid: false,
+        message: `${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem1})`
+      };
+    }
+    if (hs2 > cargem2) {
+      return {
+        valid: false,
+        message: `${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem2})`
+      };
+    }
+
     // Feature #334: Validatie: beurten niet groter dan maximaal aantal beurten
     if (competition && competition.max_beurten > 0 && brt > competition.max_beurten) {
       return {
