@@ -323,11 +323,15 @@ export default function CompetitieMatrixPage() {
       };
     }
 
-    if (cargem1 > cartem1) {
-      return { valid: false, message: `${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).` };
-    }
-    if (cargem2 > cartem2) {
-      return { valid: false, message: `${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).` };
+    // Feature #335: Validatie caramboles gemaakt <= te maken, BEHALVE bij vast beurten
+    // Bij vast beurten (vast_beurten=1) mag een speler meer caramboles maken dan het target
+    if (competition && competition.vast_beurten !== 1) {
+      if (cargem1 > cartem1) {
+        return { valid: false, message: `${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).` };
+      }
+      if (cargem2 > cartem2) {
+        return { valid: false, message: `${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).` };
+      }
     }
     if (cargem1 < cartem1 && cargem2 < cartem2) {
       return { valid: false, message: 'Minimaal één speler moet het aantal te maken caramboles hebben gehaald.' };

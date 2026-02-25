@@ -2,137 +2,19 @@
 > clubmatch@0.1.0 dev
 > next dev
 
- ⚠ Port 3000 is in use by process 63006, using available port 3002 instead.
    ▲ Next.js 15.5.9
-   - Local:        http://localhost:3002
-   - Network:      http://192.168.100.87:3002
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.100.87:3000
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1874ms
- ○ Compiling / ...
- ✓ Compiled / in 632ms (675 modules)
- GET / 200 in 1008ms
- ✓ Compiled in 41ms (227 modules)
- ✓ Compiled /favicon.ico in 317ms (465 modules)
- GET /favicon.ico 200 in 472ms
+ ✓ Ready in 1388ms
  ○ Compiling /inloggen ...
- ✓ Compiled /inloggen in 645ms (874 modules)
- GET /inloggen 200 in 915ms
- GET /favicon.ico 200 in 33ms
- ✓ Compiled /api/auth/login-code in 438ms (880 modules)
+ ✓ Compiled /inloggen in 2.3s (861 modules)
+ GET /inloggen 200 in 2731ms
+ ✓ Compiled /favicon.ico in 196ms (610 modules)
+ GET /favicon.ico 200 in 298ms
+ ✓ Compiled /api/auth/login-code in 409ms (884 modules)
 [AUTH] Querying database for login code...
 [DB] Connected to Google Firestore
-[AUTH] Updating login date in database...
-[AUTH] Login successful for org: 1205
- POST /api/auth/login-code 200 in 1853ms
- ✓ Compiled /dashboard in 215ms (915 modules)
- GET /dashboard 200 in 447ms
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET /favicon.ico 200 in 39ms
- ✓ Compiled /api/auth/session in 265ms (918 modules)
-[SESSION] Querying database for organization: 1205
-[DB] Connected to Google Firestore
- GET /api/auth/session 200 in 585ms
- ✓ Compiled /api/organizations/[orgNr]/matches/count in 488ms (927 modules)
-[MATCHES_COUNT] Counting matches for org: 1205
-[DB] Connected to Google Firestore
-[COMPETITIONS] Querying database for competitions of org: 1205
-[MEMBERS] Querying database for members of org: 1205
-[MATCHES_COUNT] Final count: 11 from matches for org 1205
- GET /api/organizations/1205/matches/count 200 in 1460ms
-[MATCHES_COUNT] Counting matches for org: 1205
-[MEMBERS] Found 9 members for org 1205
- GET /api/organizations/1205/members 200 in 1972ms
-[COMPETITIONS] Found 7 competitions
- GET /api/organizations/1205/competitions 200 in 1972ms
-[MATCHES_COUNT] Final count: 11 from matches for org 1205
- GET /api/organizations/1205/matches/count 200 in 463ms
- ○ Compiling /competities ...
- ✓ Compiled /competities in 1022ms (938 modules)
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 610ms (939 modules)
- GET /competities 404 in 2031ms
- GET /competities 200 in 347ms
- GET /favicon.ico 200 in 73ms
-[SESSION] Querying database for organization: 1205
-[DB] Connected to Google Firestore
- GET /api/auth/session 200 in 476ms
-[COMPETITIONS] Querying database for competitions of org: 1205
-[COMPETITIONS] Found 7 competitions
- GET /api/organizations/1205/competitions 200 in 475ms
- ○ Compiling /competities/[id] ...
- ✓ Compiled /competities/[id] in 569ms (938 modules)
- GET /competities/4 200 in 1337ms
- GET /favicon.ico 200 in 46ms
- ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr] in 487ms (940 modules)
- ○ Compiling /_error ...
- ✓ Compiled /_error in 3.4s (1281 modules)
- GET /competities/4 200 in 2669ms
-Could not find files for /_error in .next/build-manifest.json
-Could not find files for /_error in .next/build-manifest.json
- GET /api/organizations/1205/competitions/4 404 in 5109ms
- GET /competities/4 200 in 586ms
-[COMPETITION] Querying database for competition: 4 in org: 1205
-[DB] Connected to Google Firestore
- GET /api/organizations/1205/competitions/4 200 in 1379ms
- GET /competities 200 in 80ms
- GET /favicon.ico 200 in 32ms
-[COMPETITIONS] Querying database for competitions of org: 1205
-[COMPETITIONS] Found 7 competitions
- GET /api/organizations/1205/competitions 200 in 267ms
- ○ Compiling /competities/nieuw ...
- ✓ Compiled /competities/nieuw in 715ms (1284 modules)
- GET /competities/nieuw 200 in 1036ms
- GET /favicon.ico 200 in 45ms
- ✓ Compiled /api/auth/session in 401ms (855 modules)
-[SESSION] Querying database for organization: 1205
-[DB] Connected to Google Firestore
- GET /api/auth/session 200 in 757ms
- ○ Compiling /competities/[id]/matrix ...
- ✓ Compiled /competities/[id]/matrix in 634ms (1201 modules)
- GET /competities/1/matrix 200 in 2081ms
- GET /favicon.ico 200 in 80ms
-[SESSION] Querying database for organization: 1205
-[DB] Connected to Google Firestore
- GET /api/auth/session 200 in 315ms
- ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/players in 406ms (614 modules)
- ✓ Compiled in 227ms (434 modules)
-[COMPETITION] Querying database for competition: 1 in org: 1205
-[DB] Connected to Google Firestore
- GET /api/organizations/1205/competitions/1 200 in 1008ms
-[PLAYERS] Querying database for players of competition: 1 in org: 1205
-[BATCH_ENRICH] No players need enrichment
-[PLAYERS] Found 2 players for competition 1
- GET /api/organizations/1205/competitions/1/players 200 in 1510ms
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ○ Compiling /api/organizations/[orgNr]/competitions/[compNr]/results ...
- ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/results in 768ms (1060 modules)
- GET /competities/1/matrix 200 in 1060ms
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET /api/organizations/1205/competitions/1/results?periode=1 200 in 1308ms
- GET /api/organizations/1205/competitions/1/matches?periode=1 200 in 1308ms
-[RESULTS] Querying database for results of competition: 1 in org: 1205
-[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: 1
-[RESULTS] Filtering by periode: 1
-[DB] Connected to Google Firestore
-[MATCHES] Filtering by periode: 1
-[MATCHES] Querying database for matches of competition: 1 in org: 1205
-[RESULTS] Found 1 results for competition 1 (after filters)
-[MATCHES] Found 1 matches for competition 1
- GET /favicon.ico 200 in 34ms
-[SESSION] Querying database for organization: 1205
- GET /api/auth/session 200 in 335ms
-[MATCHES] Filtering by periode: 1
-[MATCHES] Querying database for matches of competition: 1 in org: 1205
-[RESULTS] Querying database for results of competition: 1 in org: 1205
-[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: 1
-[RESULTS] Filtering by periode: 1
-[MATCHES] Found 1 matches for competition 1
- GET /api/organizations/1205/competitions/1/matches?periode=1 200 in 319ms
-[RESULTS] Found 1 results for competition 1 (after filters)
- GET /api/organizations/1205/competitions/1/results?periode=1 200 in 755ms
- GET /api/organizations/1205/competitions/1 401 in 52ms
- ✓ Compiled in 571ms (448 modules)
- ✓ Compiled in 208ms (448 modules)
- ✓ Compiled in 132ms (448 modules)
+ GET /inloggen 200 in 60ms
