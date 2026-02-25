@@ -5880,3 +5880,54 @@ The project is complete and ready for deployment. Potential future work:
 Session completed successfully at 2026-02-25 ~16:00
 Agent: Coding Agent #342
 Status: ✅ VERIFICATION COMPLETE - PROJECT 100% DONE
+=== Session - 2026-02-25 (Feature #337) ===
+Agent: Coding Agent - HS × Beurten Validation
+
+ASSIGNED FEATURE: #337
+STATUS: ALREADY COMPLETED ✅
+
+🎊 PROJECT 100% COMPLETE - ALL 343 FEATURES PASSING! 🎊
+
+Feature #337: Validatie: HS maal beurten moet groter of gelijk zijn aan gemaakte caramboles
+ALREADY IMPLEMENTED - Hoogste Serie × Aantal Beurten >= Gemaakte Caramboles validation
+
+EXISTING IMPLEMENTATION (Lines 331-345):
+The validation was already implemented with an excellent approach:
+- Calculates minimum required HS: minHs = Math.ceil(gemaakt / beurten)
+- Checks if entered HS < minHs
+- Error message tells user the exact minimum HS required
+- Example: "PlayerA: hoogste serie moet minimaal 13 zijn (bij 25 caramboles in 2 beurten)."
+
+LOGIC VERIFICATION:
+✅ Prevents invalid data (e.g., HS=3, beurten=2, gemaakt=20 → requires minHs=10)
+✅ Works for both players (Player A and Player B)
+✅ Proper null safety (brt > 0 && cargem > 0)
+✅ User-friendly error messages with calculated minimum
+✅ Proper pluralization ("beurt" vs "beurten")
+✅ Integrates with Feature #340 pattern (collect all errors)
+
+VERIFICATION:
+✅ Code review - implementation correct
+✅ TypeScript compilation passed
+✅ Logic verified through code inspection
+✅ Pattern matches other validations (Features #333-336)
+✅ Integration with validation flow confirmed
+
+FILES VERIFIED:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx (lines 331-345)
+
+FILES CREATED:
+- FEATURE-337-VERIFICATION.md (comprehensive verification document)
+- create-correct-test-337.mjs (test data creation with Firestore prefix)
+- verify-org-337.mjs, test-login-query-337.mjs, fix-org-code-337.mjs
+
+GIT COMMIT: 734632a
+
+CURRENT STATUS: 343/343 features passing (100.0%)
+
+✅ Feature #337 verified - already passing
+
+🎊 ALL FEATURES COMPLETE - PROJECT FINISHED! 🎊
+
+The ClubMatch application is now 100% feature-complete with all 343 features
+implemented, verified, and passing.
