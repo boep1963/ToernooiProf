@@ -40,3 +40,8 @@
  GET /inloggen 200 in 22ms
  GET /inloggen 200 in 19ms
  GET /inloggen 200 in 425ms
+ GET /favicon.ico 200 in 26ms
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] No organization found for login code
+ POST /api/auth/login-code 401 in 214ms
