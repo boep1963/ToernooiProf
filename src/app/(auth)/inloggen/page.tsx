@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -105,8 +106,15 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">CM</span>
+            <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg flex-shrink-0 bg-white dark:bg-slate-800">
+              <Image
+                src="/clubmatch_logo.jpg"
+                alt="ClubMatch"
+                width={56}
+                height={56}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">

@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/dashboard" className="flex items-center space-x-2 min-h-[44px]">
             <div className="w-10 h-10 flex items-center justify-center">
               <img
-                src="/clubmatch-logo_1.svg"
+                src="/clubmatch_logo.jpg"
                 alt="ClubMatch Logo - Biljart Competitie Beheer"
                 className="w-full h-full"
               />

@@ -114,3 +114,49 @@
  ✓ Compiled in 82ms (288 modules)
  ✓ Compiled in 91ms (288 modules)
  ✓ Compiled in 75ms (288 modules)
+ GET /competities/8/matrix 200 in 257ms
+ ✓ Compiled /api/auth/session in 310ms (645 modules)
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 1356ms
+[SESSION] Querying database for organization: 1205
+ GET /api/auth/session 200 in 339ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/players in 469ms (929 modules)
+[COMPETITION] Querying database for competition: 8 in org: 1205
+[DB] Connected to Google Firestore
+[PLAYERS] Querying database for players of competition: 8 in org: 1205
+ GET /api/organizations/1205/competitions/8 200 in 1447ms
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 8
+ GET /api/organizations/1205/competitions/8/players 200 in 1901ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/results in 366ms (935 modules)
+[RESULTS] Querying database for results of competition: 8 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: 1
+[RESULTS] Filtering by periode: 1
+[DB] Connected to Google Firestore
+[MATCHES] Filtering by periode: 1
+[MATCHES] Querying database for matches of competition: 8 in org: 1205
+[RESULTS] Found 0 results for competition 8 (after filters)
+ GET /api/organizations/1205/competitions/8/results?periode=1 200 in 996ms
+[MATCHES] Found 0 matches for competition 8
+ GET /api/organizations/1205/competitions/8/matches?periode=1 200 in 1538ms
+ ✓ Compiled in 649ms (911 modules)
+ GET /competities/8/matrix 200 in 239ms
+ ✓ Compiled in 334ms (911 modules)
+ GET /competities/8/matrix 200 in 92ms
+ ✓ Compiled in 342ms (911 modules)
+ GET /competities/8/matrix 200 in 74ms
+ ✓ Compiled /competities/[id] in 271ms (906 modules)
+ GET /competities/8 200 in 674ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr] in 191ms (653 modules)
+[COMPETITION] Querying database for competition: 8 in org: 1205
+[DB] Connected to Google Firestore
+ GET /api/organizations/1205/competitions/8 200 in 664ms
+ ✓ Compiled /api/auth/logout in 241ms (932 modules)
+ POST /api/auth/logout 200 in 293ms
+ GET /inloggen 200 in 112ms
+ GET /inloggen 200 in 21ms
+ ✓ Compiled in 616ms (937 modules)
+ GET /inloggen 200 in 104ms
+ ✓ Compiled in 1223ms (970 modules)
+ GET /inloggen 200 in 141ms
