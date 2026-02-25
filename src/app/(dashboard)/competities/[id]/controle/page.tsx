@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 
 interface ValidationIssue {
@@ -38,6 +39,7 @@ export default function CompetitionControlePage() {
   const params = useParams();
   const router = useRouter();
   const { orgNummer } = useAuth();
+  const { isSuperAdmin } = useSuperAdmin();
   const compNr = parseInt(params.id as string, 10);
 
   const [report, setReport] = useState<ValidationReport | null>(null);
@@ -45,8 +47,16 @@ export default function CompetitionControlePage() {
   const [error, setError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
 
+  useEffect(() => {
+    if (orgNummer === undefined) return;
+    if (!isSuperAdmin) {
+      router.replace(`/competities/${compNr}`);
+      return;
+    }
+  }, [orgNummer, isSuperAdmin, compNr, router]);
+
   const runValidation = async () => {
-    if (!orgNummer || isNaN(compNr)) return;
+    if (!orgNummer || isNaN(compNr) || !isSuperAdmin) return;
 
     setIsValidating(true);
     setError('');
@@ -71,7 +81,7 @@ export default function CompetitionControlePage() {
 
   useEffect(() => {
     runValidation();
-  }, [orgNummer, compNr]);
+  }, [orgNummer, compNr, isSuperAdmin]);
 
   if (isLoading) {
     return (
