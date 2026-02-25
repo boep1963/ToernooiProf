@@ -329,13 +329,19 @@ export default function CompetitieMatrixPage() {
     }
 
     // Feature #337: Validatie: HS × beurten moet >= gemaakte caramboles zijn
-    // Logica: Als een speler 20 caramboles maakt in 2 beurten, kan de hoogste serie niet 3 zijn
-    // want 2 × 3 = 6 < 20. De HS × beurten geeft het theoretisch minimum aantal caramboles.
-    if (brt > 0 && hs1 * brt < cargem1) {
-      validationErrors.push(`${selectedMatch?.playerAName}: hoogste serie × aantal beurten (${hs1} × ${brt} = ${hs1 * brt}) moet groter of gelijk zijn aan het aantal gemaakte caramboles (${cargem1})`);
+    // Logica: bij 25 caramboles in 2 beurten moet hoogste serie minimaal ceil(25/2)=13 zijn.
+    // Expliciete controle met duidelijke foutmelding zodat HS=3 of 0 geweigerd wordt.
+    if (brt > 0 && cargem1 > 0) {
+      const minHs1 = Math.ceil(cargem1 / brt);
+      if (hs1 < minHs1) {
+        validationErrors.push(`${selectedMatch?.playerAName}: hoogste serie moet minimaal ${minHs1} zijn (bij ${cargem1} caramboles in ${brt} beurt${brt === 1 ? '' : 'en'}).`);
+      }
     }
-    if (brt > 0 && hs2 * brt < cargem2) {
-      validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie × aantal beurten (${hs2} × ${brt} = ${hs2 * brt}) moet groter of gelijk zijn aan het aantal gemaakte caramboles (${cargem2})`);
+    if (brt > 0 && cargem2 > 0) {
+      const minHs2 = Math.ceil(cargem2 / brt);
+      if (hs2 < minHs2) {
+        validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie moet minimaal ${minHs2} zijn (bij ${cargem2} caramboles in ${brt} beurt${brt === 1 ? '' : 'en'}).`);
+      }
     }
 
     // Feature #334: Validatie: beurten niet groter dan maximaal aantal beurten

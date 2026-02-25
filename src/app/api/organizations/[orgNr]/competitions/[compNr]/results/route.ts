@@ -417,17 +417,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Validate logical consistency: hoogste serie × beurten >= caramboles gemaakt
-    // This ensures the highest series is physically possible given the number of turns
-    if (p1Hs * brt < p1Cargem) {
+    // Validate logical consistency: hoogste serie moet minimaal ceil(cargem/beurten) zijn
+    // Bij 25 caramboles in 2 beurten moet HS minimaal 13 zijn; HS=3 of 0 is ongeldig.
+    const minP1Hs = brt > 0 && p1Cargem > 0 ? Math.ceil(p1Cargem / brt) : 0;
+    const minP2Hs = brt > 0 && p2Cargem > 0 ? Math.ceil(p2Cargem / brt) : 0;
+    if (p1Hs < minP1Hs) {
       return NextResponse.json(
-        { error: `Speler 1: hoogste serie (${p1Hs}) × beurten (${brt}) = ${p1Hs * brt} is minder dan caramboles gemaakt (${p1Cargem}). Dit is niet mogelijk.` },
+        { error: `Speler 1: hoogste serie moet minimaal ${minP1Hs} zijn (bij ${p1Cargem} caramboles in ${brt} beurt${brt === 1 ? '' : 'en'}).` },
         { status: 400 }
       );
     }
-    if (p2Hs * brt < p2Cargem) {
+    if (p2Hs < minP2Hs) {
       return NextResponse.json(
-        { error: `Speler 2: hoogste serie (${p2Hs}) × beurten (${brt}) = ${p2Hs * brt} is minder dan caramboles gemaakt (${p2Cargem}). Dit is niet mogelijk.` },
+        { error: `Speler 2: hoogste serie moet minimaal ${minP2Hs} zijn (bij ${p2Cargem} caramboles in ${brt} beurt${brt === 1 ? '' : 'en'}).` },
         { status: 400 }
       );
     }
