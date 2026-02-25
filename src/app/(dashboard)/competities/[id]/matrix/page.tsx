@@ -328,6 +328,16 @@ export default function CompetitieMatrixPage() {
       validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem2})`);
     }
 
+    // Feature #337: Validatie: HS × beurten moet >= gemaakte caramboles zijn
+    // Logica: Als een speler 20 caramboles maakt in 2 beurten, kan de hoogste serie niet 3 zijn
+    // want 2 × 3 = 6 < 20. De HS × beurten geeft het theoretisch minimum aantal caramboles.
+    if (brt > 0 && hs1 * brt < cargem1) {
+      validationErrors.push(`${selectedMatch?.playerAName}: hoogste serie × aantal beurten (${hs1} × ${brt} = ${hs1 * brt}) moet groter of gelijk zijn aan het aantal gemaakte caramboles (${cargem1})`);
+    }
+    if (brt > 0 && hs2 * brt < cargem2) {
+      validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie × aantal beurten (${hs2} × ${brt} = ${hs2 * brt}) moet groter of gelijk zijn aan het aantal gemaakte caramboles (${cargem2})`);
+    }
+
     // Feature #334: Validatie: beurten niet groter dan maximaal aantal beurten
     if (competition && competition.max_beurten > 0 && brt > competition.max_beurten) {
       validationErrors.push(`Aantal beurten (${brt}) mag niet groter zijn dan het maximum aantal beurten (${competition.max_beurten})`);
