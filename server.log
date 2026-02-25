@@ -197,3 +197,39 @@
  GET /help 200 in 79ms
  ✓ Compiled in 498ms (960 modules)
  GET /help 200 in 197ms
+ ✓ Compiled in 890ms (960 modules)
+ GET /help 200 in 164ms
+ ✓ Compiled in 564ms (960 modules)
+ GET /help 200 in 82ms
+ ○ Compiling /competities ...
+ ✓ Compiled /competities in 623ms (953 modules)
+ GET /competities 200 in 707ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions in 236ms (681 modules)
+[COMPETITIONS] Querying database for competitions of org: 1205
+[DB] Connected to Google Firestore
+[COMPETITIONS] Found 8 competitions
+ GET /api/organizations/1205/competitions 200 in 1356ms
+ GET /competities/8 200 in 61ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr] in 264ms (683 modules)
+[COMPETITION] Querying database for competition: 8 in org: 1205
+[DB] Connected to Google Firestore
+ GET /api/organizations/1205/competitions/8 200 in 489ms
+ GET /competities/8/matrix 200 in 73ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/players in 273ms (688 modules)
+[PLAYERS] Querying database for players of competition: 8 in org: 1205
+[DB] Connected to Google Firestore
+[BATCH_ENRICH] No players need enrichment
+[PLAYERS] Found 2 players for competition 8
+ GET /api/organizations/1205/competitions/8/players 200 in 519ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions/[compNr]/results in 343ms (690 modules)
+ ✓ Compiled (694 modules)
+[RESULTS] Querying database for results of competition: 8 in org: 1205
+[RESULTS] Filters - startDate: null endDate: null gespeeld: null periode: 1
+[RESULTS] Filtering by periode: 1
+[DB] Connected to Google Firestore
+[MATCHES] Filtering by periode: 1
+[MATCHES] Querying database for matches of competition: 8 in org: 1205
+[RESULTS] Found 0 results for competition 8 (after filters)
+ GET /api/organizations/1205/competitions/8/results?periode=1 200 in 1012ms
+[MATCHES] Found 0 matches for competition 8
+ GET /api/organizations/1205/competitions/8/matches?periode=1 200 in 1527ms

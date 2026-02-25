@@ -37,3 +37,120 @@ a {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* ========== Print / PDF: witte achtergrond en nette afdruk ========== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Verberg navigatie, sidebar, header, footer en print:hidden elementen */
+  nav,
+  aside,
+  header,
+  footer,
+  .sidebar,
+  [role="banner"],
+  .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Toon print-only elementen */
+  .hidden.print\:block {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Hoofdinhoud: volle breedte, witte achtergrond, zwarte tekst */
+  main,
+  main * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    min-height: auto !important;
+  }
+
+  /* Geen zijmarge bij print zodat inhoud volle breedte gebruikt */
+  [class*="ml-64"] {
+    margin-left: 0 !important;
+  }
+
+  /* Forceer witte achtergrond op alle zichtbare blokken bij print (overschrijft dark mode) */
+  main div,
+  main section,
+  main article {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+
+  main table {
+    background: #fff !important;
+    border-collapse: collapse;
+    width: 100%;
+    page-break-inside: auto;
+  }
+
+  main th,
+  main td {
+    background: #fff !important;
+    color: #111 !important;
+    border: 1px solid #333 !important;
+    padding: 6px 8px !important;
+  }
+
+  main thead th {
+    background: #f5f5f5 !important;
+    font-weight: bold;
+    border: 1px solid #333 !important;
+  }
+
+  main thead {
+    display: table-header-group;
+  }
+
+  main tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Print-specifieke containers (leden e.d.) */
+  #print-area,
+  #print-header {
+    visibility: visible !important;
+  }
+
+  #print-area,
+  #print-area *,
+  #print-header,
+  #print-header * {
+    color: #111 !important;
+    background-color: #fff !important;
+  }
+
+  #print-area th,
+  #print-area td {
+    border: 1px solid #333 !important;
+  }
+
+  #print-area thead th {
+    background: #f5f5f5 !important;
+  }
+}
