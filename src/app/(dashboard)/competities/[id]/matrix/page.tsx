@@ -94,6 +94,8 @@ export default function CompetitieMatrixPage() {
   });
   const [showVerification, setShowVerification] = useState(false);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showUnfinishedWarning, setShowUnfinishedWarning] = useState(false);
+  const [showBeurtenWarning, setShowBeurtenWarning] = useState(false);
 
   const formatName = (vnaam: string, tv: string, anaam: string): string => {
     return formatPlayerName(vnaam, tv, anaam, competition?.sorteren || 1);
@@ -347,9 +349,9 @@ export default function CompetitieMatrixPage() {
         return { valid: false, message: `${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).` };
       }
     }
-    if (cargem1 < cartem1 && cargem2 < cartem2) {
-      return { valid: false, message: 'Minimaal één speler moet het aantal te maken caramboles hebben gehaald.' };
-    }
+    // Feature #338: Removed blocking validation for unfinished matches
+    // When both players are below target (and not using fixed turns), we show a WARNING modal instead
+    // This allows the user to choose whether to continue or go back and adjust the result
     if (cartem1 > 0 && hs1 > cartem1) {
       return { valid: false, message: `${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet meer zijn dan te maken (${cartem1}).` };
     }
@@ -484,8 +486,22 @@ export default function CompetitieMatrixPage() {
   };
 
   // Handle form submission
-  const handleSubmitResult = async () => {
+  const handleSubmitResult = async (bypassWarning: boolean = false) => {
     if (!selectedMatch || !selectedPeriode) return;
+
+    // Feature #338: Check if match is unfinished (both players below target, not using fixed turns)
+    if (!bypassWarning && competition && competition.vast_beurten !== 1) {
+      const cartem1 = Number(formData.sp_1_cartem) || 0;
+      const cargem1 = Number(formData.sp_1_cargem) || 0;
+      const cartem2 = Number(formData.sp_2_cartem) || 0;
+      const cargem2 = Number(formData.sp_2_cargem) || 0;
+
+      if (cargem1 < cartem1 && cargem2 < cartem2) {
+        // Show warning modal instead of proceeding
+        setShowUnfinishedWarning(true);
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     setError('');
@@ -1071,6 +1087,20 @@ export default function CompetitieMatrixPage() {
                           setError(v.message ?? 'Controle mislukt.');
                           return;
                         }
+
+                        // Feature #339: Waarschuwing bij afwijkend aantal beurten bij vast beurten
+                        // Check if editing existing result AND vast_beurten enabled AND brt differs from max_beurten
+                        if (
+                          selectedMatch?.resultId &&
+                          competition?.vast_beurten === 1 &&
+                          competition?.max_beurten &&
+                          Number(formData.brt) !== competition.max_beurten
+                        ) {
+                          setError('');
+                          setShowBeurtenWarning(true);
+                          return;
+                        }
+
                         setError('');
                         setModalStep(2);
                       }}
@@ -1094,7 +1124,7 @@ export default function CompetitieMatrixPage() {
                       Terug
                     </button>
                     <button
-                      onClick={handleSubmitResult}
+                      onClick={() => handleSubmitResult()}
                       disabled={isSubmitting}
                       className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -1145,6 +1175,95 @@ export default function CompetitieMatrixPage() {
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
               >
                 Verwijderen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unfinished Match Warning Modal - Feature #338 */}
+      {showUnfinishedWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    Partij is niet uitgespeeld!
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Wilt u doorgaan?
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowUnfinishedWarning(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+              >
+                Terug
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnfinishedWarning(false);
+                  handleSubmitResult(true);
+                }}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Doorgaan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Beurten Warning Modal - Feature #339 */}
+      {showBeurtenWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    Afwijkend aantal beurten
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Het ingevoerde aantal beurten ({formData.brt}) wijkt af van het vaste aantal beurten ({competition?.max_beurten}) dat is ingesteld voor deze competitie.
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Wilt u dit accepteren of het aantal beurten aanpassen?
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowBeurtenWarning(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+              >
+                Aanpassen
+              </button>
+              <button
+                onClick={() => {
+                  setShowBeurtenWarning(false);
+                  setModalStep(2);
+                }}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                Accepteren
               </button>
             </div>
           </div>
