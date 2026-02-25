@@ -77,6 +77,7 @@ export default function CompetitieMatrixPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPeriode, setIsLoadingPeriode] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState<string[]>([]); // Feature #340: Multiple errors
   const [selectedPeriode, setSelectedPeriode] = useState<number | null>(null);
   const latestPeriodeRef = useRef<number | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -302,8 +303,8 @@ export default function CompetitieMatrixPage() {
     return `${name} (${car})`;
   };
 
-  // Validatie voor Controle-stap: caramboles en hoogste serie
-  const validateControleForm = (): { valid: boolean; message?: string } => {
+  // Feature #340: Validatie voor Controle-stap - collect ALL errors instead of early return
+  const validateControleForm = (): { valid: boolean; errors: string[] } => {
     const cartem1 = Number(formData.sp_1_cartem) || 0;
     const cargem1 = Number(formData.sp_1_cargem) || 0;
     const hs1 = Number(formData.sp_1_hs) || 0;
@@ -312,53 +313,47 @@ export default function CompetitieMatrixPage() {
     const hs2 = Number(formData.sp_2_hs) || 0;
     const brt = Number(formData.brt) || 0;
 
+    const validationErrors: string[] = [];
+
     // Validatie: aantal beurten moet groter zijn dan 0
     if (brt <= 0) {
-      return { valid: false, message: 'Aantal beurten moet groter zijn dan 0' };
+      validationErrors.push('Aantal beurten moet groter zijn dan 0');
     }
 
     // Feature #336: Validatie: hoogste serie niet groter dan gemaakte caramboles
     if (hs1 > cargem1) {
-      return {
-        valid: false,
-        message: `${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem1})`
-      };
+      validationErrors.push(`${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem1})`);
     }
     if (hs2 > cargem2) {
-      return {
-        valid: false,
-        message: `${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem2})`
-      };
+      validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet groter zijn dan het aantal gemaakte caramboles (${cargem2})`);
     }
 
     // Feature #334: Validatie: beurten niet groter dan maximaal aantal beurten
     if (competition && competition.max_beurten > 0 && brt > competition.max_beurten) {
-      return {
-        valid: false,
-        message: `Aantal beurten (${brt}) mag niet groter zijn dan het maximum aantal beurten (${competition.max_beurten})`
-      };
+      validationErrors.push(`Aantal beurten (${brt}) mag niet groter zijn dan het maximum aantal beurten (${competition.max_beurten})`);
     }
 
     // Feature #335: Validatie caramboles gemaakt <= te maken, BEHALVE bij vast beurten
     // Bij vast beurten (vast_beurten=1) mag een speler meer caramboles maken dan het target
     if (competition && competition.vast_beurten !== 1) {
       if (cargem1 > cartem1) {
-        return { valid: false, message: `${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).` };
+        validationErrors.push(`${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).`);
       }
       if (cargem2 > cartem2) {
-        return { valid: false, message: `${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).` };
+        validationErrors.push(`${selectedMatch?.playerBName}: gemaakt (${cargem2}) kan niet meer zijn dan te maken (${cartem2}).`);
       }
     }
     // Feature #338: Removed blocking validation for unfinished matches
     // When both players are below target (and not using fixed turns), we show a WARNING modal instead
     // This allows the user to choose whether to continue or go back and adjust the result
     if (cartem1 > 0 && hs1 > cartem1) {
-      return { valid: false, message: `${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet meer zijn dan te maken (${cartem1}).` };
+      validationErrors.push(`${selectedMatch?.playerAName}: hoogste serie (${hs1}) kan niet meer zijn dan te maken (${cartem1}).`);
     }
     if (cartem2 > 0 && hs2 > cartem2) {
-      return { valid: false, message: `${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet meer zijn dan te maken (${cartem2}).` };
+      validationErrors.push(`${selectedMatch?.playerBName}: hoogste serie (${hs2}) kan niet meer zijn dan te maken (${cartem2}).`);
     }
-    return { valid: true };
+
+    return { valid: validationErrors.length === 0, errors: validationErrors };
   };
 
   // Calculate verification data
@@ -374,6 +369,10 @@ export default function CompetitieMatrixPage() {
     // Calculate points based on competition's point system
     const cartem1 = Number(formData.sp_1_cartem) || 0;
     const cartem2 = Number(formData.sp_2_cartem) || 0;
+
+    // Feature #341: Calculate percentage (gemaakte / te maken × 100%, truncated to 3 decimals)
+    const percentage1 = cartem1 > 0 ? Math.floor((cargem1 / cartem1) * 100 * 1000) / 1000 : 0;
+    const percentage2 = cartem2 > 0 ? Math.floor((cargem2 / cartem2) * 100 * 1000) / 1000 : 0;
 
     let points1 = 0;
     let points2 = 0;
@@ -426,7 +425,7 @@ export default function CompetitieMatrixPage() {
       }
     }
 
-    return { moyenne1, moyenne2, points1, points2, result };
+    return { moyenne1, moyenne2, percentage1, percentage2, points1, points2, result };
   };
 
   // Handle print
@@ -482,6 +481,8 @@ export default function CompetitieMatrixPage() {
 
     setShowVerification(false);
     setModalStep(1); // Reset wizard to step 1
+    setError(''); // Clear old errors
+    setErrors([]); // Feature #340: Clear validation errors
     setShowResultModal(true);
   };
 
@@ -960,7 +961,21 @@ export default function CompetitieMatrixPage() {
                 </div>
               </div>
 
-                  {error && (
+                  {/* Feature #340: Display all validation errors */}
+                  {errors.length > 0 && (
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm space-y-2">
+                      {errors.length === 1 ? (
+                        <div>{errors[0]}</div>
+                      ) : (
+                        <ul className="list-disc list-inside space-y-1">
+                          {errors.map((err, idx) => (
+                            <li key={idx}>{err}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                  {error && errors.length === 0 && (
                     <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm">
                       {error}
                     </div>
@@ -996,6 +1011,10 @@ export default function CompetitieMatrixPage() {
                                   <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.moyenne1)}</span>
                                 </div>
                                 <div className="flex justify-between mt-1">
+                                  <span className="text-slate-600 dark:text-slate-400">Percentage:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.percentage1)}%</span>
+                                </div>
+                                <div className="flex justify-between mt-1">
                                   <span className="text-slate-600 dark:text-slate-400">Punten:</span>
                                   <span className="font-semibold text-blue-700 dark:text-blue-400">{verification.points1}</span>
                                 </div>
@@ -1022,6 +1041,10 @@ export default function CompetitieMatrixPage() {
                                 <div className="flex justify-between">
                                   <span className="text-slate-600 dark:text-slate-400">Moyenne:</span>
                                   <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.moyenne2)}</span>
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                  <span className="text-slate-600 dark:text-slate-400">Percentage:</span>
+                                  <span className="font-semibold text-blue-700 dark:text-blue-400">{formatDecimal(verification.percentage2)}%</span>
                                 </div>
                                 <div className="flex justify-between mt-1">
                                   <span className="text-slate-600 dark:text-slate-400">Punten:</span>
@@ -1072,6 +1095,7 @@ export default function CompetitieMatrixPage() {
                         setShowResultModal(false);
                         setSelectedMatch(null);
                         setError('');
+                        setErrors([]); // Feature #340: Clear validation errors
                         setShowVerification(false);
                         setModalStep(1);
                       }}
@@ -1082,9 +1106,11 @@ export default function CompetitieMatrixPage() {
                     </button>
                     <button
                       onClick={() => {
+                        // Feature #340: Collect all validation errors
                         const v = validateControleForm();
                         if (!v.valid) {
-                          setError(v.message ?? 'Controle mislukt.');
+                          setErrors(v.errors);
+                          setError(''); // Clear single error
                           return;
                         }
 
@@ -1097,11 +1123,13 @@ export default function CompetitieMatrixPage() {
                           Number(formData.brt) !== competition.max_beurten
                         ) {
                           setError('');
+                          setErrors([]);
                           setShowBeurtenWarning(true);
                           return;
                         }
 
                         setError('');
+                        setErrors([]);
                         setModalStep(2);
                       }}
                       disabled={!formData.sp_1_cargem || !formData.sp_2_cargem || !formData.brt}
