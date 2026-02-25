@@ -160,3 +160,40 @@
  GET /inloggen 200 in 104ms
  ✓ Compiled in 1223ms (970 modules)
  GET /inloggen 200 in 141ms
+ GET /inloggen 200 in 367ms
+ ✓ Compiled /api/auth/login-code in 336ms (667 modules)
+[AUTH] Querying database for login code...
+[DB] Connected to Google Firestore
+[AUTH] Updating login date in database...
+[AUTH] Login successful for org: 1205
+ POST /api/auth/login-code 200 in 1359ms
+ GET /dashboard 200 in 184ms
+ ✓ Compiled /api/auth/session in 210ms (670 modules)
+[SESSION] Querying database for organization: 1205
+[DB] Connected to Google Firestore
+ GET /api/auth/session 200 in 453ms
+ ✓ Compiled /api/organizations/[orgNr]/competitions in 189ms (674 modules)
+ ✓ Compiled (679 modules)
+[MEMBERS] Querying database for members of org: 1205
+[DB] Connected to Google Firestore
+[COMPETITIONS] Querying database for competitions of org: 1205
+[MATCHES_COUNT] Counting matches for org: 1205
+[MEMBERS] Found 9 members for org 1205
+ GET /api/organizations/1205/members 200 in 679ms
+[COMPETITIONS] Found 8 competitions
+ GET /api/organizations/1205/competitions 200 in 1201ms
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 1266ms
+[MATCHES_COUNT] Counting matches for org: 1205
+[MATCHES_COUNT] Final count: 11 from matches for org 1205
+ GET /api/organizations/1205/matches/count 200 in 299ms
+ ✓ Compiled /help in 433ms (979 modules)
+ GET /help 200 in 575ms
+ ✓ Compiled in 622ms (993 modules)
+ GET /help 200 in 83ms
+ ✓ Compiled in 314ms (993 modules)
+ GET /help 200 in 111ms
+ ✓ Compiled in 291ms (993 modules)
+ GET /help 200 in 79ms
+ ✓ Compiled in 498ms (960 modules)
+ GET /help 200 in 197ms

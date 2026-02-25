@@ -73,7 +73,7 @@ const helpTopics: HelpTopic[] = [
         </div>
         <div>
           <h4 className="font-semibold mb-2">Lid verwijderen</h4>
-          <p>U kunt een lid verwijderen via de knop &quot;Verwijderen&quot;. Als een lid aan een competitie is gekoppeld, worden de bijbehorende spelersgegevens in die competitie(s) ook verwijderd.</p>
+          <p>Een lid dat gekoppeld is aan een competitie kan niet verwijderd worden! Verwijder dit lid eerst uit de competitie.</p>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Leden zoeken</h4>
@@ -109,7 +109,7 @@ const helpTopics: HelpTopic[] = [
         </div>
         <div>
           <h4 className="font-semibold mb-2">Competitie wijzigen</h4>
-          <p>Van een aangemaakte competitie kunt u later nog de naam, de datum of het puntensysteem wijzigen.</p>
+          <p>Van een aangemaakte competitie kunt u later nog de naam, de datum of de sorteervolgorde van de spelernamen wijzigen.</p>
         </div>
         <div>
           <h4 className="font-semibold mb-2">Competitie verwijderen</h4>
@@ -152,7 +152,7 @@ const helpTopics: HelpTopic[] = [
   },
   {
     id: 'planning',
-    title: 'Planning',
+    title: 'Dagplanning',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -181,7 +181,7 @@ const helpTopics: HelpTopic[] = [
   },
   {
     id: 'uitslagen',
-    title: 'Uitslagen',
+    title: 'Matrix en Uitslagbeheer',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -190,19 +190,15 @@ const helpTopics: HelpTopic[] = [
     content: (
       <div className="space-y-4">
         <div>
-          <h4 className="font-semibold mb-2">Uitslag invoeren</h4>
+          <h4 className="font-semibold mb-2">Matrix</h4>
           <p>
-            U kunt twee spelers kiezen en een uitslag invoeren van een gespeelde wedstrijd.
+            De matrix geeft aan wie tegen wie heeft gespeeld. Aan de kleurtjes kunt u zien wie er gewonnen heeft.
           </p>
         </div>
         <div>
-          <h4 className="font-semibold mb-2">Uitslag wijzigen</h4>
-          <p>U kunt elke uitslag wijzigen.</p>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Uitslag verwijderen</h4>
+          <h4 className="font-semibold mb-2">Uitslagbeheer</h4>
           <p>
-            U kunt elke uitslag verwijderen. Let op: als u een uitslag verwijdert worden de resultaten van beide spelers verwijderd en wordt de partij niet meer in de stand meegenomen.
+            In de matrix kunt u uitslagen invoeren, wijzigen of verwijderen.
           </p>
         </div>
       </div>
