@@ -308,6 +308,20 @@ export default function CompetitieMatrixPage() {
     const cartem2 = Number(formData.sp_2_cartem) || 0;
     const cargem2 = Number(formData.sp_2_cargem) || 0;
     const hs2 = Number(formData.sp_2_hs) || 0;
+    const brt = Number(formData.brt) || 0;
+
+    // Validatie: aantal beurten moet groter zijn dan 0
+    if (brt <= 0) {
+      return { valid: false, message: 'Aantal beurten moet groter zijn dan 0' };
+    }
+
+    // Feature #334: Validatie: beurten niet groter dan maximaal aantal beurten
+    if (competition && competition.max_beurten > 0 && brt > competition.max_beurten) {
+      return {
+        valid: false,
+        message: `Aantal beurten (${brt}) mag niet groter zijn dan het maximum aantal beurten (${competition.max_beurten})`
+      };
+    }
 
     if (cargem1 > cartem1) {
       return { valid: false, message: `${selectedMatch?.playerAName}: gemaakt (${cargem1}) kan niet meer zijn dan te maken (${cartem1}).` };
