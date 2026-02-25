@@ -5414,3 +5414,94 @@ The validation correctly handles both scenarios:
 - Regular competitions: gemaakt ≤ te maken enforced
 - Fixed turns competitions: gemaakt can exceed te maken
 - Zero compilation errors, production-ready code
+
+=== Session - 2026-02-25 (Feature #336) ===
+Agent: Coding Agent - Result Form Validation
+
+ASSIGNED FEATURE: #336
+STATUS: COMPLETED AND PASSING ✅
+
+Feature #336: Validatie: Hoogste serie niet groter dan gemaakte caramboles
+COMPLETED - Validation for HS <= achieved caramboles
+
+IMPLEMENTATION:
+Added validation to the Matrix result form to ensure that the hoogste serie (HS)
+for each player cannot exceed their gemaakte caramboles (achieved caramboles).
+
+Location: src/app/(dashboard)/competities/[id]/matrix/page.tsx
+Function: validateControleForm() (lines 318-330)
+
+Changes Made:
+1. Added HS validation for Player A (lines 319-324):
+   - Check: if (hs1 > cargem1)
+   - Error: "[Player A Name]: hoogste serie (X) kan niet groter zijn dan het aantal gemaakte caramboles (Y)"
+
+2. Added HS validation for Player B (lines 325-330):
+   - Check: if (hs2 > cargem2)
+   - Error: "[Player B Name]: hoogste serie (X) kan niet groter zijn dan het aantal gemaakte caramboles (Y)"
+
+3. Integration:
+   - Validation runs when user clicks "Controle" button
+   - Positioned early in validation chain (before other checks)
+   - Error displayed in red alert box at top of page
+   - Form stays on Step 1 until corrected
+   - Works for both new results and edits
+
+VERIFICATION:
+✅ TypeScript compilation successful (npx tsc --noEmit)
+✅ Production build successful (npm run build)
+   - Matrix page: 6.17 kB
+   - Zero errors, zero warnings
+✅ Automated testing: 5/5 tests passed
+   - Valid HS values accepted
+   - Invalid HS (> achieved) rejected with correct error
+   - Edge cases handled (0 values)
+   - Both players validated correctly
+✅ Code review: Clean, consistent with existing patterns
+✅ Error messages: Clear Dutch messages with player names and values
+
+TEST CASES VERIFIED:
+1. ✅ Valid result - HS equals achieved (both players)
+2. ✅ Invalid - Player A HS > achieved (error shown)
+3. ✅ Invalid - Player B HS > achieved (error shown)
+4. ✅ Valid - HS is 0 (edge case handled)
+5. ✅ Invalid - Both players HS > achieved (Player A error first)
+
+BEHAVIOR:
+- User enters HS > achieved caramboles
+- Clicks "Controle" button
+- Validation detects error
+- Error message displayed: "[Name]: hoogste serie (X) kan niet groter zijn dan het aantal gemaakte caramboles (Y)"
+- Form stays on Step 1
+- User corrects value
+- Clicks "Controle" again
+- Validation passes
+- Form proceeds to Step 2
+
+APPLIES TO:
+✅ New results (nieuwe uitslag)
+✅ Editing existing results (uitslag wijzigen)
+✅ Both Player A and Player B
+✅ All billiard disciplines
+✅ All competition types
+
+FILES MODIFIED:
+- src/app/(dashboard)/competities/[id]/matrix/page.tsx
+  * Lines 318-330: Added HS validation for both players
+
+FILES CREATED:
+- test-feature-336.mjs (comprehensive validation tests)
+- FEATURE-336-VERIFICATION.md (detailed verification report)
+- get-login-336.mjs (helper script)
+- get-any-org-336.mjs (helper script)
+
+GIT COMMIT: cdc6fdf
+
+CURRENT STATUS: 334/343 features passing (97.4%)
+
+✅ Feature #336 verified and marked as passing\!
+
+The validation prevents data integrity issues by ensuring hoogste serie values
+are mathematically possible (cannot exceed total achieved caramboles). This is
+a critical validation that maintains data consistency across the application.
+
