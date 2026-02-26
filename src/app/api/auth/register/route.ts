@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { addEmailToQueue, generateRegistrationEmail } from '@/lib/emailQueue';
+import { checkRegisterLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
+import { logAuthEvent } from '@/lib/authLog';
 
 /**
  * Generate a random string of uppercase letters (excluding I and O for readability)
@@ -73,6 +75,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limit: per IP and per email
+    const limitResult = await checkRegisterLimit(request, org_wl_email.trim());
+    if (!limitResult.allowed) {
+      return rateLimit429(limitResult);
+    }
+
     // Check if email already exists
     console.log('[REGISTER] Checking for existing email:', org_wl_email.trim());
     const existingEmail = await db.collection('organizations')
@@ -81,9 +89,16 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (!existingEmail.empty) {
+      void logAuthEvent({
+        endpoint: 'register',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: org_wl_email.trim(),
+      });
       return NextResponse.json(
-        { error: 'Met dit e-mailadres is al een account aangemaakt. Neem contact op als u uw inlogcode kwijt bent.' },
-        { status: 409 }
+        { error: 'Als dit e-mailadres nog niet is geregistreerd, ontvang je een e-mail.' },
+        { status: 401 }
       );
     }
 
@@ -185,9 +200,22 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    void logAuthEvent({
+      endpoint: 'register',
+      success: true,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+      identifier: org_wl_email.trim(),
+    });
     return response;
   } catch (error) {
     console.error('[REGISTER] Registration error:', error);
+    void logAuthEvent({
+      endpoint: 'register',
+      success: false,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+    });
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij het registreren.' },
       { status: 500 }

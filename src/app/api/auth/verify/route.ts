@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { addEmailToQueue, generateVerificationConfirmationEmail } from '@/lib/emailQueue';
+import { checkVerifyLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
+import { logAuthEvent } from '@/lib/authLog';
 
 /**
  * POST /api/auth/verify
@@ -17,6 +19,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limit: per IP and per email
+    const limitResult = await checkVerifyLimit(request, email);
+    if (!limitResult.allowed) {
+      return rateLimit429(limitResult);
+    }
+
     // Find organization with matching email and verification code
     console.log('[VERIFY] Looking up verification for email:', email);
     const orgSnapshot = await db.collection('organizations')
@@ -25,9 +33,16 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (orgSnapshot.empty) {
+      void logAuthEvent({
+        endpoint: 'verify',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: email,
+      });
       return NextResponse.json(
-        { error: 'Geen account gevonden met dit e-mailadres.' },
-        { status: 404 }
+        { error: 'Ongeldige of verlopen verificatie.' },
+        { status: 401 }
       );
     }
 
@@ -45,8 +60,15 @@ export async function POST(request: NextRequest) {
     // Check verification code
     if (String(orgData?.verification_code) !== String(verification_code)) {
       console.log('[VERIFY] Invalid verification code');
+      void logAuthEvent({
+        endpoint: 'verify',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: email,
+      });
       return NextResponse.json(
-        { error: 'Ongeldige verificatiecode.' },
+        { error: 'Ongeldige of verlopen verificatie.' },
         { status: 401 }
       );
     }
@@ -58,6 +80,13 @@ export async function POST(request: NextRequest) {
 
     if (verificationTime && (currentTime - verificationTime) > fifteenMinutes) {
       console.log('[VERIFY] Verification code expired');
+      void logAuthEvent({
+        endpoint: 'verify',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: email,
+      });
       return NextResponse.json(
         { error: 'De verificatiecode is verlopen. Registreer opnieuw.' },
         { status: 410 }
@@ -113,9 +142,22 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    void logAuthEvent({
+      endpoint: 'verify',
+      success: true,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+      identifier: email,
+    });
     return response;
   } catch (error) {
     console.error('[VERIFY] Verification error:', error);
+    void logAuthEvent({
+      endpoint: 'verify',
+      success: false,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+    });
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij de verificatie.' },
       { status: 500 }

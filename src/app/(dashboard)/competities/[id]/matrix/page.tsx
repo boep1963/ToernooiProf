@@ -412,9 +412,15 @@ export default function CompetitieMatrixPage({
     let result = '';
 
     if (competition) {
-      // FIX #323: Convert punten_sys to number to handle both string and number from Firestore
+      // FIX #323: Convert punten_sys to number. Use same baseSys logic as results API so Belgian (30000) is recognized.
+      // 30000 -> 3 (Belgisch), 20000 -> 2 (10-punten), 10000/11100 -> 1 (WRV), 30 -> 3, 3 -> 3
       const puntenSys = Number(competition.punten_sys) || 1;
-      const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
+      const sysType =
+        puntenSys >= 10000
+          ? Math.floor(puntenSys / 10000)
+          : puntenSys % 10 === 0
+            ? Math.floor(puntenSys / 10)
+            : puntenSys;
 
       if (sysType === 3) {
         // Belgian system - use shared calculation from lib/billiards.ts
