@@ -1,18 +1,22 @@
-# Bij push naar main: verhoog patch-versie in package.json en push.
+# Bij push naar main/master: verhoog patch-versie in package.json en push.
 # Zo krijgt elke automatische deploy (Firebase App Hosting) een hoger versienummer.
 # De versie wordt rechtsonder in het dashboard getoond.
+# Skip wanneer de push door deze workflow zelf gedaan is (actor = github-actions[bot]).
 name: Bump version on deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   bump:
     runs-on: ubuntu-latest
-    # Voorkom dubbele run wanneer deze workflow zelf commit + push doet
-    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'chore: bump version') }}
+    # Alleen draaien bij push door een gebruiker; niet wanneer deze workflow zelf heeft gecommit en gepusht
+    if: github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
         with:
