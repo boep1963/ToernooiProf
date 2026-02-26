@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { readFileSync } from "fs";
+
+const packageJson = JSON.parse(
+  readFileSync(path.join(__dirname, "package.json"), "utf-8")
+) as { version?: string };
+const appVersion = packageJson.version ?? "0.0.0";
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: appVersion,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

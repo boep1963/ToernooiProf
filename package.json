@@ -1,13 +1,14 @@
 {
   "name": "clubmatch",
-  "version": "0.1.0",
+  "version": "0.1.25",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:hosting": "node scripts/create-out.js"
+    "build:hosting": "node scripts/create-out.js",
+    "version:bump": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
     "@google-cloud/logging": "^11.2.1",

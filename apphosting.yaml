@@ -38,6 +38,7 @@ env:
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
 
 # Optional: override build/run (defaults work for Next.js)
+# Om bij deploy het versienummer te verhogen: run lokaal of in CI "npm run version:bump", commit package.json + package-lock.json, dan push.
 # scripts:
 #   buildCommand: npm run build
 #   runCommand: npm start

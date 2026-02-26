@@ -112,6 +112,10 @@ De app draait als **serverapplicatie** op **Firebase App Hosting** (Next.js op C
 
 **Via GitHub (aanbevolen):** push naar je live branch (bijv. `main`); App Hosting bouwt en rolt automatisch uit.
 
+**Versienummer bij deploy:** Het versienummer uit `package.json` wordt rechtsonder in het dashboard getoond. Om het bij elke deploy te verhogen:
+- **Automatisch:** de workflow `.github/workflows/version-bump.yml` verhoogt bij elke push naar `main` de patch-versie en commit. Zorg dat de default branch `main` is en dat pushes de workflow triggeren.
+- **Handmatig:** voer vóór push uit: `npm run version:bump`, commit `package.json` en `package-lock.json`, dan push.
+
 **Via CLI (lokaal):**
 
 ```bash
