@@ -77,10 +77,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       true // persist to Firestore
     );
 
-    // Build player name map from enriched players
+    // Build player name map from enriched players (exclude players without moyenne in this period)
     const playerMap: Record<number, { name: string; nr: number }> = {};
 
     for (const player of enrichedPlayers) {
+      if (periodNumber >= 1) {
+        const moyKey = `spc_moyenne_${periodNumber}`;
+        const moy = Number((player as Record<string, unknown>)[moyKey]) || 0;
+        if (moy <= 0) continue;
+      }
       const nr = Number(player.spc_nummer);
       const name = formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren);
       playerMap[nr] = { name, nr };
@@ -154,15 +159,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         if (p1Punt >= p2Punt && brt > 0) {
           standingsMap[p1Nr].partijMoyennes.push(p1Car / brt);
         }
-      } else {
-        // Player not in competition players but has a result - add them
+      } else if (playerMap[p1Nr]) {
+        // Player has moyenne in this period - add them
         const partijMoyennes: number[] = [];
         if (p1Punt >= p2Punt && brt > 0) {
           partijMoyennes.push(p1Car / brt);
         }
         standingsMap[p1Nr] = {
           playerNr: p1Nr,
-          playerName: playerMap[p1Nr]?.name || `Speler ${p1Nr}`,
+          playerName: playerMap[p1Nr].name,
           matchesPlayed: 1,
           carambolesGemaakt: p1Car,
           carambolesTeMaken: Number(result.sp_1_cartem) || 0,
@@ -189,14 +194,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         if (p2Punt >= p1Punt && brt > 0) {
           standingsMap[p2Nr].partijMoyennes.push(p2Car / brt);
         }
-      } else {
+      } else if (playerMap[p2Nr]) {
+        // Player has moyenne in this period - add them
         const partijMoyennes: number[] = [];
         if (p2Punt >= p1Punt && brt > 0) {
           partijMoyennes.push(p2Car / brt);
         }
         standingsMap[p2Nr] = {
           playerNr: p2Nr,
-          playerName: playerMap[p2Nr]?.name || `Speler ${p2Nr}`,
+          playerName: playerMap[p2Nr].name,
           matchesPlayed: 1,
           carambolesGemaakt: p2Car,
           carambolesTeMaken: Number(result.sp_2_cartem) || 0,

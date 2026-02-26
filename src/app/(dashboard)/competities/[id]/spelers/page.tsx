@@ -194,10 +194,13 @@ export default function CompetitieSpelersPage({
     };
   }, []);
 
-  // Get members not yet in the competition
-  const availableMembers = members.filter(
-    (m) => !players.some((p) => p.spc_nummer === m.spa_nummer)
-  );
+  // Get members not yet in the competition and with moyenne for this discipline
+  const availableMembers = members.filter((m) => {
+    if (players.some((p) => p.spc_nummer === m.spa_nummer)) return false;
+    if (!competition) return false;
+    const field = getMoyenneField(competition.discipline) as keyof MemberData;
+    return (Number(m[field]) || 0) > 0;
+  });
 
   // Get the moyenne for the selected member for the competition's discipline
   const getSelectedMemberMoyenne = (): number => {
@@ -763,10 +766,10 @@ export default function CompetitieSpelersPage({
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {sortedPlayers.length} {sortedPlayers.length === 1 ? 'speler' : 'spelers'} in periode {selectedPeriod}
+              {sortedPlayers.length} {sortedPlayers.length === 1 ? 'speler' : 'spelers'} met moyenne in periode {selectedPeriod}
               {sortedPlayers.length !== players.length && (
                 <span className="ml-2 text-slate-400">
-                  ({players.length} totaal in competitie)
+                  ({players.length} spelers gekoppeld aan competitie)
                 </span>
               )}
             </p>

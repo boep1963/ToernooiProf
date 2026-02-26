@@ -169,6 +169,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         const moyenneField = getMoyenneField(discipline);
         const moyenne = Number(memberData?.[moyenneField] as number) || 0;
 
+        if (moyenne <= 0) {
+          errors.push({ spc_nummer: memberNummer, error: 'Geen moyenne voor deze discipline' });
+          continue;
+        }
+
         // Calculate caramboles: moyenne × formula_multiplier, with minimum enforcement
         const caramboles = calculateCaramboles(moyenne, moyForm, minCar);
 
