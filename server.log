@@ -263,3 +263,11 @@
 
  ✓ Starting...
  ✓ Ready in 2.3s
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.160.169:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1682ms
