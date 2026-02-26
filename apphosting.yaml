@@ -38,7 +38,8 @@ env:
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
 
 # Optional: override build/run (defaults work for Next.js)
-# Om bij deploy het versienummer te verhogen: run lokaal of in CI "npm run version:bump", commit package.json + package-lock.json, dan push.
-# scripts:
-#   buildCommand: npm run build
+# Elke build krijgt een unieke NEXT_PUBLIC_BUILD_ID (timestamp), getoond rechtsonder in het dashboard.
+# Geen version-bump workflow meer nodig → geen dubbele build, geen rollout-conflict.
+scripts:
+  buildCommand: export NEXT_PUBLIC_BUILD_ID=$(date +%s) && npm run build
 #   runCommand: npm start

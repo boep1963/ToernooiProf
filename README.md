@@ -112,9 +112,7 @@ De app draait als **serverapplicatie** op **Firebase App Hosting** (Next.js op C
 
 **Via GitHub (aanbevolen):** push naar je live branch (bijv. `main`); App Hosting bouwt en rolt automatisch uit.
 
-**Versienummer bij deploy:** Het versienummer uit `package.json` wordt rechtsonder in het dashboard getoond. Om het bij elke deploy te verhogen:
-- **Automatisch:** de workflow `.github/workflows/version-bump.yml` verhoogt bij elke push naar `main` de patch-versie en commit. Zorg dat de default branch `main` is en dat pushes de workflow triggeren.
-- **Handmatig:** voer vóór push uit: `npm run version:bump`, commit `package.json` en `package-lock.json`, dan push.
+**Versienummer bij deploy:** Rechtsonder in het dashboard wordt "Versie X.Y.Z" getoond (uit `package.json`). Bij een deploy via Firebase App Hosting krijgt elke build een unieke build-id (timestamp) en wordt "Versie X.Y.Z (1234567890)" getoond, zodat je ziet welke deploy actief is. Er is geen version-bump workflow meer; daardoor ontstaat maar één build per push en geen rollout-conflict. Het versienummer in `package.json` verhoog je handmatig wanneer je wilt: `npm run version:bump`, commit en push.
 
 **Via CLI (lokaal):**
 
