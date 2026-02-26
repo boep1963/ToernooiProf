@@ -448,6 +448,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Determine base scoring system: 30000 -> 3 (Belgisch), 20000 -> 2 (10-punten), 10000/11100 -> 1 (WRV)
     const baseSys = puntenSys >= 10000 ? Math.floor(puntenSys / 10000) : (puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys);
 
+    // 10-punten systeem is niet toegestaan bij vast aantal beurten (spec)
+    if (baseSys === 2 && vastBeurten) {
+      return NextResponse.json(
+        { error: '10-punten systeem is niet toegestaan bij een competitie met vast aantal beurten.' },
+        { status: 400 }
+      );
+    }
+
     // Fetch player data from competition_players (for moyennes) and members (for names)
     let p1Moyenne: number | undefined;
     let p2Moyenne: number | undefined;
@@ -477,14 +485,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const p1Data = playerDataMap.get(Number(sp_1_nr));
     const p2Data = playerDataMap.get(Number(sp_2_nr));
 
-    // Extract moyennes
+    // Extract moyennes (period moyenne for WRV bonus: spc_moyenne_1..5 = periods)
     if (p1Data) {
-      const moyenneField = `spc_moyenne_${discipline}`;
+      const moyenneField = `spc_moyenne_${periode}`;
       p1Moyenne = Number(p1Data[moyenneField]) || 0;
     }
 
     if (p2Data) {
-      const moyenneField = `spc_moyenne_${discipline}`;
+      const moyenneField = `spc_moyenne_${periode}`;
       p2Moyenne = Number(p2Data[moyenneField]) || 0;
     }
 

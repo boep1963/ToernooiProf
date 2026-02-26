@@ -443,9 +443,32 @@ export default function CompetitieMatrixPage({
         }
       } else {
         // WRV system - use shared calculation from lib/billiards.ts
-        // Feature #343: Pass actual vast_beurten value to ensure percentage-based winner determination
+        // Pass period moyennes for bonus preview (spc_moyenne_1..5 = periods)
         const vastBeurten = competition.vast_beurten === 1;
-        const wrv = calculateWRVPoints(cargem1, cartem1, cargem2, cartem2, 0, brt, vastBeurten, puntenSys);
+        const p1Moyenne =
+          selectedMatch && selectedPeriode != null
+            ? (players.find((p) => p.spc_nummer === selectedMatch.playerANr) as PlayerData | undefined)?.[
+                `spc_moyenne_${selectedPeriode}` as keyof PlayerData
+              ] as number | undefined
+            : undefined;
+        const p2Moyenne =
+          selectedMatch && selectedPeriode != null
+            ? (players.find((p) => p.spc_nummer === selectedMatch.playerBNr) as PlayerData | undefined)?.[
+                `spc_moyenne_${selectedPeriode}` as keyof PlayerData
+              ] as number | undefined
+            : undefined;
+        const wrv = calculateWRVPoints(
+          cargem1,
+          cartem1,
+          cargem2,
+          cartem2,
+          0,
+          brt,
+          vastBeurten,
+          puntenSys,
+          p1Moyenne,
+          p2Moyenne
+        );
         points1 = wrv.points1;
         points2 = wrv.points2;
 

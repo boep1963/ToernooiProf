@@ -31,14 +31,14 @@ export function getMoyenneField(discipline: number): string {
 
 /**
  * Calculate points using the WRV system.
- * Win (reached target, opponent didn't): 2 points
- * Loss: 0 points
- * Draw (both reached or same %): 1 point each
+ * Win/loss/draw is always determined by comparing Per_car (Car_gemaakt/Car_temaken × 100%, 3 decimals).
+ * Win: 2 pts, Loss: 0 pts, Draw: 1 pt each.
  *
  * Bonus points (if enabled via puntenSys):
- * - Winner bonus: +1 if winner's match moyenne > registered moyenne
- * - Draw bonus: +1 if draw player's match moyenne > registered moyenne (if enabled)
- * - Loss bonus: +1 if loser's match moyenne > registered moyenne (if enabled)
+ * - Winner bonus: +1 if winner's match moyenne > registered period moyenne (Moy_start)
+ * - Draw bonus: +1 if draw player's match moyenne > Moy_start (if enabled)
+ * - Loss bonus: +1 if loser's match moyenne > Moy_start (if enabled)
+ * Moy_gemaakt = Car_gemaakt/Brt, 3 decimals.
  */
 export function calculateWRVPoints(
   player1Gem: number,
@@ -52,87 +52,41 @@ export function calculateWRVPoints(
   player1Moyenne?: number,
   player2Moyenne?: number
 ): { points1: number; points2: number } {
-  const pct1 = player1Tem > 0 ? (player1Gem / player1Tem) * 100 : 0;
-  const pct2 = player2Tem > 0 ? (player2Gem / player2Tem) * 100 : 0;
+  // Per_car = (Car_gemaakt / Car_temaken) * 100%, 3 decimals (spec)
+  const perCar1 = player1Tem > 0 ? Math.round((player1Gem / player1Tem) * 100 * 1000) / 1000 : 0;
+  const perCar2 = player2Tem > 0 ? Math.round((player2Gem / player2Tem) * 100 * 1000) / 1000 : 0;
 
-  const reached1 = player1Gem >= player1Tem;
-  const reached2 = player2Gem >= player2Tem;
+  let points1: number;
+  let points2: number;
 
-  let points1 = 0;
-  let points2 = 0;
-
-  if (vastBeurten) {
-    // Fixed turns mode: always compare by percentage
-    if (pct1 > pct2) {
-      points1 = 2;
-      points2 = 0;
-    } else if (pct2 > pct1) {
-      points1 = 0;
-      points2 = 2;
-    } else {
-      points1 = 1;
-      points2 = 1;
-    }
-  } else if (maxBeurten > 0 && beurten >= maxBeurten && !reached1 && !reached2) {
-    // Max turns reached, neither finished: compare by percentage
-    if (pct1 > pct2) {
-      points1 = 2;
-      points2 = 0;
-    } else if (pct2 > pct1) {
-      points1 = 0;
-      points2 = 2;
-    } else {
-      points1 = 1;
-      points2 = 1;
-    }
-  } else if (reached1 && reached2) {
-    // Both reached target: draw
-    points1 = 1;
-    points2 = 1;
-  } else if (reached1 && !reached2) {
-    // Player 1 wins
+  if (perCar1 > perCar2) {
     points1 = 2;
     points2 = 0;
-  } else if (!reached1 && reached2) {
-    // Player 2 wins
+  } else if (perCar2 > perCar1) {
     points1 = 0;
     points2 = 2;
   } else {
-    // Neither reached: compare by percentage
-    if (pct1 > pct2) {
-      points1 = 2;
-      points2 = 0;
-    } else if (pct2 > pct1) {
-      points1 = 0;
-      points2 = 2;
-    } else {
-      points1 = 1;
-      points2 = 1;
-    }
+    points1 = 1;
+    points2 = 1;
   }
 
-  // Apply bonus points if enabled
+  // Apply bonus points if enabled (Moy_gemaakt = Car/Brt, 3 decimals; bonus if Moy_gemaakt > Moy_start)
   const puntenStr = puntenSys.toString();
   if (puntenStr.length >= 2 && puntenStr[1] === '1' && player1Moyenne !== undefined && player2Moyenne !== undefined) {
-    // Bonus enabled - calculate match moyenne (caramboles / beurten)
-    const matchMoyenne1 = beurten > 0 ? player1Gem / beurten : 0;
-    const matchMoyenne2 = beurten > 0 ? player2Gem / beurten : 0;
+    const matchMoyenne1 = beurten > 0 ? Math.round((player1Gem / beurten) * 1000) / 1000 : 0;
+    const matchMoyenne2 = beurten > 0 ? Math.round((player2Gem / beurten) * 1000) / 1000 : 0;
 
-    // Check if match moyenne exceeds registered moyenne
     const aboveMoyenne1 = matchMoyenne1 > player1Moyenne;
     const aboveMoyenne2 = matchMoyenne2 > player2Moyenne;
 
-    // Winner bonus
     if (points1 === 2 && aboveMoyenne1) points1 += 1;
     if (points2 === 2 && aboveMoyenne2) points2 += 1;
 
-    // Draw bonus (if enabled, digit 4)
     if (puntenStr.length >= 4 && puntenStr[3] === '1') {
       if (points1 === 1 && aboveMoyenne1) points1 += 1;
       if (points2 === 1 && aboveMoyenne2) points2 += 1;
     }
 
-    // Loss bonus (if enabled, digit 5)
     if (puntenStr.length >= 5 && puntenStr[4] === '1') {
       if (points1 === 0 && aboveMoyenne1) points1 += 1;
       if (points2 === 0 && aboveMoyenne2) points2 += 1;
