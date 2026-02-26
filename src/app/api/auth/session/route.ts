@@ -46,6 +46,16 @@ export async function GET(request: NextRequest) {
 
     const orgData = orgSnapshot.docs[0].data();
 
+    // Ensure we return the organization that matches the session (defensive check for correct org/logo)
+    const orgNummerFromDb = orgData?.org_nummer;
+    if (orgNummerFromDb !== session.orgNummer) {
+      console.error('[SESSION] Org number mismatch:', { session: session.orgNummer, db: orgNummerFromDb });
+      return NextResponse.json(
+        { error: 'Sessie komt niet overeen met organisatie.' },
+        { status: 403 }
+      );
+    }
+
     return cachedJsonResponse({
       orgNummer: session.orgNummer,
       verified: orgData?.verified === true || orgData?.verified === undefined,

@@ -19,7 +19,7 @@ interface OrgDetails {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { orgNummer, login, logout } = useAuth();
+  const { orgNummer, login, logout, refreshOrganization } = useAuth();
 
   const [orgDetails, setOrgDetails] = useState<OrgDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -251,11 +251,10 @@ export default function AccountPage() {
       if (res.ok) {
         setUploadSuccess('Logo succesvol ge-upload!');
         setSelectedLogo(null);
-        // Reset file input
         const fileInput = document.getElementById('logo-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
-        // Refresh org details to show new logo
         await fetchOrgDetails();
+        await refreshOrganization();
       } else {
         setError(data.error || 'Fout bij uploaden logo.');
       }
@@ -284,6 +283,7 @@ export default function AccountPage() {
       if (res.ok) {
         setUploadSuccess('Logo verwijderd!');
         await fetchOrgDetails();
+        await refreshOrganization();
       } else {
         setError(data.error || 'Fout bij verwijderen logo.');
       }

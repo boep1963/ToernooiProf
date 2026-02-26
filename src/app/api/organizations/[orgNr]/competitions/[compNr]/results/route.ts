@@ -445,8 +445,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const p2Tem = p2Cartem; // target caramboles for player 2
     const turns = brt;
 
-    // Determine scoring system (first digit)
-    const sysType = puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys;
+    // Determine base scoring system: 30000 -> 3 (Belgisch), 20000 -> 2 (10-punten), 10000/11100 -> 1 (WRV)
+    const baseSys = puntenSys >= 10000 ? Math.floor(puntenSys / 10000) : (puntenSys % 10 === 0 ? Math.floor(puntenSys / 10) : puntenSys);
 
     // Fetch player data from competition_players (for moyennes) and members (for names)
     let p1Moyenne: number | undefined;
@@ -516,18 +516,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sp_2_naam = formatPlayerName(m2Data.spa_vnaam, m2Data.spa_tv, m2Data.spa_anaam, sorteren);
     }
 
-    if (sysType === 1 || puntenSys >= 10) {
+    if (baseSys === 1) {
       // WRV system - use player moyennes for bonus calculation
       const wrv = calculateWRVPoints(p1Gem, p1Tem, p2Gem, p2Tem, maxBeurten, turns, vastBeurten, puntenSys, p1Moyenne, p2Moyenne);
       sp_1_punt = wrv.points1;
       sp_2_punt = wrv.points2;
       console.log(`[RESULTS] WRV points: P1=${sp_1_punt}, P2=${sp_2_punt} (P1 moyenne: ${p1Moyenne}, P2 moyenne: ${p2Moyenne})`);
-    } else if (sysType === 2) {
+    } else if (baseSys === 2) {
       // 10-point system
       sp_1_punt = calculate10PointScore(p1Gem, p1Tem);
       sp_2_punt = calculate10PointScore(p2Gem, p2Tem);
       console.log(`[RESULTS] 10-point: P1=${sp_1_punt}, P2=${sp_2_punt}`);
-    } else if (sysType === 3) {
+    } else if (baseSys === 3) {
       // Belgian system
       const belgian = calculateBelgianScore(p1Gem, p1Tem, p2Gem, p2Tem);
       sp_1_punt = belgian.points1;

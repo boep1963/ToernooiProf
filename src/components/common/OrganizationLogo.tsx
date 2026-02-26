@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface OrganizationLogoProps {
   src?: string | null;
@@ -17,10 +17,14 @@ export default function OrganizationLogo({
 }: OrganizationLogoProps) {
   const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
   const [hasError, setHasError] = useState(false);
+  const cacheBusterRef = useRef(0);
 
   useEffect(() => {
     if (src) {
-      setImgSrc(src);
+      cacheBusterRef.current += 1;
+      const isDataUrl = src.startsWith('data:');
+      const url = isDataUrl ? src : `${src}${src.includes('?') ? '&' : '?'}_t=${cacheBusterRef.current}`;
+      setImgSrc(url);
       setHasError(false);
     } else {
       setImgSrc(fallbackSrc);

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       members,
       count: members.length,
       org_nummer: orgNumber,
-    }, 'default');
+    }, 'no-cache');
   } catch (error) {
     console.error('[MEMBERS] Error fetching members:', error);
     return NextResponse.json(

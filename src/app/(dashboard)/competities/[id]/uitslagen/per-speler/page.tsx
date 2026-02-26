@@ -81,6 +81,11 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
+function getPuntenSysLabel(punten_sys: number): string {
+  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
+  return PUNTEN_SYSTEMEN[baseSys] || '';
+}
+
 export default function PlayerResultsPage({
   params,
 }: {
@@ -145,6 +150,12 @@ export default function PlayerResultsPage({
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
+        }
+        /* Prevent scrollbar from appearing on print - table container */
+        #per-speler-results-table-wrap {
+          overflow: visible !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
         }
       }
     `;
@@ -372,7 +383,7 @@ export default function PlayerResultsPage({
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
         <h2 className="text-xl mb-2">Uitslagen per speler: {selectedPlayer && formatPlayerName(selectedPlayer)}</h2>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
+          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -386,7 +397,7 @@ export default function PlayerResultsPage({
           Uitslagen per speler - {competition.comp_naam}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
+          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''}
         </p>
       </div>
 
@@ -484,12 +495,12 @@ export default function PlayerResultsPage({
       {/* Results Table */}
       {selectedPlayerNr && playerResults.length > 0 && !isLoadingResults && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div id="per-speler-results-table-wrap" className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
-                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Per</th>
+                  <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Periode</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tegenstander</th>
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Car Speler</th>
                   <th className="text-center px-2 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Car Teg</th>

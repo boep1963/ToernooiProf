@@ -233,3 +233,33 @@
  GET /api/organizations/1205/competitions/8/results?periode=1 200 in 1012ms
 [MATCHES] Found 0 matches for competition 8
  GET /api/organizations/1205/competitions/8/matches?periode=1 200 in 1527ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 1155ms (790 modules)
+ GET /admin 200 in 1604ms
+ ✓ Compiled /api/admin/collections in 239ms (814 modules)
+[DB] Connected to Google Firestore
+ GET /api/admin/collections 200 in 4404ms
+ GET /api/admin/collections 200 in 4101ms
+ ✓ Compiled /instellingen in 452ms (821 modules)
+ GET /instellingen 200 in 580ms
+ ✓ Compiled /instellingen/backups in 304ms (828 modules)
+ GET /instellingen/backups 200 in 412ms
+ ○ Compiling /api/backup/list ...
+ ✓ Compiled /api/backup/list in 921ms (1080 modules)
+[DB] Connected to Google Firestore
+[Backup API] Listing backups for super admin: 1205
+(node:77109) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Backup API] Found 5 backups
+ GET /api/backup/list 200 in 2291ms
+[Backup API] Listing backups for super admin: 1205
+[Backup API] Found 5 backups
+ GET /api/backup/list 200 in 566ms
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.209:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.3s

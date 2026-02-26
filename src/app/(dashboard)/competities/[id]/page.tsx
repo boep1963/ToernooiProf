@@ -36,12 +36,14 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 // 10000 = WRV no bonuses, 11100 = WRV with bonuses enabled (winst always on)
 // 11110 = +remise, 11101 = +verlies, 11111 = all bonuses
 function decodePuntenSys(punten_sys: number): string {
-  const puntenSysStr = String(punten_sys);
+  // Base system for display: 30000 -> 3 (Belgisch), 10000/11100 -> 1 (WRV), 20000 -> 2 (10-punten)
+  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
 
-  // Check if it's a base system (1, 2, 3)
-  if (punten_sys <= 3) {
-    return PUNTEN_SYSTEMEN[punten_sys] || '-';
+  if (baseSys <= 3) {
+    return PUNTEN_SYSTEMEN[baseSys] || '-';
   }
+
+  const puntenSysStr = String(punten_sys);
 
   // Check if it's WRV with bonuses (starts with 1)
   if (puntenSysStr.startsWith('1')) {
@@ -62,7 +64,7 @@ function decodePuntenSys(punten_sys: number): string {
     return `WRV 2-1-0 + bonus (${bonuses.join(', ')})`;
   }
 
-  return PUNTEN_SYSTEMEN[punten_sys] || '-';
+  return PUNTEN_SYSTEMEN[baseSys] || '-';
 }
 
 const SORTEREN_LABELS: Record<number, string> = {

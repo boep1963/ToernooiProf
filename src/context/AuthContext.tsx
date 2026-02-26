@@ -14,6 +14,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (orgNummer: number) => Promise<void>;
   logout: () => Promise<void>;
+  refreshOrganization: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,8 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const refreshOrganization = async () => {
+    const currentOrgNr = state.orgNummer;
+    if (!currentOrgNr) return;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrgNr}`);
+      if (res.ok) {
+        const organization = await res.json();
+        setState((prev) => (prev.orgNummer === currentOrgNr ? { ...prev, organization } : prev));
+      }
+    } catch (error) {
+      console.error('Error refreshing organization:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, refreshOrganization }}>
       {children}
     </AuthContext.Provider>
   );

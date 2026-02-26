@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       date_inlog: new Date().toISOString(),
     });
 
-    // Create session response with org data
+    // Create session response with org data from the document we looked up (same org as org_code)
     const response = NextResponse.json({
       success: true,
       orgNummer: orgData?.org_nummer,
@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
         org_wl_naam: orgData?.org_wl_naam,
         org_wl_email: orgData?.org_wl_email,
         org_logo: orgData?.org_logo || '',
+        org_code: orgData?.org_code || '',
         aantal_tafels: orgData?.aantal_tafels || 4,
+        theme_preference: orgData?.theme_preference,
       },
     });
 

@@ -46,6 +46,11 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
+function getPuntenSysLabel(punten_sys: number): string {
+  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
+  return PUNTEN_SYSTEMEN[baseSys] || '';
+}
+
 export default function CompetitieStandPage({
   params,
 }: {
@@ -259,7 +264,7 @@ export default function CompetitieStandPage({
       <div className="hidden print:block mb-6">
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ClubMatch'} - {competition.comp_naam}</h1>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
+          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -273,7 +278,7 @@ export default function CompetitieStandPage({
           Stand - {competition.comp_naam}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]}{PUNTEN_SYSTEMEN[competition.punten_sys] ? ` | ${PUNTEN_SYSTEMEN[competition.punten_sys]}` : ''}
+          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''}
         </p>
       </div>
 

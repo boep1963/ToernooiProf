@@ -137,6 +137,15 @@ export default function LedenPage() {
     fetchMembers();
   }, [fetchMembers]);
 
+  // Refetch when page gains focus (e.g. returning from bewerken) so moyenne changes show immediately
+  useEffect(() => {
+    const onFocus = () => {
+      if (orgNummer) fetchMembers();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [orgNummer, fetchMembers]);
+
   // Filter members based on search query (case-insensitive, partial match, special-char-safe)
   const filteredMembers = useMemo(() => {
     const trimmed = searchQuery.trim();
