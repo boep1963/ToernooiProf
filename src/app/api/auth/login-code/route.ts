@@ -1,15 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import {
+  checkLoginCodeLimit,
+  getClientIp,
+  getUserAgent,
+  rateLimit429,
+} from '@/lib/rateLimit';
+import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile';
+import { logAuthEvent } from '@/lib/authLog';
 
 export async function POST(request: NextRequest) {
   try {
-    const { code } = await request.json();
+    const { code, turnstileToken } = await request.json();
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json(
         { error: 'Inlogcode is verplicht.' },
         { status: 400 }
       );
+    }
+
+    // When Turnstile is configured and a token is sent, verify it
+    if (isTurnstileConfigured() && turnstileToken) {
+      const valid = await verifyTurnstileToken(turnstileToken);
+      if (!valid) {
+        return NextResponse.json(
+          { error: 'Onjuiste inloggegevens.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Rate limit: per IP and per code prefix (first 4 chars)
+    const codePrefix = code.slice(0, 4);
+    const limitResult = await checkLoginCodeLimit(request, codePrefix);
+    if (!limitResult.allowed) {
+      return rateLimit429(limitResult);
     }
 
     // Query database for organization with this login code
@@ -21,8 +47,15 @@ export async function POST(request: NextRequest) {
 
     if (orgSnapshot.empty) {
       console.log('[AUTH] No organization found for login code');
+      void logAuthEvent({
+        endpoint: 'login-code',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: codePrefix,
+      });
       return NextResponse.json(
-        { error: 'Ongeldige inlogcode. Probeer het opnieuw.' },
+        { error: 'Onjuiste inloggegevens.' },
         { status: 401 }
       );
     }
@@ -66,9 +99,21 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('[AUTH] Login successful for org:', orgData?.org_nummer);
+    void logAuthEvent({
+      endpoint: 'login-code',
+      success: true,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+    });
     return response;
   } catch (error) {
     console.error('[AUTH] Login error:', error);
+    void logAuthEvent({
+      endpoint: 'login-code',
+      success: false,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+    });
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij het inloggen.' },
       { status: 500 }

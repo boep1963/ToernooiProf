@@ -5,6 +5,10 @@ import Image from 'next/image';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Turnstile from 'react-turnstile';
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 
 export default function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
@@ -15,6 +19,8 @@ export default function LoginPage() {
   const [showLoginCode, setShowLoginCode] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleCodeLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,17 +31,22 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: loginCode }),
+        body: JSON.stringify({
+          code: loginCode,
+          ...(turnstileToken && { turnstileToken }),
+        }),
       });
 
       if (res.ok) {
         window.location.href = '/dashboard';
       } else {
         const data = await res.json();
-        setError(data.error || 'Ongeldige inlogcode. Probeer het opnieuw.');
+        setError(data.error || 'Onjuiste inloggegevens.');
+        setFailedAttempts((n) => n + 1);
       }
     } catch {
       setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+      setFailedAttempts((n) => n + 1);
     } finally {
       setIsLoading(false);
     }
@@ -57,25 +68,23 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({
+          idToken,
+          ...(turnstileToken && { turnstileToken }),
+        }),
       });
 
       if (res.ok) {
         window.location.href = '/dashboard';
       } else {
         const data = await res.json();
-        setError(data.error || 'Ongeldig e-mailadres of wachtwoord.');
+        setError(data.error || 'Onjuiste inloggegevens.');
+        setFailedAttempts((n) => n + 1);
       }
     } catch (err: unknown) {
-      // Handle Firebase Auth specific errors with Dutch messages
+      // Generieke foutmelding voor credential-fouten (geen account-enumeratie)
       const firebaseError = err as { code?: string };
       switch (firebaseError.code) {
-        case 'auth/user-not-found':
-          setError('Geen account gevonden voor dit e-mailadres.');
-          break;
-        case 'auth/wrong-password':
-          setError('Ongeldig wachtwoord. Probeer het opnieuw.');
-          break;
         case 'auth/invalid-email':
           setError('Ongeldig e-mailadres formaat.');
           break;
@@ -85,11 +94,12 @@ export default function LoginPage() {
         case 'auth/user-disabled':
           setError('Dit account is gedeactiveerd.');
           break;
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
         case 'auth/invalid-credential':
-          setError('Ongeldig e-mailadres of wachtwoord.');
-          break;
         default:
-          setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+          setError('Onjuiste inloggegevens.');
+          setFailedAttempts((n) => n + 1);
       }
     } finally {
       setIsLoading(false);
@@ -161,10 +171,22 @@ export default function LoginPage() {
             </div>
           )}
 
+          {TURNSTILE_SITE_KEY && failedAttempts >= SHOW_TURNSTILE_AFTER_FAILURES && (
+            <div className="mb-4 flex justify-center">
+              <Turnstile
+                sitekey={TURNSTILE_SITE_KEY}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                theme="light"
+                size="normal"
+              />
+            </div>
+          )}
+
           {loginMethod === 'code' ? (
             <form onSubmit={handleCodeLogin} className="space-y-4">
               <div>
-                <label htmlFor="loginCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="loginCode"className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Inlogcode
                 </label>
                 <div className="relative">

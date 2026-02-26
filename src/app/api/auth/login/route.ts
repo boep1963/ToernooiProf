@@ -1,11 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { adminAuth } from '@/lib/firebase-admin';
+import { checkLoginLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
+import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile';
+import { logAuthEvent } from '@/lib/authLog';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit per IP before processing
+    const limitResult = await checkLoginLimit(request);
+    if (!limitResult.allowed) {
+      return rateLimit429(limitResult);
+    }
+
     const body = await request.json();
-    const { idToken } = body;
+    const { idToken, turnstileToken } = body;
+
+    // When Turnstile is configured and a token is sent, verify it
+    if (isTurnstileConfigured() && turnstileToken) {
+      const valid = await verifyTurnstileToken(turnstileToken);
+      if (!valid) {
+        return NextResponse.json(
+          { error: 'Onjuiste inloggegevens.' },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!idToken) {
       return NextResponse.json(
@@ -21,8 +41,14 @@ export async function POST(request: NextRequest) {
       decodedToken = await adminAuth.verifyIdToken(idToken);
     } catch (tokenError) {
       console.error('[AUTH] Token verification failed:', tokenError);
+      void logAuthEvent({
+        endpoint: 'login',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+      });
       return NextResponse.json(
-        { error: 'Ongeldige authenticatie. Probeer opnieuw in te loggen.' },
+        { error: 'Onjuiste inloggegevens.' },
         { status: 401 }
       );
     }
@@ -43,9 +69,16 @@ export async function POST(request: NextRequest) {
       .get();
 
     if (orgSnapshot.empty) {
+      void logAuthEvent({
+        endpoint: 'login',
+        success: false,
+        ip: getClientIp(request),
+        userAgent: getUserAgent(request),
+        identifier: email,
+      });
       return NextResponse.json(
-        { error: 'Geen organisatie gevonden voor dit e-mailadres.' },
-        { status: 404 }
+        { error: 'Onjuiste inloggegevens.' },
+        { status: 401 }
       );
     }
 
@@ -83,9 +116,22 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('[AUTH] Firebase Auth login successful for org:', orgData?.org_nummer, '(email:', email, ')');
+    void logAuthEvent({
+      endpoint: 'login',
+      success: true,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+      identifier: email,
+    });
     return response;
   } catch (error) {
     console.error('[AUTH] Login error:', error);
+    void logAuthEvent({
+      endpoint: 'login',
+      success: false,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+    });
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij het inloggen.' },
       { status: 500 }
