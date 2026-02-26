@@ -302,7 +302,7 @@ export default function LoginPage() {
       <footer className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none">
         <p className="text-xm text-slate-400 dark:text-slate-500">
           Deze applicatie is gebaseerd op het werk van Hans Eekels gedurende 1990-2026 (windows en web).
-          <br className="sm:hidden" /> Samen herschreven met Pierre de Boer in 2026.
+          <br className="sm:hidden" /> Compleet herschreven samen met Pierre de Boer in 2026.
         </p>
       </footer>
     </div>
