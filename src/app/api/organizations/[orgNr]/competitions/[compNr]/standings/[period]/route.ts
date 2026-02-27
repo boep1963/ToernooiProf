@@ -238,9 +238,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         beurten: entry.beurten,
         hoogsteSerie: entry.hoogsteSerie,
         punten: entry.punten,
-        percentage: Math.round(percentage * 100) / 100, // 2 decimal places
-        moyenne: Math.round(moyenne * 1000) / 1000, // 3 decimal places
-        partijMoyenne: Math.round(partijMoyenne * 100) / 100, // 2 decimal places
+        percentage: Math.floor(percentage * 1000) / 1000,
+        moyenne: Math.floor(moyenne * 1000) / 1000,
+        partijMoyenne: Math.floor(partijMoyenne * 1000) / 1000,
       };
     });
 
