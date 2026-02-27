@@ -42,5 +42,5 @@ env:
 # Elke build krijgt een unieke NEXT_PUBLIC_BUILD_ID (timestamp), getoond rechtsonder in het dashboard.
 # Geen version-bump workflow meer nodig → geen dubbele build, geen rollout-conflict.
 scripts:
-  buildCommand: export NEXT_PUBLIC_BUILD_ID=$(date +%s) && npm run build
+  buildCommand: export NEXT_PUBLIC_BUILD_ID=$(date +%d%m%Y%H%M) && npm run build
 #   runCommand: npm start
