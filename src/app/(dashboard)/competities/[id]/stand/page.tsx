@@ -515,8 +515,8 @@ export default function CompetitieStandPage({
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {sortByPercentage
-                ? 'Sortering: % punten > percentage > moyenne > hoogste serie'
-                : 'Sortering: punten > percentage > moyenne > hoogste serie'
+                ? 'Sortering: % punten > moyenne > hoogste serie'
+                : 'Sortering: punten > moyenne > hoogste serie'
               }
             </p>
           </div>

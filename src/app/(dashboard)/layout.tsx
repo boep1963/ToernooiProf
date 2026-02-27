@@ -102,8 +102,8 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main content: extra padding-bottom zodat inhoud niet achter de vaste footer verdwijnt */}
-        <main id="main-content" className="flex-1 p-4 lg:p-6 pb-24">
+        {/* Main content */}
+        <main id="main-content" className="flex-1 p-4 lg:p-6">
           {children}
         </main>
 
