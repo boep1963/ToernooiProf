@@ -7,13 +7,18 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
-import { toInputDate, fromInputDate } from '@/lib/dateUtils';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
   2: '10-punten',
   3: 'Belgisch (12-punten)',
 };
+
+/** Decode punten_sys voor weergave: 10000→1, 20000→2, 30000→3 (zoals in DB bij WRV-bonus encoding). */
+function getPuntenSysLabel(punten_sys: number): string {
+  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
+  return PUNTEN_SYSTEMEN[baseSys] ?? 'Onbekend';
+}
 
 interface CompetitionData {
   id: string;
@@ -69,14 +74,14 @@ export default function CompetitieBewerkenPage({
         setCompetition(data);
         setFormData({
           comp_naam: data.comp_naam || '',
-          comp_datum: toInputDate(data.comp_datum || ''),
-          discipline: data.discipline || 1,
-          punten_sys: data.punten_sys || 1,
-          moy_form: data.moy_form || 3,
-          min_car: data.min_car || 10,
-          max_beurten: data.max_beurten || 30,
-          vast_beurten: data.vast_beurten || 0,
-          sorteren: data.sorteren || 1,
+          comp_datum: (data.comp_datum ?? '') as string,
+          discipline: Number(data.discipline) || 1,
+          punten_sys: Number(data.punten_sys) || 1,
+          moy_form: Number(data.moy_form) || 3,
+          min_car: Number(data.min_car) ?? 10,
+          max_beurten: Number(data.max_beurten) ?? 30,
+          vast_beurten: Number(data.vast_beurten) ?? 0,
+          sorteren: Number(data.sorteren) || 1,
         });
       } else {
         setError('Competitie niet gevonden.');
@@ -136,10 +141,8 @@ export default function CompetitieBewerkenPage({
     setFieldErrors({});
 
     try {
-      // Convert date back to DD-MM-YYYY for Firestore storage
       const submitData = {
         ...formData,
-        comp_datum: fromInputDate(formData.comp_datum),
       };
       const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`, {
         method: 'PUT',
@@ -254,14 +257,15 @@ export default function CompetitieBewerkenPage({
               <input
                 id="comp_datum"
                 name="comp_datum"
-                type="date"
+                type="text"
                 value={formData.comp_datum}
                 onChange={handleChange}
+                placeholder="Bijv. 14-02-2026 of seizoen 2026"
                 required
                 aria-required="true"
                 aria-invalid={!!fieldErrors.comp_datum}
                 aria-describedby={fieldErrors.comp_datum ? 'comp_datum-error' : undefined}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
               {fieldErrors.comp_datum && (
                 <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_datum}</p>
@@ -312,7 +316,7 @@ export default function CompetitieBewerkenPage({
                 Puntensysteem
               </label>
               <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {PUNTEN_SYSTEMEN[formData.punten_sys] || 'Onbekend'}
+                {getPuntenSysLabel(formData.punten_sys)}
               </div>
             </div>
             <div>

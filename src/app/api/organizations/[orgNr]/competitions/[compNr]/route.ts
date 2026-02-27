@@ -43,7 +43,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const doc = snapshot.docs[0];
-    return cachedJsonResponse({ id: doc.id, ...doc.data() }, 'default');
+    const data = doc.data() as Record<string, unknown>;
+
+    // Normaliseer veldnamen: Firestore kan puntensysteem of comp_datum onder andere key hebben
+    const puntenSysRaw = data.punten_sys ?? data.puntensysteem;
+    const punten_sys = typeof puntenSysRaw === 'number' ? puntenSysRaw : Number(puntenSysRaw) || 1;
+    const comp_datum = (data.comp_datum ?? data.datum ?? '') as string;
+
+    const normalized = {
+      ...data,
+      punten_sys,
+      comp_datum: comp_datum || (data.comp_datum as string) || '',
+    };
+
+    return cachedJsonResponse({ id: doc.id, ...normalized }, 'default');
   } catch (error) {
     console.error('[COMPETITION] Error fetching competition:', error);
     return NextResponse.json(
