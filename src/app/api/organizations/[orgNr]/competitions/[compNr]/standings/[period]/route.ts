@@ -56,6 +56,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const compData = compSnapshot.docs[0].data();
     const sorteren = Number(compData?.sorteren) || 1;
+    const punten_sys = Number(compData?.punten_sys ?? compData?.puntensysteem) || 1;
 
     // Fetch all competition players
     const playersSnapshot = await db.collection('competition_players')
@@ -266,7 +267,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         comp_nr: compNumber,
         comp_naam: compData?.comp_naam || '',
         discipline: compData?.discipline || 1,
-        punten_sys: compData?.punten_sys || 1,
+        punten_sys,
         periode: periodNumber,
       },
     };

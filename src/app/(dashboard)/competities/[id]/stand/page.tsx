@@ -51,6 +51,22 @@ function getPuntenSysLabel(punten_sys: number): string {
   return PUNTEN_SYSTEMEN[baseSys] || '';
 }
 
+/**
+ * Maximaal te behalen punten in één partij op basis van puntensysteem.
+ * WRV = 2 (of 3 bij extra punt boven moyenne), 10-punten = 10, Belgisch = 12.
+ */
+function getMaxPointsPerMatch(punten_sys: number): number {
+  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
+  if (baseSys === 1) {
+    // WRV: 3 als bonus (extra punt boven moyenne) actief, anders 2
+    const hasBonus = punten_sys >= 11000; // 11xxx = winst-/remise-/verliesbonus
+    return hasBonus ? 3 : 2;
+  }
+  if (baseSys === 2) return 10;
+  if (baseSys === 3) return 12;
+  return 2;
+}
+
 export default function CompetitieStandPage({
   params,
 }: {
@@ -149,19 +165,17 @@ export default function CompetitieStandPage({
       if (res.ok) {
         const data = await res.json();
         const standingsData = data.standings || [];
+        const punten_sys = Number(data.competition?.punten_sys) || 1;
+        const maxPointsPerMatch = getMaxPointsPerMatch(punten_sys);
 
-        // Calculate percentage points for each player
         const standingsWithPercentage = standingsData.map((entry: StandingEntry) => {
-          // Calculate max possible points based on WRV 2-1-0 system (most common)
-          // Max points = 2 points per match if all wins
-          const maxPossiblePoints = entry.matchesPlayed * 2;
-          const percentagePunten = maxPossiblePoints > 0
-            ? (entry.punten / maxPossiblePoints) * 100
+          const totaalpunten_max = maxPointsPerMatch * entry.matchesPlayed;
+          const percentagePunten = totaalpunten_max > 0
+            ? (entry.punten / totaalpunten_max) * 100
             : 0;
-
           return {
             ...entry,
-            percentagePunten: Math.round(percentagePunten * 100) / 100, // 2 decimal places
+            percentagePunten: Math.floor(percentagePunten * 1000) / 1000,
           };
         });
 
