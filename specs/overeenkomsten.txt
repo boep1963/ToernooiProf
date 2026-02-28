@@ -1,0 +1,38 @@
+Programmatische overeenkomsten en verschillen
+tussen ClubMatch en ToernooiProf
+Identiek
+1. Lay-out (css)
+2. Account aanmaken
+3. Inloggen
+4. Logo uploaden
+5. Starten met Dashboard en menu’s in linker kolom.
+6. Stand opmaken (Punten of %Punten, ook volgorde punten > moy > hs)
+7. Noodknop: In ClubMatch terug naar vorige periode, in ToernooiProf terug naar vorige
+ronde.
+
+Verschillend
+1. Menu linkerkolom
+a. ClubMatch: Dashboard, Competities, Ledenbeheer, Instellingen, (Admin), Help,
+Contact;
+b. ToernooiProf: Dashboard, Toernooien, Instellingen, (Admin), Help, Contact;
+2. Ledenbeheer:
+a. ClubMatch: apart Ledenbeheer. Leden kunnen aan meerdere competities gekoppeld
+worden.
+b. ToernooiProf: elk aangemaakt toernooi kent zijn eigen lijst met bijbehorende
+deelnemers.
+3. Partijindelingen:
+a. ClubMatch: keuze WL in Matrix;
+b. ToernooiProf: alle partijen voor een halve competitie in een poule zijn al aangemaakt
+en per partijronde te beheren.
+4. Periodes of Ronden:
+a. ClubMatch: werkt met maximaal 5 perioden. Moyennes zijn aanpasbaar bij aanmaak
+nieuwe periode. Bij een periode-overgang worden alle spelers doorgekoppeld naar
+de nieuwe periode.
+b. ToernooiProf: werkt met onbeperkt aantal ronden, met in elke ronde een zelf te
+bepalen aantal poules. Bij een nieuwe ronde bepaalt de WL welke spelers door
+gekoppeld worden naar de nieuwe ronde.
+5. Stand:
+a. In ClubMatch: de stand van alle gekoppelde spelers;
+b. In ToernooiProf: de stand per poule.
+
+

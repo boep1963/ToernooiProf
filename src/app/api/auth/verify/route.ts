@@ -125,16 +125,17 @@ export async function POST(request: NextRequest) {
       org_nummer: orgData?.org_nummer,
       org_code: orgData?.org_code,
       org_naam: orgData?.org_naam,
-      message: 'Verificatie voltooid! U kunt nu volledig gebruikmaken van ClubMatch.',
+      message: 'Verificatie voltooid! U kunt nu volledig gebruikmaken van ToernooiProf.',
     });
 
     // Set session cookie with verified flag
-    response.cookies.set('clubmatch-session', JSON.stringify({
+    const sessionData = {
       orgNummer: orgData?.org_nummer,
       orgNaam: orgData?.org_naam,
       loginTime: new Date().toISOString(),
       verified: true,
-    }), {
+    };
+    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

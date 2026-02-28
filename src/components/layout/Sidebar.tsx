@@ -23,17 +23,8 @@ const baseNavItems: NavItem[] = [
     ),
   },
   {
-    label: 'Competities',
-    href: '/competities',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Ledenbeheer',
-    href: '/leden',
+    label: 'Toernooien',
+    href: '/toernooien',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -135,13 +126,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/dashboard" className="flex items-center space-x-2 min-h-[44px]">
             <div className="w-10 h-10 flex items-center justify-center">
               <img
-                src="/clubmatchlogo.png"
-                alt="ClubMatch Logo - Biljart Competitie Beheer"
+                src="/ToernooiProf.png"
+                alt="ToernooiProf Logo"
                 className="w-full h-full"
               />
             </div>
             <span className="text-lg font-bold text-slate-900 dark:text-white">
-              ClubMatch
+              ToernooiProf
             </span>
           </Link>
           {/* Close button for mobile */}
@@ -169,11 +160,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 aria-current={active ? 'page' : undefined}
                 className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                   active
-                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <span className={`mr-3 ${active ? 'text-green-700 dark:text-green-400' : ''}`}>
+                <span className={`mr-3 ${active ? 'text-orange-700 dark:text-orange-400' : ''}`}>
                   {item.icon}
                 </span>
                 {item.label}
@@ -186,7 +177,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-400 dark:text-slate-500" suppressHydrationWarning>
-              &copy; {year ?? '–'} ClubMatch
+              &copy; {year ?? '–'} ToernooiProf
             </p>
             <ThemeToggle />
           </div>

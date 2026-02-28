@@ -4,6 +4,10 @@
 
 set -e
 
+# Altijd vanuit de projectmap (waar dit script staat) draaien, ongeacht vanwaar je init.sh start.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo "============================================"
 echo "  ClubMatch - Biljart Competitie Beheer"
 echo "  Development Environment Setup"

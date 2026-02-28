@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-const PROGRAMMA_OPTIES = ['ClubMatch', 'ToernooiProf'];
+const PROGRAMMA_OPTIES = ['ToernooiProf'];
 
 const ONDERWERP_OPTIES = [
   { value: 'vraag', label: 'Vraag' },
@@ -101,9 +101,9 @@ export default function ContactPage() {
       )}
 
       {success && (
-        <div ref={successRef} role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+        <div ref={successRef} role="status" className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-sm border border-orange-200 dark:border-orange-800 flex items-center justify-between">
           <span>{success}</span>
-          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors" aria-label="Melding sluiten">
+          <button onClick={() => setSuccess('')} className="ml-3 text-orange-500 hover:text-orange-700 dark:hover:text-orange-300 transition-colors" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -172,7 +172,7 @@ export default function ContactPage() {
                 onChange={(e) => setProgramma(e.target.value)}
                 required
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               >
                 <option value="">-- Kies een programma --</option>
                 {PROGRAMMA_OPTIES.map((optie) => (
@@ -192,7 +192,7 @@ export default function ContactPage() {
                 onChange={(e) => setOnderwerp(e.target.value)}
                 required
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               >
                 {ONDERWERP_OPTIES.map((optie) => (
                   <option key={optie.value} value={optie.value}>{optie.label}</option>
@@ -214,7 +214,7 @@ export default function ContactPage() {
                 placeholder="Typ hier uw bericht..."
                 required
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors resize-y"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors resize-y"
               />
               <div className="flex justify-between mt-1">
                 <p className="text-xs text-slate-500 dark:text-slate-500">
@@ -233,7 +233,7 @@ export default function ContactPage() {
           <button
             type="submit"
             disabled={isSubmitting || !programma || !onderwerp || !bericht.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             {isSubmitting ? (
               <>

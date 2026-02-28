@@ -1,5 +1,5 @@
 /**
- * Database abstraction layer for ClubMatch
+ * Database abstraction layer for ToernooiProf
  *
  * Uses Firebase Admin SDK (Firestore) as the primary database.
  * Falls back to a local JSON file-based storage when Firebase
@@ -337,11 +337,11 @@ function createLocalDb(): DbInstance {
 
 /**
  * Namespace prefix for all Firestore collections.
- * All collections are stored as subcollections under ClubMatch/data/ document.
+ * All collections are stored as subcollections under ToernooiProf/data/ document.
  * This keeps the Firestore root clean and organizes all app data in one place.
- * Example: 'organizations' becomes 'ClubMatch/data/organizations'
+ * Example: 'organizations' becomes 'ToernooiProf/data/organizations'
  */
-const FIRESTORE_PREFIX = 'ClubMatch/data';
+const FIRESTORE_PREFIX = 'ToernooiProf/data';
 
 // Symbol to store the underlying Firestore document reference on wrapped DocumentRefs
 const FIRESTORE_REF_SYMBOL = Symbol('firestoreRef');
@@ -468,7 +468,7 @@ function createFirestoreAdapter(firestore: Firestore): DbInstance {
     },
     async listCollections(): Promise<{ id: string }[]> {
       try {
-        // List subcollections of the ClubMatch/data namespace document
+        // List subcollections of the ToernooiProf/data namespace document
         const namespaceDoc = firestore.doc(FIRESTORE_PREFIX);
         const collections = await namespaceDoc.listCollections();
         return collections.map(c => ({ id: c.id }));
@@ -502,7 +502,7 @@ function getDb(): DbInstance {
       }
       const firestore = getFirestore(adminApp);
       _db = createFirestoreAdapter(firestore);
-      console.log('[DB] Connected to Google Firestore');
+      console.log('[DB] Connected to Google Firestore (ToernooiProf)');
       return _db;
     } catch (error) {
       console.warn('[DB] Failed to initialize Firestore, falling back to local storage:', error);

@@ -11,9 +11,9 @@ export default function LoadingScreen() {
       aria-label="Applicatie wordt geladen"
     >
       <div className="text-center max-w-sm px-6">
-        <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-green-700 border-r-transparent mb-6" />
+        <div className="inline-flex h-12 w-12 animate-spin rounded-full border-4 border-orange-600 border-r-transparent mb-6" />
         <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-          ClubMatch
+          ToernooiProf
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mb-1">
           De app wordt opgestart…

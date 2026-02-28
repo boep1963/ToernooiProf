@@ -1,0 +1,194 @@
+Opmerkingen ToernooiProf Nr 1
+[Hans Eekels, 28-02-2026]
+
+Uitleg programma
+▪
+
+▪
+▪
+▪
+
+▪
+
+▪
+
+▪
+
+▪
+
+▪
+
+▪
+
+▪
+
+1
+
+ToernooiProf is een programma dat de wedstrijdleider (WL) op een biljartlocatie
+ondersteunt bij het organiseren van een klein of zeer groot biljarttoernooi waaraan
+individuele biljarters op uitnodiging deelnemen. Individueel betekent dat elke speler
+voor zich zelf speelt en dus niet lid is van een team.
+Het aantal deelnemers is feitelijk onbeperkt.
+Toernooien worden meestal in meerdere toernooironden gespeeld, maar ook 1
+toernooironde is in principe mogelijk.
+De spelers worden per toernooironde over poules verdeeld. Het minimaal aantal
+poules is 1, het maximaal aantal poules per toernooironde is feitelijk onbeperkt,
+maar uit praktische overwegingen wordt dit aantal beperkt tot 25.
+Spelers kunnen op basis van hun speelresultaten (de uitslagen van hun partijen
+tegen andere deelnemers) in een toernooironde:
+a) doorgekoppeld worden naar een volgende toernooironde;
+b) uitgesloten worden van verdere deelname aan dit toernooi.
+In elke poule en in elke toernooironde spelen de deelnemers in principe 1 maal tegen
+elke andere deelnemer (in biljarttaal heet dit een “halve competitie”) in die poule een
+partij. Het aantal te spelen partijen in een poule hangt dus af van het aantal spelers
+dat in een poule is ingedeeld. NB: als de WL besluit om niet alle partijen te laten
+spelen, dan moet dat mogelijk zijn.
+Alle partijen in een poule worden aangemaakt bij de start van een toernooironde. Het
+aantal partijen is altijd (aantal_spelers * (aantal_spelers – 1))/2, dus als voorbeeld bij
+6 spelers: (6 * (6-1))/2 = 15 partijen.
+Bij een even aantal spelers in een poule, kunnen alle partijen in (aantal_spelers – 1)
+speelronden worden gespeeld, dus als voorbeeld: bij 6 spelers kunnen alle partijen
+over 6-1 = 5 speelronden verdeeld worden.
+Bij een oneven aantal spelers in een poule, kunnen alle partijen in aantal_spelers
+speelronden worden gespeeld, dus als voorbeeld: bij 7 spelers kunnen alle partijen
+over 7 speelronden verdeeld worden, waarbij er steeds 1 speler een rust-speelronde
+heeft.
+Om de partij-indeling te maken voor elk aantal spelers in een poule, is de Round
+Robin code in php beschikbaar, zowel voor een even als voor een oneven aantal
+spelers.
+Nogmaals ter verduidelijking:
+a) Een speelronde is een ronde waarin spelers in een poule tegen elkaar spelen;
+het aantal speelronden is dus afhankelijk van het aantal spelers in een poule.
+b) Een toernooironde is een ronde die aangemaakt wordt om alle partijen in alle
+poules te kunnen spelen. Als al die partijen gespeeld zijn, kan er een nieuwe
+toernooironde worden aangemaakt. Het aantal toernooironden is onbeperkt.
+
+▪
+
+▪
+▪
+▪
+
+▪
+
+▪
+
+▪
+
+2
+
+Als een toernooironde is afgelopen, kan er een nieuwe toernooironde worden
+aangemaakt. In deze nieuwe toernooironde worden opnieuw poules aangemaakt.
+De spelers uit de vorige ronde die voldoen aan de voorwaarden om verder te strijden
+in het toernooi (bepaalt de organisatie), worden door gekoppeld naar de volgende
+ronde en vrij over de nieuwe poules in de nieuwe toernooironde verdeeld (ook die
+verdeling bepaalt de organisatie).
+Nadat een gebruiker een Account voor ToernooiProf heeft aangemaakt, kan deze
+gebruiker net zoveel toernooien aanmaken als hij wil.
+Als een nieuw toernooi wordt aangemaakt, moeten eerst de toernooi-gegevens
+worden ingevoerd en daarna de spelers worden ingevoerd.
+Bij de aanmaak van een nieuw toernooi moeten de volgende gegevens worden
+ingevoerd:
+a) Naam toernooi (vrije invoer)
+b) Sub-titel (vrije invoer)
+c) Start_datum (data-picker)
+d) Eind_datum (data-picker)
+e) Discipline (vrije invoer)
+f) Keuze uit 2 manieren om het aantal te maken caramboles per speler te
+bepalen:
+▪ Vrije invoer aantal te maken caramboles bij invoer spelers;
+▪ Aantal te maken caramboles op basis van een moyenne-formule; dan
+de mogelijkheid om uit 6 moyenne-formules te kiezen.
+g) Puntensysteem: keuze uit 3 verschillende systemen;
+h) Minimaal aantal te maken caramboles: keuze uit 3 t/m 10;
+i) Maximaal aantal beurten: vrije keuze (default 0), bij geen keuze 0 opslaan;
+j) Stand openbaar: keuze tussen Ja (default) en Nee.
+Na aanmaak van een toernooi moeten de deelnemers/spelers worden ingevoerd met
+de volgende gegevens:
+a) Voor- en achternaam (samen in een invoerveld);
+b) Startmoyenne: als er een moyenneformule is gekozen, dan wordt het aantal te
+maken caramboles getoond gebaseerd op het ingevoerde moyenne;
+c) Aantal te maken caramboles: alleen nodig om dat in te vullen als bij de
+aanmaak van dit toernooi gekozen is voor “Vrije invoer”.
+d) Indeling in Start_poule (keuze uit poule 1 t/m poule 25).
+Als een toernooi is aangemaakt en alle deelnemers zijn ingevoerd, kan met een druk
+op de knop het toernooi worden gestart. Het programma maakt voor elke poule alle
+partijen aan. De gebruiker kan dan vanuit een Beheersscherm het toernooi
+verwerken.
+De mogelijkheden vanuit het Beheersscherm:
+a) Wat informatie over het toernooironde nummer, het aantal poules en het
+totaal aantal spelers in deze toernooironde;
+b) Uitslagbeheer: na keuze poule kunnen hier de uitslagen van alle partijen in die
+poule worden ingevoerd of worden gewijzigd;
+c) De stand per poule;
+
+▪
+
+▪
+
+▪
+▪
+▪
+
+d) Een overzicht van elke poule-indeling;
+e) Een overzicht van alle resultaten per gekozen speler;
+f) De mogelijkheid om een nieuwe toernooironde aan te maken;
+g) De mogelijkheid om de naam van een speler te wijzigen;
+h) De mogelijkheid om te bepalen of de stand al dan niet openbaar is;
+i) Een zoekfunctie om te tonen in welke ronde en in welke poule een gevraagde
+speler heeft gespeeld;
+j) De mogelijkheid om de Start van het toernooi ongedaan te maken of als er
+een nieuwe toernooironde is aangemaakt, de mogelijkheid om die aanmaak
+van een nieuwe ronde terug te draaien.
+De opzet van een toernooi is geheel aan de organisatie van dat toernooi. Een paar
+mogelijkheden als voorbeeld:
+a) Een klein toernooitje met een paar spelers en weinig beschikbare tijd: er
+wordt één toernooironde gebruikt met één poule waarin alle deelnemers
+worden opgenomen. Op elk moment kan de stand in de poule bepaald
+worden, kan de winnaar aangewezen worden en kan het toernooi worden
+afgesloten;
+b) Een zeer groot toernooi (zeg 128 deelnemers) over meerdere dagen met
+voorronden in 16 poules met 8 spelers. De spelers 1 en 2 in de stand per
+poule gaan door, de rest valt af. De spelers die doorgaan (32 spelers) spelen in
+toernooironde 2 met 16 poules een 16de finale, de 16 winnaars spelen in
+toernooironde 3 met 8 poules een 8ste finale, de 8 winnaars spelen in
+toernooironde 4 met 4 poules een kwart finale, de 4 winnaars spelen in
+toernooironde 5 met 2 poules een halve finale en de 2 winnaars in
+toernooironde 6 met 1 poule de finale (of wellicht met 2 poules ook een partij
+om de 3e en 4e plaats),
+Bij het doorkoppelen van een speler vanuit een afgeronde toernooironde naar een
+nieuw aangemaakte toernooironde moet de WL de mogelijkheid hebben:
+a) het moyenne van elke speler al dan niet aan te passen. Als bij aanmaak van
+het toernooi gekozen is voor gebruik van een moyenneformule, dan moet het
+nieuwe aantal te maken caramboles per speler waarvan het moyenne is
+aangepast, ook op basis van die moyenneformule worden aangepast. Is bij
+aanmaak van het toernooi gekozen voor vrije invoer van het aantal te maken
+caramboles, dan moet dat aantal te maken caramboles bij overgang naar een
+nieuwe toernooironde ook al dan niet aangepast kunnen worden door de WL.
+b) om te kiezen in welke poule elke speler die door gekoppeld wordt, komt te
+spelen.
+Bij de aanmaak van een nieuwe toernooironde dienen voor elke poule de partijen te
+worden gegenereerd op basis van het aantal spelers in de betreffende poule.
+Ook na de aanmaak van een nieuwe toernooironde dient er een mogelijkheid te zijn
+om de aanmaak van deze ronde ongedaan te maken.
+Het programma ToernooiProf moet de volgende mogelijkheden bieden:
+a) Een aangemaakt toernooi moet verwijderd kunnen worden;
+
+3
+
+b) Een aangemaakt toernooi moet op elk moment een paar gegevens aangepast
+
+kunnen worden, te weten:
+▪ De naam;
+▪ De subtitel;
+▪ De start_datum en de eind_datum;
+▪ De discipline-naam;
+▪ De al dan niet openbaarheid van de stand.
+c) Er moet een eigen logo geupload kunnen worden;
+d) Het aangemaakte Account moet verwijderd kunnen worden.
+NB: elke verwijzing in de aangebode code naar het gebruik van elektronische
+scoreborden moet genegeerd worden.
+
+4
+
+

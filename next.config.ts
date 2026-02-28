@@ -7,6 +7,9 @@ const packageJson = JSON.parse(
 ) as { version?: string };
 const appVersion = packageJson.version ?? "0.0.0";
 
+// Projectroot: altijd deze map, ook als cwd elders is (bv. parent Documents)
+const projectRoot = __dirname;
+
 const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
@@ -14,7 +17,16 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  outputFileTracingRoot: path.join(__dirname),
+  outputFileTracingRoot: projectRoot,
+  // Turbopack: expliciete root zodat module-resolutie in deze map blijft (niet /Documents).
+  turbopack: {
+    root: projectRoot,
+  },
+  webpack: (config, { isServer }) => {
+    // Module-resolutie altijd vanuit ToernooiProf, niet vanuit cwd (voorkomt /Documents/node_modules)
+    config.context = projectRoot;
+    return config;
+  },
   async headers() {
     return [
       {

@@ -138,7 +138,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     await doc.ref.update(updateData);
 
-    console.log(`[COMPETITION] Competition ${compNumber} updated successfully`);
+    console.log(`[TOURNAMENT] Tournament ${compNumber} updated successfully`);
 
     return NextResponse.json({
       id: doc.id,
@@ -274,7 +274,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Delete the competition itself
     await compDoc.ref.delete();
 
-    console.log(`[COMPETITION] Competition ${compNumber} deleted. Cascade: ${cascadeCounts.players} players, ${cascadeCounts.matches} matches, ${cascadeCounts.results} results, ${cascadeCounts.tables} tables, ${cascadeCounts.score_helpers} score_helpers, ${cascadeCounts.score_helpers_tablet} score_helpers_tablet`);
+    console.log(`[TOURNAMENT] Tournament ${compNumber} deleted. Cascade: ${cascadeCounts.players} players, ${cascadeCounts.matches} matches, ${cascadeCounts.results} results, ${cascadeCounts.tables} tables, ${cascadeCounts.score_helpers} score_helpers, ${cascadeCounts.score_helpers_tablet} score_helpers_tablet`);
 
     return NextResponse.json({
       message: 'Competitie succesvol verwijderd',

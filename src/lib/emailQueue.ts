@@ -42,7 +42,7 @@ export async function addEmailToQueue(email: Omit<EmailQueueDocument, 'status' |
 
   console.log(`[EMAIL_QUEUE] Adding ${email.type} email to queue for ${email.to}`);
 
-  const docRef = await db.collection('email_queue').add(emailDoc);
+  const docRef = await db.collection('email_queue').add(emailDoc as any);
 
   console.log(`[EMAIL_QUEUE] Email queued with ID: ${docRef.id}`);
 
@@ -60,9 +60,9 @@ export function generateRegistrationEmail(
 ): Omit<EmailQueueDocument, 'status' | 'created_at'> {
   return {
     to: recipientEmail,
-    subject: 'Welkom bij ClubMatch - Verificatie vereist',
+    subject: 'Welkom bij ToernooiProf - Verificatie vereist',
     body: `
-Welkom bij ClubMatch!
+Welkom bij ToernooiProf!
 
 Bedankt voor uw registratie voor organisatie "${orgNaam}".
 
@@ -76,7 +76,7 @@ Na verificatie kunt u inloggen met uw inlogcode:
 ${loginCode}
 
 Met vriendelijke groet,
-Het ClubMatch Team
+Het ToernooiProf Team
     `.trim(),
     type: 'registration',
   };
@@ -92,17 +92,17 @@ export function generateVerificationConfirmationEmail(
 ): Omit<EmailQueueDocument, 'status' | 'created_at'> {
   return {
     to: recipientEmail,
-    subject: 'ClubMatch - Account geverifieerd',
+    subject: 'ToernooiProf - Account geverifieerd',
     body: `
-Uw ClubMatch account is geverifieerd!
+Uw ToernooiProf account is geverifieerd!
 
 Organisatie: ${orgNaam}
 Inlogcode: ${loginCode}
 
-U kunt nu volledig gebruikmaken van ClubMatch.
+U kunt nu volledig gebruikmaken van ToernooiProf.
 
 Met vriendelijke groet,
-Het ClubMatch Team
+Het ToernooiProf Team
     `.trim(),
     type: 'verification',
   };

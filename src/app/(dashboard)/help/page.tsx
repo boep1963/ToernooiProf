@@ -29,24 +29,24 @@ const helpTopics: HelpTopic[] = [
     content: (
       <div className="space-y-4">
         <p>
-          ClubMatch is een biljart competitie beheersysteem voor clubbeheerders. Het stelt u in staat om leden te beheren, competities te organiseren in meerdere disciplines, wedstrijden te plannen, uitslagen in te voeren en standen te genereren.
+          ToernooiProf is een toernooibeheersysteem voor wedstrijdleiders. Het stelt u in staat om toernooien te organiseren, deelnemers toe te voegen, wedstrijden te plannen in poules, uitslagen in te voeren en standen te genereren.
         </p>
         <p>
           <strong>Aan de slag:</strong>
         </p>
         <ol className="list-decimal list-inside space-y-2 ml-2">
-          <li>Maak eerst leden aan in de module &quot;Ledenbeheer&quot; met een naam en een moyenne per discipline.</li>
-          <li>Maak een competitie aan bij &quot;Competities&quot;.</li>
-          <li>Koppel spelers (leden) aan de competitie.</li>
-          <li>Plan wedstrijden en voer uitslagen in.</li>
+          <li>Maak een toernooi aan bij &quot;Toernooien&quot;.</li>
+          <li>Voeg deelnemers aan het toernooi toe in de gewenste poules.</li>
+          <li>Start het toernooi en laat alle partijen genereren.</li>
+          <li>Voeg uitslagen toe of beheer de standen.</li>
         </ol>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-          NB: Een lid kunt u aan meerdere competities koppelen.
+          NB: Deelnemers worden per toernooi beheerd, niet in een algemene ledenlijst.
         </p>
         <div>
           <h4 className="font-semibold mb-2">Printen en exporteren</h4>
           <p>
-            In ClubMatch betekent <strong>printen</strong> of <strong>exporteren</strong> steeds: printen naar PDF. U kunt daarmee standen, planningen of andere overzichten als PDF opslaan of afdrukken via de printoptie in uw browser (kies &quot;Opslaan als PDF&quot; of een PDF-printer).
+            In ToernooiProf betekent <strong>printen</strong> of <strong>exporteren</strong> steeds: printen naar PDF. U kunt daarmee standen, planningen of andere overzichten als PDF opslaan.
           </p>
         </div>
       </div>
@@ -89,44 +89,39 @@ const helpTopics: HelpTopic[] = [
     ),
   },
   {
-    id: 'competities',
-    title: 'Competities',
+    id: 'toernooien',
+    title: 'Toernooien',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
       </svg>
     ),
-    relatedLink: { href: '/competities', label: 'Ga naar Competities' },
+    relatedLink: { href: '/toernooien', label: 'Ga naar Toernooien' },
     content: (
       <div className="space-y-4">
         <p>
-          U kunt zoveel competities aanmaken als u wilt. Aan elke competitie moet u spelers koppelen uit de ledenlijst.
+          U kunt zoveel toernooien aanmaken als u wilt. Aan elk toernooi moet u deelnemers toevoegen, die in poules verdeeld worden.
         </p>
         <div>
-          <h4 className="font-semibold mb-2">Competitie aanmaken</h4>
-          <p>Bij het aanmaken van een competitie kiest u uit:</p>
+          <h4 className="font-semibold mb-2">Toernooi aanmaken</h4>
+          <p>Bij het aanmaken van een toernooi kiest u uit:</p>
           <ul className="list-disc list-inside ml-2 space-y-1 mt-2">
-            <li>Een discipline (Libre, Bandstoten, Driebanden klein, Driebanden groot, Kader)</li>
-            <li>Diverse moyenne-formules om het aantal te maken caramboles te bepalen</li>
-            <li>Drie puntensystemen (Winst/Remise/Verlies, 10-puntensysteem, Belgisch systeem)</li>
-            <li>Minimaal aantal te maken caramboles</li>
-            <li>Een beurtenlimiet indien gewenst</li>
+            <li>Sub-titel, start/eind datum, discipline</li>
+            <li>Diverse moyenne-formules of vrije invoer om het aantal te maken caramboles te bepalen</li>
+            <li>Drie puntensystemen</li>
+            <li>Minimaal aantal te maken caramboles en/of een beurtenlimiet indien gewenst</li>
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold mb-2">Competitie wijzigen</h4>
-          <p>Van een aangemaakte competitie kunt u later nog de naam, de datum of de sorteervolgorde van de spelernamen wijzigen.</p>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Competitie verwijderen</h4>
-          <p>Bij het verwijderen van een competitie worden alle gekoppelde spelers, wedstrijden en uitslagen ook verwijderd.</p>
+          <h4 className="font-semibold mb-2">Toernooi wijzigen of verwijderen</h4>
+          <p>Van een aangemaakt toernooi kunt u later nog de actieve instellingen wijzigen of het in zijn geheel verwijderen.</p>
         </div>
       </div>
     ),
   },
   {
     id: 'spelers',
-    title: 'Spelers in competitie',
+    title: 'Deelnemers',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -135,18 +130,15 @@ const helpTopics: HelpTopic[] = [
     content: (
       <div className="space-y-4">
         <div>
-          <h4 className="font-semibold mb-2">Speler koppelen</h4>
+          <h4 className="font-semibold mb-2">Deelnemer toevoegen</h4>
           <p>
-            Als u een competitie hebt aangemaakt en geopend, moet u als eerste spelers aan de competitie toevoegen. Die spelers heeft u eerder in de module &quot;Ledenbeheer&quot; aangemaakt. U kunt zoveel spelers aan een competitie koppelen als u wilt.
+            Als u een toernooi hebt aangemaakt, voegt u deelnemers toe aan een specifieke poule.
           </p>
         </div>
         <div>
-          <h4 className="font-semibold mb-2">Speler verwijderen</h4>
+          <h4 className="font-semibold mb-2">Deelnemer verwijderen</h4>
           <p>
-            Spelers die aan een competitie zijn gekoppeld, kunt u altijd verwijderen. Let op: alle partijen van die speler worden verwijderd, inclusief bij de tegenstanders.
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            NB: Spelers die u uit een competitie verwijdert, blijven als lid beschikbaar om later opnieuw of aan andere competities te koppelen.
+            Deelnemers kunt u altijd verwijderen. Let op: als het toernooi al is gestart worden de actieve partijen in de planning beïnvloed.
           </p>
         </div>
         <div>
@@ -169,18 +161,8 @@ const helpTopics: HelpTopic[] = [
         <div>
           <h4 className="font-semibold mb-2">Algemeen</h4>
           <p>
-            U kunt een vrijblijvende planning maken voor een speeldag in uw competitie. Vink de spelers aan die aanwezig zijn en kies het aantal partijen (1 of 2) dat het programma moet maken. Klik dan op &quot;Maak planning&quot; en het programma genereert partijen tussen spelers die nog tegen elkaar kunnen spelen.
+            Wanneer u het toernooi start, creëert ToernooiProf alle partijen voor een halve competitie (Round Robin). Bij een even aantal deelnemers is er in elke speelronde geen rust, en bij een oneven aantal is er in elke speelronde exact één deelnemer die rust heeft. U beheert deze wedstrijden in het beheersscherm.
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            NB: De voorgestelde partijen zijn vrijblijvend; u hoeft ze niet te gebruiken.
-          </p>
-        </div>
-        <div>
-          <h4 className="font-semibold mb-2">Suggestie aantal partijen</h4>
-          <ul className="list-disc list-inside ml-2 space-y-2">
-            <li><strong>Even aantal spelers:</strong> Kies voor 1 partij per speler. Na afloop kunt u een nieuwe planning maken.</li>
-            <li><strong>Oneven aantal spelers:</strong> Kies voor 2 partijen per speler. Bij een oneven aantal hebt u altijd een rustspeler. Het programma deelt de rustspelers tegen elkaar in.</li>
-          </ul>
         </div>
       </div>
     ),
@@ -232,8 +214,8 @@ const helpTopics: HelpTopic[] = [
     ),
   },
   {
-    id: 'periodes',
-    title: 'Periodes',
+    id: 'ronden',
+    title: 'Toernooironden',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -242,20 +224,11 @@ const helpTopics: HelpTopic[] = [
     content: (
       <div className="space-y-4">
         <div>
-          <h4 className="font-semibold mb-2">Periode-overgang</h4>
+          <h4 className="font-semibold mb-2">Overgang naar nieuwe ronde</h4>
           <p>
-            Vanuit periode 1 t/m 4 kunt u een volgende periode aanmaken. Daarbij kunt u per speler aangeven of het nieuwe moyenne gaat gelden voor de nieuwe periode. Als u geen vinkje bij een speler zet, blijft het oude moyenne ook gelden in de nieuwe periode.
+            Nadat een toernooironde klaar is (alle poules voltooid) kunt u een volgende toernooironde aanmaken. U bepaalt zelf welke deelnemers doorkoppelen en in welke nieuwe poule zij terechtkomen. Ook besluit u of hun moyenne (en daarmee aantal te maken caramboles) gewijzigd dient te worden voor de nieuwe ronde.
           </p>
         </div>
-        <div>
-          <h4 className="font-semibold mb-2">Moyenne aanpassen</h4>
-          <p>
-            Bent u niet akkoord met het voorgestelde moyenne? Dan kunt u het nieuwe moyenne voor de volgende periode handmatig aanpassen. Het aantal te maken caramboles wordt automatisch herberekend op basis van de gekozen moyenne-formule.
-          </p>
-        </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Er zijn maximaal 5 periodes per competitie mogelijk.
-        </p>
       </div>
     ),
   },
@@ -296,7 +269,7 @@ export default function HelpPage() {
         {/* Topic list sidebar */}
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="px-4 py-3 bg-green-700 text-white font-semibold text-sm">
+            <div className="px-4 py-3 bg-orange-600 text-white font-semibold text-sm">
               <div className="flex items-center gap-2">
                 <QuestionIcon />
                 Onderwerpen
@@ -309,11 +282,11 @@ export default function HelpPage() {
                   onClick={() => setActiveTopic(topic.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition-colors ${
                     activeTopic === topic.id
-                      ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <span className={activeTopic === topic.id ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}>
+                  <span className={activeTopic === topic.id ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}>
                     {topic.icon}
                   </span>
                   {topic.title}
@@ -328,7 +301,7 @@ export default function HelpPage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-green-600 dark:text-green-400">
+                <span className="text-orange-600 dark:text-orange-400">
                   {currentTopic.icon}
                 </span>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -338,7 +311,7 @@ export default function HelpPage() {
               {currentTopic.relatedLink && (
                 <Link
                   href={currentTopic.relatedLink.href}
-                  className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium flex items-center gap-1"
+                  className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium flex items-center gap-1"
                 >
                   {currentTopic.relatedLink.label}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

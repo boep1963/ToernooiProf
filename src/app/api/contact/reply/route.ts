@@ -4,9 +4,8 @@ import { BCC_EMAILS } from '@/lib/emailQueue';
 import { cookies } from 'next/headers';
 
 // Helper to get authenticated org from session cookie
-async function getAuthOrg(): Promise<{ orgNummer: number; orgName: string } | null> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('clubmatch-session');
+async function getAuthOrg(request: NextRequest): Promise<{ orgNummer: number; orgName: string } | null> {
+  const sessionCookie = request.cookies.get('toernooiprof-session');
   if (!sessionCookie) return null;
   try {
     const session = JSON.parse(sessionCookie.value);
@@ -22,8 +21,8 @@ async function getAuthOrg(): Promise<{ orgNummer: number; orgName: string } | nu
  * The reply is sent to the org_email from the original contact message.
  */
 export async function POST(request: NextRequest) {
-  const auth = await getAuthOrg();
-  if (!auth) {
+  const authOrg = await getAuthOrg(request);
+  if (!authOrg) {
     return NextResponse.json({ error: 'Niet ingelogd. Log opnieuw in.' }, { status: 401 });
   }
 
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
     const onderwerp = contactData.onderwerp_label || contactData.onderwerp || 'Contact';
-    const programma = contactData.programma || 'ClubMatch';
+    const programma = contactData.programma || 'ToernooiProf';
 
     // Add reply to email queue
     const emailDoc = {
@@ -82,7 +81,7 @@ Ons antwoord:
 ${replyMessage.trim()}
 
 Met vriendelijke groet,
-Het ClubMatch Team`,
+Het ToernooiProf Team`,
       type: 'notification',
       status: 'pending',
       created_at: now,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Footer from '@/components/layout/Footer';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { CompetitionProvider } from '@/context/CompetitionContext';
+import { TournamentProvider } from '@/context/TournamentContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
@@ -119,9 +119,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider initialTheme={organization?.theme_preference}>
-      <CompetitionProvider>
+      <TournamentProvider>
         <AuthenticatedLayout>{children}</AuthenticatedLayout>
-      </CompetitionProvider>
+      </TournamentProvider>
     </ThemeProvider>
   );
 }

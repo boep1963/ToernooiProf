@@ -37,21 +37,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const periodeParam = searchParams.get('periode');
+    const pouleIdParam = searchParams.get('poule_id');
+ 
+     // Build additional filters
+     const additionalFilters: Array<{ field: string; op: any; value: any }> = [];
+ 
+     if (periodeParam !== null) {
+       const periode = parseInt(periodeParam, 10);
+       if (!isNaN(periode)) {
+         additionalFilters.push({ field: 'periode', op: '==', value: periode });
+         console.log('[MATCHES] Filtering by periode:', periode);
+       }
+     }
 
-    // Build additional filters
-    const additionalFilters: Array<{ field: string; op: FirebaseFirestore.WhereFilterOp; value: any }> = [];
-
-    if (periodeParam !== null) {
-      const periode = parseInt(periodeParam, 10);
-      if (!isNaN(periode)) {
-        additionalFilters.push({ field: 'periode', op: '==', value: periode });
-        console.log('[MATCHES] Filtering by periode:', periode);
-      }
-    }
+     if (pouleIdParam !== null) {
+       additionalFilters.push({ field: 'poule_id', op: '==', value: pouleIdParam });
+       console.log('[MATCHES] Filtering by poule_id:', pouleIdParam);
+     }
 
     console.log('[MATCHES] Querying database for matches of competition:', compNumber, 'in org:', orgNummer);
     const snapshot = await queryWithOrgComp(
-      db.collection('matches'),
+      db.collection('matches') as any,
       orgNummer,
       compNumber,
       additionalFilters
@@ -107,7 +113,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get competition details
     console.log('[MATCHES] Fetching competition details...');
     const compSnapshot = await queryWithOrgComp(
-      db.collection('competitions'),
+      db.collection('competitions') as any,
       orgNummer,
       compNumber
     );
@@ -124,27 +130,42 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const periode = Number(compData?.periode) || 1;
     const sorteren = Number(compData?.sorteren) || 1;
 
-    // Get periode-specific caramboles key (NOT discipline - that was the bug!)
-    const carKeyMap: Record<number, string> = {
-      1: 'spc_car_1', 2: 'spc_car_2', 3: 'spc_car_3', 4: 'spc_car_4', 5: 'spc_car_5',
-    };
-    const carKey = carKeyMap[periode] || 'spc_car_1';
+    const body = await request.json().catch(() => ({}));
+    const pouleId = body.poule_id;
+    const forceRegenerate = body.force === true;
 
-    // Get all players in the competition
-    console.log('[MATCHES] Fetching players...');
-    const playersSnapshot = await queryWithOrgComp(
-      db.collection('competition_players'),
-      orgNummer,
-      compNumber,
-      [],
-      'spc_org',
-      'spc_competitie'
-    );
+    let playersSnapshot: any;
+    let effectivePeriode = periode;
+
+    if (pouleId) {
+      console.log(`[MATCHES] Generating matches for poule ${pouleId}...`);
+      // Get players from poule_players
+      playersSnapshot = await db.collection('poule_players')
+        .where('poule_id', '==', pouleId)
+        .get();
+      
+      // Get poule details to know the ronde_nr
+      const pouleDoc = await db.collection('poules').doc(pouleId).get();
+      if (pouleDoc.exists) {
+        effectivePeriode = (pouleDoc.data()?.ronde_nr as number) || periode;
+      }
+    } else {
+      console.log('[MATCHES] Generating matches for all players in competition...');
+      playersSnapshot = await queryWithOrgComp(
+        db.collection('competition_players') as any,
+        orgNummer,
+        compNumber,
+        [],
+        'spc_org',
+        'spc_competitie'
+      );
+    }
 
     // Prepare players for batch enrichment
-    const playersToEnrich = playersSnapshot.docs.map(doc => ({
+    const playersToEnrich = playersSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ref: doc.ref,
+      spc_nummer: doc.data().spc_nummer,
       ...doc.data()
     }));
 
@@ -163,14 +184,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       vnaam: string;
       tv: string;
       anaam: string;
-    }> = enrichedPlayers.map(player => ({
-      nummer: Number(player.spc_nummer) || 0,
-      naam: formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren),
-      caramboles: Number(player[carKey]) || 0,
-      vnaam: player.spa_vnaam,
-      tv: player.spa_tv,
-      anaam: player.spa_anaam,
-    }));
+    }> = enrichedPlayers.map(player => {
+      let caramboles = 0;
+      if (pouleId) {
+        // Use the caramboles stored in the poule_player record
+        caramboles = Number(player.caramboles_start) || 0;
+      } else {
+        // Use the period-specific caramboles key from the competition_player record
+        const carKeyMap: Record<number, string> = {
+          1: 'spc_car_1', 2: 'spc_car_2', 3: 'spc_car_3', 4: 'spc_car_4', 5: 'spc_car_5',
+        };
+        const carKey = carKeyMap[effectivePeriode] || 'spc_car_1';
+        caramboles = Number(player[carKey]) || 0;
+      }
+
+      return {
+        nummer: Number(player.spc_nummer) || 0,
+        naam: formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren),
+        caramboles,
+        vnaam: player.spa_vnaam,
+        tv: player.spa_tv,
+        anaam: player.spa_anaam,
+      };
+    });
 
     if (players.length < 2) {
       return NextResponse.json(
@@ -179,25 +215,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check if matches already exist
-    const existingMatches = await queryWithOrgComp(
-      db.collection('matches'),
-      orgNummer,
-      compNumber
-    );
-
-    // Parse optional body for regeneration flag
-    let forceRegenerate = false;
-    try {
-      const body = await request.json();
-      forceRegenerate = body?.force === true;
-    } catch {
-      // No body or invalid JSON, that's fine
+    // Check if matches already exist for this scope
+    let matchesQuery: any = db.collection('matches')
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
+      .where('periode', '==', effectivePeriode);
+    
+    if (pouleId) {
+      matchesQuery = matchesQuery.where('poule_id', '==', pouleId);
     }
+
+    const existingMatches = await matchesQuery.get();
 
     if (!existingMatches.empty && !forceRegenerate) {
       return NextResponse.json(
-        { error: 'Er bestaan al wedstrijden voor deze competitie. Gebruik force=true om opnieuw te genereren.' },
+        { error: `Er bestaan al wedstrijden voor ${pouleId ? 'deze poule' : 'deze competitie'}. Gebruik force=true om opnieuw te genereren.` },
         { status: 409 }
       );
     }
@@ -206,7 +238,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!existingMatches.empty && forceRegenerate) {
       console.log('[MATCHES] Deleting existing matches...');
       const allExisting = await queryWithOrgComp(
-        db.collection('matches'),
+        db.collection('matches') as any,
         orgNummer,
         compNumber
       );
@@ -239,7 +271,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const existingMatchesSnapshot = await db.collection('matches')
       .where('org_nummer', '==', orgNummer)
       .where('comp_nr', '==', compNumber)
-      .where('periode', '==', periode)
+      .where('periode', '==', effectivePeriode)
       .get();
 
     // Build Set of existing pairings for O(1) duplicate detection
@@ -251,12 +283,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const numB = Number(data.nummer_B);
       // Store normalized key (smaller number first)
       const key = numA < numB
-        ? `${periode}_${numA}_${numB}`
-        : `${periode}_${numB}_${numA}`;
+        ? `${effectivePeriode}_${numA}_${numB}`
+        : `${effectivePeriode}_${numB}_${numA}`;
       existingPairings.add(key);
     });
 
-    console.log(`[MATCHES] Found ${existingPairings.size} existing pairings in period ${periode}`);
+    console.log(`[MATCHES] Found ${existingPairings.size} existing pairings in period ${effectivePeriode}`);
 
     // Create match documents
     const createdMatches: Record<string, unknown>[] = [];
@@ -272,35 +304,36 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
         // Create a normalized pairing key (always smaller number first)
         const pairingKey = playerANr < playerBNr
-          ? `${periode}_${playerANr}_${playerBNr}`
-          : `${periode}_${playerBNr}_${playerANr}`;
+          ? `${effectivePeriode}_${playerANr}_${playerBNr}`
+          : `${effectivePeriode}_${playerBNr}_${playerANr}`;
 
         // Check if this pairing already exists in this batch
         if (createdPairings.has(pairingKey)) {
-          console.log(`[MATCHES] Skipping duplicate pairing: ${playerA.naam} vs ${playerB.naam} in period ${periode}`);
+          console.log(`[MATCHES] Skipping duplicate pairing: ${playerA.naam} vs ${playerB.naam} in period ${effectivePeriode}`);
           continue;
         }
+ 
+         // Check if this pairing already exists in the database (O(1) lookup)
+         if (existingPairings.has(pairingKey)) {
+           console.log(`[MATCHES] Skipping duplicate pairing (already in DB): ${playerA.naam} vs ${playerB.naam} in period ${effectivePeriode}`);
+           continue;
+         }
 
-        // Check if this pairing already exists in the database (O(1) lookup)
-        if (existingPairings.has(pairingKey)) {
-          console.log(`[MATCHES] Skipping duplicate pairing (already in DB): ${playerA.naam} vs ${playerB.naam} in period ${periode}`);
-          continue;
-        }
-
-        const matchCode = generateMatchCode(periode, playerANr, playerBNr);
-
-        const matchData = {
-          org_nummer: orgNummer,
-          comp_nr: compNumber,
-          nummer_A: playerANr,
-          naam_A: playerA.naam,
-          cartem_A: playerA.caramboles,
-          tafel: '000000000000', // No table assigned yet (binary string, 12 tables)
-          nummer_B: playerBNr,
-          naam_B: playerB.naam,
-          cartem_B: playerB.caramboles,
-          periode: periode,
-          uitslag_code: matchCode,
+        const matchCode = generateMatchCode(effectivePeriode, playerANr, playerBNr);
+ 
+         const matchData = {
+           org_nummer: orgNummer,
+           comp_nr: compNumber,
+           nummer_A: playerANr,
+           naam_A: playerA.naam,
+           cartem_A: playerA.caramboles,
+           tafel: '000000000000', // No table assigned yet (binary string, 12 tables)
+           nummer_B: playerBNr,
+           naam_B: playerB.naam,
+           cartem_B: playerB.caramboles,
+           periode: effectivePeriode,
+           poule_id: pouleId || null,
+           uitslag_code: matchCode,
           gespeeld: 0, // Not played yet
           ronde: roundIdx + 1, // Round number for display
         };

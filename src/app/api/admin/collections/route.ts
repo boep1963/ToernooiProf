@@ -4,7 +4,7 @@ import db from '@/lib/db';
 
 /**
  * GET /api/admin/collections
- * Lists all Firestore collections under the ClubMatch/data namespace with document counts.
+ * Lists all Firestore collections under the ToernooiProf/data namespace with document counts.
  * Protected by super admin check.
  */
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // List of all collections in the ClubMatch/data namespace
+    // List of all collections in the ToernooiProf/data namespace
     const collectionNames = [
       'organizations',
       'members',

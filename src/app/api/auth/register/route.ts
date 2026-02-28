@@ -187,12 +187,13 @@ export async function POST(request: NextRequest) {
       message: 'Account aangemaakt! Verifieer uw e-mailadres om verder te gaan.',
     }, { status: 201 });
 
-    // Set session cookie (unverified - user needs to complete email verification)
-    response.cookies.set('clubmatch-session', JSON.stringify({
+    // Set session cookie anyway so they can be logged in after verification
+    const sessionData = {
       orgNummer: nextOrgNummer,
       orgNaam: org_naam.trim(),
       loginTime: new Date().toISOString(),
-    }), {
+    };
+    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

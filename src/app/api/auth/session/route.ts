@@ -4,7 +4,7 @@ import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get('clubmatch-session');
+    const sessionCookie = request.cookies.get('toernooiprof-session');
 
     if (!sessionCookie?.value) {
       return NextResponse.json(

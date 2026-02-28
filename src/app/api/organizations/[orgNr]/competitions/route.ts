@@ -126,7 +126,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log('[COMPETITIONS] Creating new competition in database:', competitionData.comp_naam);
     const docRef = await db.collection('competitions').add(competitionData);
 
-    console.log('[COMPETITIONS] Competition created successfully, comp_nr:', newCompNr);
+    console.log('[TOURNAMENTS] Tournament created successfully, comp_nr:', newCompNr);
     return NextResponse.json({
       success: true,
       competition: {

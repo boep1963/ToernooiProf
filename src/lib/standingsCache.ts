@@ -19,14 +19,14 @@ class StandingsCache {
   /**
    * Generate cache key for standings
    */
-  private getKey(orgNummer: number, compNumber: number, periode: number): string {
+  private getKey(orgNummer: number, compNumber: number, periode: string | number): string {
     return `standings-${orgNummer}-${compNumber}-${periode}`;
   }
 
   /**
    * Get cached standings if not expired
    */
-  get<T>(orgNummer: number, compNumber: number, periode: number): T | null {
+  get<T>(orgNummer: number, compNumber: number, periode: string | number): T | null {
     const key = this.getKey(orgNummer, compNumber, periode);
     const entry = this.cache.get(key);
 
@@ -50,7 +50,7 @@ class StandingsCache {
   /**
    * Set cached standings
    */
-  set<T>(orgNummer: number, compNumber: number, periode: number, data: T): void {
+  set<T>(orgNummer: number, compNumber: number, periode: string | number, data: T): void {
     const key = this.getKey(orgNummer, compNumber, periode);
     this.cache.set(key, {
       data,

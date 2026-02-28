@@ -103,7 +103,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set('clubmatch-session', JSON.stringify({
+    // Set session cookie
+    response.cookies.set('toernooiprof-session', JSON.stringify({
       orgNummer: orgData?.org_nummer,
       orgNaam: orgData?.org_naam,
       loginTime: new Date().toISOString(),

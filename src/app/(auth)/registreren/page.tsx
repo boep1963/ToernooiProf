@@ -82,12 +82,12 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">CM</span>
+            <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">TP</span>
             </div>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            ClubMatch
+            ToernooiProf
           </h1>
           <p className="mt-2 text-slate-600 dark:text-slate-400">
             Account aanmaken
@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 p-8 border border-slate-200 dark:border-slate-700">
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            U kunt hier gratis een account aanmaken, waarna u ClubMatch Online onbeperkt kunt gebruiken. Vul de gegevens hieronder in en klik op &quot;Registreren&quot;.
+            U kunt hier gratis een account aanmaken, waarna u ToernooiProf onbeperkt kunt gebruiken. Vul de gegevens hieronder in en klik op &quot;Registreren&quot;.
           </p>
 
           {/* Error messages */}
@@ -137,7 +137,7 @@ export default function RegisterPage() {
                 minLength={5}
                 maxLength={30}
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">5 - 30 tekens, wordt getoond in het programma</p>
             </div>
@@ -156,7 +156,7 @@ export default function RegisterPage() {
                 minLength={5}
                 maxLength={30}
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">5 - 30 tekens, wordt gebruikt voor contact</p>
             </div>
@@ -174,7 +174,7 @@ export default function RegisterPage() {
                 required
                 maxLength={50}
                 aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Max 50 tekens, wordt gebruikt voor contact</p>
             </div>
@@ -187,7 +187,7 @@ export default function RegisterPage() {
                 id="aantalTafels"
                 value={aantalTafels}
                 onChange={(e) => setAantalTafels(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
                   <option key={num} value={num}>{num}</option>
@@ -199,14 +199,14 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm min-h-[44px]"
+              className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 dark:disabled:bg-orange-800 text-white font-medium rounded-lg transition-colors shadow-sm min-h-[44px]"
             >
               {isLoading ? 'Bezig met registreren...' : 'Registreren'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/inloggen" className="text-sm text-green-700 dark:text-green-400 hover:underline inline-flex items-center min-h-[44px]">
+            <a href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Al een account? Inloggen
             </a>
           </div>

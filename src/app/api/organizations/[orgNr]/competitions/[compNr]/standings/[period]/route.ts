@@ -24,6 +24,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const compNumber = parseInt(compNr, 10);
     const periodNumber = parseInt(period, 10);
 
+    const { searchParams } = new URL(request.url);
+    const pouleId = searchParams.get('poule_id');
+
     if (isNaN(orgNummer) || isNaN(compNumber) || isNaN(periodNumber)) {
       return NextResponse.json(
         { error: 'Ongeldige parameters' },
@@ -31,10 +34,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    console.log(`[STANDINGS] Calculating standings for competition ${compNumber}, period ${periodNumber}, org ${orgNummer}`);
+    console.log(`[STANDINGS] Calculating standings for competition ${compNumber}, period ${periodNumber}, org ${orgNummer}${pouleId ? `, poule ${pouleId}` : ''}`);
 
-    // Check cache first
-    const cachedStandings = standingsCache.get(orgNummer, compNumber, periodNumber);
+    // Check cache first (add pouleId to cache key)
+    const cacheKey = pouleId ? `${periodNumber}_${pouleId}` : String(periodNumber);
+    const cachedStandings = standingsCache.get(orgNummer, compNumber, cacheKey as any);
     if (cachedStandings) {
       console.log('[STANDINGS] Returning cached standings');
       return cachedJsonResponse(cachedStandings, 'default');
@@ -58,16 +62,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const sorteren = Number(compData?.sorteren) || 1;
     const punten_sys = Number(compData?.punten_sys ?? compData?.puntensysteem) || 1;
 
-    // Fetch all competition players
-    const playersSnapshot = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
-      .get();
+    let playersSnapshot;
+    if (pouleId) {
+      // Fetch only players in this poule
+      playersSnapshot = await db.collection('poule_players')
+        .where('poule_id', '==', pouleId)
+        .get();
+    } else {
+      // Fetch all competition players
+      playersSnapshot = await db.collection('competition_players')
+        .where('spc_org', '==', orgNummer)
+        .where('spc_competitie', '==', compNumber)
+        .get();
+    }
 
     // Prepare players for batch enrichment
-    const playersToEnrich = playersSnapshot.docs.map(doc => ({
+    const playersToEnrich = playersSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ref: doc.ref,
+      spc_nummer: doc.data().spc_nummer,
       ...doc.data()
     }));
 
@@ -79,17 +92,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     // Build player name map from enriched players (exclude players without moyenne in this period)
-    const playerMap: Record<number, { name: string; nr: number }> = {};
+    const playerMap: Record<number, { name: string; nr: number; playerRef?: any }> = {};
 
     for (const player of enrichedPlayers) {
-      if (periodNumber >= 1) {
+      if (periodNumber >= 1 && !pouleId) {
         const moyKey = `spc_moyenne_${periodNumber}`;
         const moy = Number((player as Record<string, unknown>)[moyKey]) || 0;
         if (moy <= 0) continue;
       }
       const nr = Number(player.spc_nummer);
       const name = formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren);
-      playerMap[nr] = { name, nr };
+      playerMap[nr] = { name, nr, playerRef: player };
     }
 
     // Fetch all results for this competition and period
@@ -100,6 +113,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (periodNumber !== 0) {
       resultsQuery = resultsQuery.where('periode', '==', periodNumber);
+    }
+
+    if (pouleId) {
+      resultsQuery = resultsQuery.where('poule_id', '==', pouleId);
     }
 
     const resultsSnapshot = await resultsQuery.get();
@@ -143,6 +160,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const brt = Number(result.brt) || 0;
       const p1Car = Number(result.sp_1_cargem) || 0;
       const p2Car = Number(result.sp_2_cargem) || 0;
+      const p1Target = pouleId ? (Number((playerMap[Number(result.sp_1_nr)]?.playerRef as any)?.caramboles_start) || 0) : (Number(result.sp_1_cartem) || 0);
+      const p2Target = pouleId ? (Number((playerMap[Number(result.sp_2_nr)]?.playerRef as any)?.caramboles_start) || 0) : (Number(result.sp_2_cartem) || 0);
 
       // Player 1 stats
       const p1Nr = Number(result.sp_1_nr);
@@ -273,7 +292,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     };
 
     // Cache the response for 30 seconds
-    standingsCache.set(orgNummer, compNumber, periodNumber, responseData);
+    standingsCache.set(orgNummer, compNumber, cacheKey as any, responseData);
 
     return cachedJsonResponse(responseData, 'default');
   } catch (error) {

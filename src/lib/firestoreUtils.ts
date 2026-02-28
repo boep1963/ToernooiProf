@@ -122,10 +122,10 @@ export async function dualTypeQuery(
  *
  * @param baseQuery - The base Firestore query/collection
  * @param orgNummer - Organization number
- * @param compNr - Competition number
+ * @param compNr - Tournament number
  * @param additionalFilters - Additional filters to apply
  * @param orgField - Custom field name for organization (default: 'org_nummer')
- * @param compField - Custom field name for competition (default: 'comp_nr')
+ * @param compField - Custom field name for tournament (default: 'comp_nr')
  * @returns Query snapshot
  */
 export async function queryWithOrgComp(

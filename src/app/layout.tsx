@@ -3,8 +3,8 @@ import './globals.css';
 import ChunkLoadHandler from '@/components/ChunkLoadHandler';
 
 export const metadata: Metadata = {
-  title: 'ClubMatch - Biljart Competitie Beheer',
-  description: 'Beheersysteem voor biljartcompetities - beheer leden, competities en uitslagen',
+  title: 'ToernooiProf',
+  description: 'Beheersysteem voor biljarttoernooien',
 };
 
 export default function RootLayout({

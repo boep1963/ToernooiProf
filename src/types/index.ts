@@ -32,8 +32,8 @@ export interface Member {
   spa_moy_kad: number;
 }
 
-// Competition (mapped from bj_competities)
-export interface Competition {
+// Tournament (mapped from bj_competities)
+export interface Tournament {
   org_nummer: number;
   comp_nr: number;
   comp_naam: string;
@@ -48,8 +48,8 @@ export interface Competition {
   sorteren: number; // 1=first name first, 2=last name first
 }
 
-// Competition Player (mapped from bj_spelers_comp)
-export interface CompetitionPlayer {
+// Tournament Player (mapped from bj_spelers_comp)
+export interface TournamentPlayer {
   spc_nummer: number;
   spc_org: number;
   spc_competitie: number;
@@ -160,7 +160,6 @@ export const MOYENNE_MULTIPLIERS: Record<number, number> = {
   4: 30,
   5: 40,
   6: 50,
-  7: 60,
 };
 
 // Moyenne formula labels for dropdowns (full text)
@@ -171,7 +170,6 @@ export const MOYENNE_FORMULE_LABELS: Record<number, string> = {
   4: 'Te maken car = Moyenne x 30',
   5: 'Te maken car = Moyenne x 40',
   6: 'Te maken car = Moyenne x 50',
-  7: 'Te maken car = Moyenne x 60',
 };
 
 // Standing entry for display

@@ -13,10 +13,16 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname);
+const envPath = path.join(projectRoot, '.env.local');
 
 // Initialize Firebase Admin
 const serviceAccount = JSON.parse(
-  readFileSync('/Users/p.l.m.deboer/Documents/ClubMatch/.env.local')
+  readFileSync(envPath)
     .toString()
     .split('\n')
     .find(line => line.startsWith('FIREBASE_SERVICE_ACCOUNT'))

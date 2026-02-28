@@ -86,11 +86,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Set session cookie
-    response.cookies.set('clubmatch-session', JSON.stringify({
+    const sessionData = {
       orgNummer: orgData?.org_nummer,
       orgNaam: orgData?.org_naam,
       loginTime: new Date().toISOString(),
-    }), {
+    };
+    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -15,7 +15,7 @@ export default function Footer() {
   return (
     <footer className="py-4 px-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-        <p suppressHydrationWarning>&copy; {year ?? '–'} ClubMatch - Biljart Competitie Beheer</p>
+        <p suppressHydrationWarning>&copy; {year ?? '–'} ToernooiProf</p>
         <p className="sm:ml-auto" suppressHydrationWarning>Versie {versionDisplay}</p>
       </div>
     </footer>

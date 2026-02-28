@@ -1,5 +1,5 @@
 /**
- * Date utilities for ClubMatch
+ * Date utilities for ToernooiProf
  *
  * Dates in Firestore (imported from legacy PHP/MariaDB) are stored as DD-MM-YYYY strings.
  * JavaScript's Date constructor cannot parse DD-MM-YYYY, so this module provides

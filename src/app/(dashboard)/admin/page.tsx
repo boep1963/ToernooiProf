@@ -94,7 +94,7 @@ export default function AdminPage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Welkom bij het Admin-paneel</h2>
             <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
-              Dit paneel is exclusief beschikbaar voor systeembeheerders en biedt inzicht in de onderliggende database-structuur van ClubMatch.
+              Dit paneel is exclusief beschikbaar voor systeembeheerders en biedt inzicht in de onderliggende database-structuur van ToernooiProf.
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function AdminPage() {
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat is een Firestore Collectie?</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Firestore is de database van ClubMatch. Elke <strong>collectie</strong> bevat gerelateerde gegevens: bijvoorbeeld de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">organizations</code> bevat alle organisaties, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">competitions</code> alle competities, enzovoort.
+              Firestore is de database van ToernooiProf. Elke <strong>collectie</strong> bevat gerelateerde gegevens: bijvoorbeeld de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">organizations</code> bevat alle organisaties, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">competitions</code> alle competities, enzovoort.
             </p>
           </div>
 
@@ -148,7 +148,7 @@ export default function AdminPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Firestore Collecties</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">ClubMatch/data namespace</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">ToernooiProf/data namespace</p>
             </div>
           </div>
         </div>

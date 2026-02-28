@@ -296,7 +296,7 @@ export default function AccountPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
           <span className="text-slate-600 dark:text-slate-400">Accountgegevens laden...</span>
         </div>
       </div>
@@ -330,18 +330,18 @@ export default function AccountPage() {
       )}
 
       {success && (
-        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+        <div role="status" className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-sm border border-orange-200 dark:border-orange-800 flex items-center justify-between">
           <span>{success}</span>
-          <button onClick={() => setSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
+          <button onClick={() => setSuccess('')} className="ml-3 text-orange-500 hover:text-orange-700 dark:hover:text-orange-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
       )}
 
       {uploadSuccess && (
-        <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center justify-between">
+        <div role="status" className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-sm border border-orange-200 dark:border-orange-800 flex items-center justify-between">
           <span>{uploadSuccess}</span>
-          <button onClick={() => setUploadSuccess('')} className="ml-3 text-green-500 hover:text-green-700 dark:hover:text-green-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
+          <button onClick={() => setUploadSuccess('')} className="ml-3 text-orange-500 hover:text-orange-700 dark:hover:text-orange-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -360,7 +360,7 @@ export default function AccountPage() {
                 <button
                   type="button"
                   onClick={handleEdit}
-                  className="px-4 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors border border-green-200 dark:border-green-800"
+                  className="px-4 py-2 text-sm font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-lg transition-colors border border-orange-200 dark:border-orange-800"
                 >
                   Bewerken
                 </button>
@@ -392,7 +392,7 @@ export default function AccountPage() {
                     placeholder="Naam van de organisatie"
                     required
                     aria-required="true"
-                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                 ) : (
                   <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white rounded-lg border border-slate-200 dark:border-slate-600">
@@ -413,7 +413,7 @@ export default function AccountPage() {
                     value={editContactPerson}
                     onChange={(e) => setEditContactPerson(e.target.value)}
                     placeholder="Naam contactpersoon"
-                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                 ) : (
                   <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white rounded-lg border border-slate-200 dark:border-slate-600">
@@ -434,7 +434,7 @@ export default function AccountPage() {
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     placeholder="email@voorbeeld.nl"
-                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                 ) : (
                   <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white rounded-lg border border-slate-200 dark:border-slate-600">
@@ -483,7 +483,7 @@ export default function AccountPage() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2.5 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isSaving ? 'Bezig met opslaan...' : 'Opslaan'}
               </button>
@@ -553,7 +553,7 @@ export default function AccountPage() {
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
                   onChange={handleLogoSelect}
-                  className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 dark:file:bg-green-900/30 file:text-green-700 dark:file:text-green-400 hover:file:bg-green-100 dark:hover:file:bg-green-900/50 file:cursor-pointer file:transition-colors"
+                  className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 dark:file:bg-orange-900/30 file:text-orange-700 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-orange-900/50 file:cursor-pointer file:transition-colors"
                 />
               </div>
               {selectedLogo && (
@@ -561,7 +561,7 @@ export default function AccountPage() {
                   type="button"
                   onClick={handleLogoUpload}
                   disabled={isUploadingLogo}
-                  className="px-6 py-2 bg-green-700 hover:bg-green-800 disabled:bg-green-400 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+                  className="px-6 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
                 >
                   {isUploadingLogo ? 'Uploaden...' : 'Upload'}
                 </button>
@@ -580,16 +580,16 @@ export default function AccountPage() {
               Nieuwsbrief
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Ontvang updates en nieuws over ClubMatch per e-mail.
+              Ontvang updates en nieuws over ToernooiProf per e-mail.
             </p>
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={handleNewsletterToggle}
                 disabled={isSavingNewsletter}
-                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
                   orgDetails.nieuwsbrief === 1
-                    ? 'bg-green-600'
+                    ? 'bg-orange-600'
                     : 'bg-slate-300 dark:bg-slate-600'
                 } ${isSavingNewsletter ? 'opacity-50 cursor-wait' : ''}`}
                 role="switch"

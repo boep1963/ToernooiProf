@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 // Helper to get authenticated org from session cookie
 async function getAuthOrg(): Promise<{ orgNummer: number; orgName: string } | null> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('clubmatch-session');
+  const sessionCookie = cookieStore.get('toernooiprof-session');
   if (!sessionCookie) return null;
   try {
     const session = JSON.parse(sessionCookie.value);
@@ -15,7 +15,7 @@ async function getAuthOrg(): Promise<{ orgNummer: number; orgName: string } | nu
   }
 }
 
-const VALID_PROGRAMMA = ['ClubMatch', 'ToernooiProf'];
+const VALID_PROGRAMMA = ['ToernooiProf'];
 const VALID_ONDERWERP = ['vraag', 'klacht', 'suggestie'];
 const ONDERWERP_LABELS: Record<string, string> = {
   vraag: 'Vraag',

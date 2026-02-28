@@ -55,7 +55,7 @@ export default function DashboardPage() {
       {/* Welcome card */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
         <p className="text-slate-600 dark:text-slate-400">
-          Welkom bij ClubMatch
+          Welkom bij ToernooiProf
           {organization?.org_naam ? `, ${organization.org_naam}` : ''}!
         </p>
         <p className="text-slate-500 dark:text-slate-500 mt-2 text-sm">
@@ -69,15 +69,15 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Competities
+                Toernooien
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {competitionCount}
               </p>
             </div>
-            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
               <svg
-                className="w-5 h-5 text-green-600 dark:text-green-400"
+                className="w-5 h-5 text-orange-600 dark:text-orange-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -117,8 +117,8 @@ export default function LoginPage() {
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Image
-              src="/clubmatchlogo.png"
-              alt="ClubMatch"
+              src="/ToernooiProf.png"
+              alt="ToernooiProf"
               width={140}
               height={140}
               className="w-[120px] h-auto object-contain"
@@ -126,10 +126,10 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            ClubMatch
+            ToernooiProf
           </h1>
           <p className="mt-2 text-slate-600 dark:text-slate-400">
-            Biljart Competitie Beheer
+            Biljart Toernooi Beheer
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export default function LoginPage() {
               onClick={() => { setLoginMethod('code'); setError(''); }}
               className={`flex-1 pb-3 pt-2 min-h-[44px] text-sm font-medium border-b-2 transition-colors ${
                 loginMethod === 'code'
-                  ? 'border-green-700 text-green-700 dark:text-green-400 dark:border-green-400'
+                  ? 'border-orange-600 text-orange-600 dark:text-orange-400 dark:border-orange-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -152,7 +152,7 @@ export default function LoginPage() {
               onClick={() => { setLoginMethod('email'); setError(''); }}
               className={`flex-1 pb-3 pt-2 min-h-[44px] text-sm font-medium border-b-2 transition-colors ${
                 loginMethod === 'email'
-                  ? 'border-green-700 text-green-700 dark:text-green-400 dark:border-green-400'
+                  ? 'border-orange-600 text-orange-600 dark:text-orange-400 dark:border-orange-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -197,7 +197,7 @@ export default function LoginPage() {
                     required
                     aria-required="true"
                     autoComplete="one-time-code"
-                    className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                   <button
                     type="button"
@@ -221,7 +221,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+                className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 dark:disabled:bg-orange-800 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}
               </button>
@@ -240,7 +240,7 @@ export default function LoginPage() {
                   placeholder="uw@email.nl"
                   required
                   aria-required="true"
-                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                 />
               </div>
               <div>
@@ -255,7 +255,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     aria-required="true"
-                    className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                    className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                   <button
                     type="button"
@@ -281,7 +281,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm"
+                className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 dark:disabled:bg-orange-800 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isLoading ? 'Bezig met inloggen...' : 'Inloggen'}
               </button>
@@ -289,7 +289,7 @@ export default function LoginPage() {
           )}
 
           <div className="mt-6 text-center">
-            <a href="/registreren" className="text-sm text-green-700 dark:text-green-400 hover:underline inline-flex items-center min-h-[44px]">
+            <a href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Nog geen account? Registreer hier
             </a>
           </div>

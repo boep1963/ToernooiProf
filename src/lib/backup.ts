@@ -1,5 +1,5 @@
 /**
- * Firestore Backup and Restore Library for ClubMatch
+ * Firestore Backup and Restore Library for ToernooiProf
  *
  * Provides functions to:
  * - Export all Firestore collections to Cloud Storage as JSON
@@ -11,7 +11,7 @@
 import { Storage } from '@google-cloud/storage';
 import { adminDb } from './firebase-admin';
 
-const FIRESTORE_PREFIX = 'ClubMatch/data';
+const FIRESTORE_PREFIX = 'ToernooiProf/data';
 
 export interface BackupMetadata {
   timestamp: string;

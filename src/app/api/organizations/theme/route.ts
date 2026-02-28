@@ -3,7 +3,7 @@ import db from '@/lib/db';
 
 export async function PATCH(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get('clubmatch-session');
+    const sessionCookie = request.cookies.get('toernooiprof-session');
 
     if (!sessionCookie?.value) {
       return NextResponse.json(

@@ -20,7 +20,7 @@ export async function GET(
 
     if (isNaN(org_nummer) || isNaN(comp_nr)) {
       return NextResponse.json(
-        { error: 'Ongeldige organisatie of competitie nummer.' },
+        { error: 'Ongeldige organisatie of toernooi nummer.' },
         { status: 400 }
       );
     }
@@ -36,13 +36,20 @@ export async function GET(
 
     if (competitionsSnapshot.empty) {
       return NextResponse.json(
-        { error: 'Competitie niet gevonden.' },
+        { error: 'Toernooi niet gevonden.' },
         { status: 404 }
       );
     }
 
     const competitionDoc = competitionsSnapshot.docs[0];
     const competition = competitionDoc.data();
+
+    if (!competition) {
+      return NextResponse.json(
+        { error: 'Toernooigegevens ongeldig.' },
+        { status: 500 }
+      );
+    }
 
     // 2. Get all players in this competition
     const playersSnapshot = await db
@@ -72,7 +79,7 @@ export async function GET(
             type: 'error',
             category: 'Spelers',
             message: `Speler ${spa_nummer} bestaat niet in de ledenlijst`,
-            details: 'Deze speler is toegevoegd aan de competitie maar bestaat niet meer in de ledenlijst.',
+            details: 'Deze speler is toegevoegd aan de toernooi maar bestaat niet meer in de ledenlijst.',
           });
         }
       }
@@ -80,7 +87,7 @@ export async function GET(
       issues.push({
         type: 'warning',
         category: 'Spelers',
-        message: 'Geen spelers toegevoegd aan deze competitie',
+        message: 'Geen spelers toegevoegd aan dit toernooi',
         details: 'Voeg spelers toe om wedstrijden te kunnen plannen.',
       });
     }
@@ -106,7 +113,7 @@ export async function GET(
           type: 'error',
           category: 'Wedstrijden',
           message: `Wedstrijd ${m.uitslag_code} verwijst naar onbekende speler ${m.nummer_A}`,
-          details: 'Deze speler is niet toegevoegd aan de competitie.',
+          details: 'Deze speler is niet toegevoegd aan het toernooi.',
         });
       }
 
@@ -115,7 +122,7 @@ export async function GET(
           type: 'error',
           category: 'Wedstrijden',
           message: `Wedstrijd ${m.uitslag_code} verwijst naar onbekende speler ${m.nummer_B}`,
-          details: 'Deze speler is niet toegevoegd aan de competitie.',
+          details: 'Deze speler is niet toegevoegd aan het toernooi.',
         });
       }
 
@@ -258,7 +265,7 @@ export async function GET(
     const info = issues.filter((i) => i.type === 'info').length;
 
     const report = {
-      competition: {
+      tournament: {
         comp_nr: competition.comp_nr,
         comp_naam: competition.comp_naam,
         periode: competition.periode || 1,
@@ -281,9 +288,9 @@ export async function GET(
 
     return cachedJsonResponse(report, 'short', 200);
   } catch (error) {
-    console.error('Error validating competition:', error);
+    console.error('Error validating tournament:', error);
     return NextResponse.json(
-      { error: 'Er is een fout opgetreden bij het valideren van de competitie.' },
+      { error: 'Er is een fout opgetreden bij het valideren van het toernooi.' },
       { status: 500 }
     );
   }

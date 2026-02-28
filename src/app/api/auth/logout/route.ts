@@ -4,7 +4,7 @@ export async function POST() {
   const response = NextResponse.json({ success: true });
 
   // Clear session cookie
-  response.cookies.set('clubmatch-session', '', {
+  response.cookies.set('toernooiprof-session', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

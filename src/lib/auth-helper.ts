@@ -9,7 +9,7 @@ export function validateOrgAccess(
   request: NextRequest,
   requestedOrgNr: string | number
 ): { orgNummer: number } | NextResponse {
-  const sessionCookie = request.cookies.get('clubmatch-session');
+  const sessionCookie = request.cookies.get('toernooiprof-session');
 
   if (!sessionCookie?.value) {
     return NextResponse.json(

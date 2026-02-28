@@ -44,6 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const endDate = searchParams.get('endDate');
     const gespeeldParam = searchParams.get('gespeeld');
     const periodeParam = searchParams.get('periode');
+    const pouleIdParam = searchParams.get('poule_id');
 
     console.log('[RESULTS] Querying database for results of competition:', compNumber, 'in org:', orgNummer);
     console.log('[RESULTS] Filters - startDate:', startDate, 'endDate:', endDate, 'gespeeld:', gespeeldParam, 'periode:', periodeParam);
@@ -66,9 +67,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    if (pouleIdParam !== null) {
+      additionalFilters.push({ field: 'poule_id', op: '==', value: pouleIdParam });
+      console.log('[RESULTS] Filtering by poule_id:', pouleIdParam);
+    }
+
     // Use dual-type query to handle both string and number variants
     const snapshot = await queryWithOrgComp(
-      db.collection('results'),
+      db.collection('results') as any,
       orgNummer,
       compNumber,
       additionalFilters
@@ -117,7 +123,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       // Get competition settings for name formatting
       const compSnapshot = await queryWithOrgComp(
-        db.collection('competitions'),
+        db.collection('competitions') as any,
         orgNummer,
         compNumber
       );
@@ -141,7 +147,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       for (let i = 0; i < playerNrsArray.length; i += 30) {
         const batch = playerNrsArray.slice(i, i + 30);
         const playersSnapshot = await queryWithOrgComp(
-          db.collection('competition_players'),
+          db.collection('competition_players') as any,
           orgNummer,
           compNumber,
           [{ field: 'spc_nummer', op: 'in', value: batch }],
@@ -151,6 +157,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         for (const doc of playersSnapshot.docs) {
           const data = doc.data();
+          if (!data) continue;
           const nummer = Number(data.spc_nummer);
           const vnaam = data.spa_vnaam;
           const tv = data.spa_tv;
@@ -159,8 +166,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
           if (hasEmptyName) {
             playersNeedingMemberLookup.add(nummer);
-          } else {
-            compPlayerData.set(nummer, { vnaam, tv, anaam });
+          } else if (vnaam !== undefined && anaam !== undefined) {
+            compPlayerData.set(nummer, { vnaam, tv: tv || '', anaam });
           }
         }
       }
@@ -174,7 +181,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         for (let i = 0; i < membersArray.length; i += 30) {
           const batch = membersArray.slice(i, i + 30);
           const membersSnapshot = await queryWithOrgComp(
-            db.collection('members'),
+            db.collection('members') as any,
             orgNummer,
             null,
             [{ field: 'spa_nummer', op: 'in', value: batch }],
@@ -183,11 +190,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
           for (const doc of membersSnapshot.docs) {
             const memberData = doc.data();
+            if (!memberData) continue;
             const nummer = Number(memberData.spa_nummer);
             memberDataMap.set(nummer, {
-              vnaam: memberData.spa_vnaam,
-              tv: memberData.spa_tv,
-              anaam: memberData.spa_anaam
+              vnaam: memberData.spa_vnaam || '',
+              tv: memberData.spa_tv || '',
+              anaam: memberData.spa_anaam || ''
             });
           }
         }
@@ -327,6 +335,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sp_2_cargem,
       sp_2_hs,
       brt, // beurten (turns)
+      poule_id,
     } = body;
 
     if (!uitslag_code || !sp_1_nr || !sp_2_nr) {
@@ -377,7 +386,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get competition details for point calculation
     console.log('[RESULTS] Fetching competition details...');
     const compSnapshot = await queryWithOrgComp(
-      db.collection('competitions'),
+      db.collection('competitions') as any,
       orgNummer,
       compNumber
     );
@@ -467,7 +476,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Batch fetch both players from competition_players (1 query instead of 2)
     const playerNrs = [Number(sp_1_nr), Number(sp_2_nr)];
     const playersSnapshot = await queryWithOrgComp(
-      db.collection('competition_players'),
+      db.collection('competition_players') as any,
       orgNummer,
       compNumber,
       [{ field: 'spc_nummer', op: 'in', value: playerNrs }],
@@ -479,7 +488,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const playerDataMap = new Map<number, FirebaseFirestore.DocumentData>();
     playersSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      playerDataMap.set(Number(data.spc_nummer), data);
+      if (data) {
+        playerDataMap.set(Number(data.spc_nummer), data);
+      }
     });
 
     const p1Data = playerDataMap.get(Number(sp_1_nr));
@@ -498,7 +509,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Batch fetch both players from members collection (1 query instead of 2)
     const membersSnapshot = await queryWithOrgComp(
-      db.collection('members'),
+      db.collection('members') as any,
       orgNummer,
       null,
       [{ field: 'spa_nummer', op: 'in', value: playerNrs }],
@@ -517,11 +528,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Format player names
     if (m1Data) {
-      sp_1_naam = formatPlayerName(m1Data.spa_vnaam, m1Data.spa_tv, m1Data.spa_anaam, sorteren);
+      sp_1_naam = formatPlayerName(m1Data.spa_vnaam || '', m1Data.spa_tv || '', m1Data.spa_anaam || '', sorteren);
     }
-
+ 
     if (m2Data) {
-      sp_2_naam = formatPlayerName(m2Data.spa_vnaam, m2Data.spa_tv, m2Data.spa_anaam, sorteren);
+      sp_2_naam = formatPlayerName(m2Data.spa_vnaam || '', m2Data.spa_tv || '', m2Data.spa_anaam || '', sorteren);
     }
 
     if (baseSys === 1) {
@@ -562,6 +573,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sp_2_hs: p2Hs,
       sp_2_punt: sp_2_punt,
       gespeeld: 1,
+      poule_id: poule_id || null,
     };
 
     // Add denormalized player names if available (for performance)
@@ -571,7 +583,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check if result already exists
     console.log('[RESULTS] Checking if result already exists...');
     const existingResult = await queryWithOrgComp(
-      db.collection('results'),
+      db.collection('results') as any,
       orgNummer,
       compNumber,
       [{ field: 'uitslag_code', op: '==', value: uitslag_code }]
@@ -594,7 +606,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Mark the match as played (gespeeld=1)
     console.log('[RESULTS] Marking match as played...');
     const matchSnapshot = await queryWithOrgComp(
-      db.collection('matches'),
+      db.collection('matches') as any,
       orgNummer,
       compNumber,
       [{ field: 'uitslag_code', op: '==', value: uitslag_code }]

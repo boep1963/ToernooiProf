@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import db from '@/lib/db';
 
 // Re-export client-safe helpers so existing server-side imports keep working
@@ -24,7 +25,8 @@ import { isSuperAdmin } from '@/lib/admin-shared';
 export async function validateSuperAdmin(
   request: NextRequest
 ): Promise<{ isSuperAdmin: true; orgNummer: number } | NextResponse> {
-  const sessionCookie = request.cookies.get('clubmatch-session');
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('toernooiprof-session');
 
   if (!sessionCookie?.value) {
     return NextResponse.json(

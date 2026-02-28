@@ -100,12 +100,12 @@ function VerificationPageContent() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-2xl">CM</span>
+              <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl">TP</span>
               </div>
             </div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-              ClubMatch
+              ToernooiProf
             </h1>
             <p className="mt-2 text-slate-600 dark:text-slate-400">
               Verificatie voltooid!
@@ -116,8 +116,8 @@ function VerificationPageContent() {
             <div className="text-center space-y-4">
               {/* Success icon */}
               <div className="flex items-center justify-center mb-2">
-                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 </div>
@@ -134,7 +134,7 @@ function VerificationPageContent() {
 
               <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Uw inlogcode:</p>
-                <p className="text-2xl font-mono font-bold text-green-700 dark:text-green-400 tracking-wider select-all">
+                <p className="text-2xl font-mono font-bold text-orange-600 dark:text-orange-400 tracking-wider select-all">
                   {success.org_code}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
@@ -148,14 +148,14 @@ function VerificationPageContent() {
 
               <a
                 href="/dashboard"
-                className="block w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm text-center min-h-[44px] leading-[28px]"
+                className="block w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm text-center min-h-[44px] leading-[28px]"
               >
                 Ga naar Dashboard
               </a>
 
               <a
                 href="/inloggen"
-                className="block text-sm text-slate-500 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400 hover:underline min-h-[44px] leading-[44px]"
+                className="block text-sm text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:underline min-h-[44px] leading-[44px]"
               >
                 Naar inlogpagina
               </a>
@@ -176,12 +176,12 @@ function VerificationPageContent() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-14 h-14 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">CM</span>
+            <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">TP</span>
             </div>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            ClubMatch
+            ToernooiProf
           </h1>
           <p className="mt-2 text-slate-600 dark:text-slate-400">
             E-mail verificatie
@@ -234,25 +234,25 @@ function VerificationPageContent() {
                 maxLength={10}
                 autoComplete="one-time-code"
                 aria-required="true"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors text-center text-2xl font-mono tracking-widest"
+                className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors text-center text-2xl font-mono tracking-widest"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 bg-green-700 hover:bg-green-800 disabled:bg-green-400 dark:disabled:bg-green-800 text-white font-medium rounded-lg transition-colors shadow-sm min-h-[44px]"
+              className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 dark:disabled:bg-orange-800 text-white font-medium rounded-lg transition-colors shadow-sm min-h-[44px]"
             >
               {isLoading ? 'Bezig met verifiëren...' : 'Verifiëren'}
             </button>
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            <a href="/registreren" className="text-sm text-green-700 dark:text-green-400 hover:underline inline-flex items-center min-h-[44px]">
+            <a href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Opnieuw registreren
             </a>
             <span className="text-slate-300 dark:text-slate-600 mx-2">|</span>
-            <a href="/inloggen" className="text-sm text-green-700 dark:text-green-400 hover:underline inline-flex items-center min-h-[44px]">
+            <a href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Inloggen
             </a>
           </div>
@@ -268,7 +268,7 @@ export default function VerificationPage(_props: { searchParams?: Promise<Record
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">Laden...</p>
         </div>
       </div>
