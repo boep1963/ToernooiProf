@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
+import { isValidAdminCollection } from '@/lib/admin-collections';
 
 /**
  * POST /api/admin/collections/[collection]/import
@@ -20,6 +21,13 @@ export async function POST(
     }
 
     const { collection } = await params;
+
+    if (!isValidAdminCollection(collection)) {
+      return NextResponse.json(
+        { error: 'Ongeldige collectie naam.' },
+        { status: 400 }
+      );
+    }
 
     // Parse multipart form data
     const formData = await request.formData();

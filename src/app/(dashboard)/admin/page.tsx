@@ -103,21 +103,21 @@ export default function AdminPage() {
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat is een Firestore Collectie?</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Firestore is de database van ToernooiProf. Elke <strong>collectie</strong> bevat gerelateerde gegevens: bijvoorbeeld de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">organizations</code> bevat alle organisaties, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">competitions</code> alle competities, enzovoort.
+              Firestore is de database van ToernooiProf. Elke <strong>collectie</strong> bevat gerelateerde gegevens: bijvoorbeeld <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">organizations</code> bevat organisaties/gebruikers, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">toernooien</code> competities, <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">uitslagen</code> partijen en resultaten, enzovoort.
             </p>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat betekent het aantal documenten?</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Elk document is één record in de database. Bijvoorbeeld: 50 documenten in de collectie <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">members</code> betekent dat er 50 leden zijn opgeslagen in het systeem.
+              Elk document is één record in de database. Bijvoorbeeld: 50 documenten in <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">spelers</code> betekent 50 spelers in toernooien; 100 in <code className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">uitslagen</code> betekent 100 partijen.
             </p>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Wat kunt u doen met de &quot;Bekijken&quot; link?</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Door op <strong>Bekijken</strong> te klikken bij een collectie, kunt u de individuele documenten inzien. Dit is handig voor het controleren van data, het opsporen van fouten, of het inspecteren van specifieke records (bijvoorbeeld het bekijken van alle uitslagen in een competitie).
+              Door op <strong>Bekijken</strong> te klikken bij een collectie, kunt u de individuele documenten inzien. Handig voor controle, foutopsporing, of het inspecteren van records (bijv. alle uitslagen van een toernooi).
             </p>
           </div>
 

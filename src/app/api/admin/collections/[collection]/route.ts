@@ -1,26 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
-
-/**
- * Validate collection name against whitelist
- */
-function isValidCollection(collection: string): boolean {
-  const validCollections = [
-    'organizations',
-    'members',
-    'competitions',
-    'competition_players',
-    'matches',
-    'results',
-    'tables',
-    'device_config',
-    'scoreboards',
-    'email_queue',
-    'contact_messages',
-  ];
-  return validCollections.includes(collection);
-}
+import { isValidAdminCollection } from '@/lib/admin-collections';
 
 /**
  * GET /api/admin/collections/[collection]
@@ -50,7 +31,7 @@ export async function GET(
     const searchTerm = searchParams.get('search') || '';
 
     // Validate collection name
-    if (!isValidCollection(collection)) {
+    if (!isValidAdminCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }
@@ -125,7 +106,7 @@ export async function GET(
 
       // Auto-detect key fields to display in the list
       const keyFields: Record<string, any> = {};
-      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 'comp_naam', 'email', 'org_wl_email', 'to', 'subject', 'type', 'status', 'created_at', 'programma', 'onderwerp', 'onderwerp_label', 'org_contactpersoon', 'org_email', 'tijd'];
+      const priorityFields = ['name', 'naam', 'voornaam', 'achternaam', 'org_naam', 't_naam', 'comp_naam', 'email', 'org_wl_email', 'gebruiker_nr', 't_nummer', 'sp_nummer', 'sp_naam', 'gespeeld', 'to', 'subject', 'type', 'status', 'created_at', 'onderwerp', 'org_email', 'tijd'];
 
       // Include ID
       keyFields.id = doc.id;
@@ -200,7 +181,7 @@ export async function POST(
     const { collection } = await params;
 
     // Validate collection name
-    if (!isValidCollection(collection)) {
+    if (!isValidAdminCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }

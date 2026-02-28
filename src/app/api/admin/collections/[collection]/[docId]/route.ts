@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
+import { isValidAdminCollection } from '@/lib/admin-collections';
 
 /**
  * GET /api/admin/collections/[collection]/[docId]
@@ -20,22 +21,7 @@ export async function GET(
   try {
     const { collection, docId } = await params;
 
-    // Validate collection name (whitelist approach for security)
-    const validCollections = [
-      'organizations',
-      'members',
-      'competitions',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'scoreboards',
-      'email_queue',
-      'contact_messages',
-    ];
-
-    if (!validCollections.includes(collection)) {
+    if (!isValidAdminCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }
@@ -90,22 +76,7 @@ export async function PUT(
     const { collection, docId } = await params;
     const body = await request.json();
 
-    // Validate collection name (whitelist approach for security)
-    const validCollections = [
-      'organizations',
-      'members',
-      'competitions',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'scoreboards',
-      'email_queue',
-      'contact_messages',
-    ];
-
-    if (!validCollections.includes(collection)) {
+    if (!isValidAdminCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }
@@ -165,22 +136,7 @@ export async function DELETE(
   try {
     const { collection, docId } = await params;
 
-    // Validate collection name (whitelist approach for security)
-    const validCollections = [
-      'organizations',
-      'members',
-      'competitions',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'scoreboards',
-      'email_queue',
-      'contact_messages',
-    ];
-
-    if (!validCollections.includes(collection)) {
+    if (!isValidAdminCollection(collection)) {
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }

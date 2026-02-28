@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
+import { isValidAdminCollection } from '@/lib/admin-collections';
 
 /**
  * GET /api/admin/collections/[collection]/stats
@@ -20,6 +21,13 @@ export async function GET(
     }
 
     const { collection } = await params;
+
+    if (!isValidAdminCollection(collection)) {
+      return NextResponse.json(
+        { error: 'Ongeldige collectie naam.' },
+        { status: 400 }
+      );
+    }
 
     // Fetch all documents from the collection
     const snapshot = await db.collection(collection).get();

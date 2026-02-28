@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
+import { TOERNOOIPROF_COLLECTIONS } from '@/lib/admin-collections';
 
 /**
  * GET /api/admin/collections
  * Lists all Firestore collections under the ToernooiProf/data namespace with document counts.
  * Protected by super admin check.
+ * Gebruikt ToernooiProf tabellen: organizations, toernooien, spelers, poules, uitslagen, etc.
  */
 export async function GET(request: NextRequest) {
   // Validate super admin access
@@ -15,23 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // List of all collections in the ToernooiProf/data namespace
-    const collectionNames = [
-      'organizations',
-      'members',
-      'competitions',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'score_helpers',
-      'score_helpers_tablet',
-      'scoreboards',
-      'email_queue',
-      'contact_messages',
-      'news_reactions',
-    ];
+    const collectionNames = [...TOERNOOIPROF_COLLECTIONS];
 
     // Get document count for each collection
     const collections = await Promise.all(
