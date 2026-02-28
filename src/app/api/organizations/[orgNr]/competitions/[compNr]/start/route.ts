@@ -185,7 +185,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             t_ronde: tRonde,
             p_ronde: pRonde + 1,
             koppel: k + 1,
-            sp_partcode: `${tRonde}_${k + 1}`,
+            sp_partcode: `${pRonde + 1}_${k + 1}`,
             sp1_car_tem: sp1Data?.sp_car ?? 0,
             sp2_car_tem: sp2Data?.sp_car ?? 0,
             sp1_car_gem: 0,

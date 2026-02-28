@@ -49,7 +49,7 @@ function getStorageClient(): Storage {
  * Get the backup bucket name from environment or use default
  */
 function getBucketName(): string {
-  return process.env.BACKUP_BUCKET_NAME || 'backupclubmatch';
+  return process.env.BACKUP_BUCKET_NAME || 'backuptoernooiprof';
 }
 
 /**

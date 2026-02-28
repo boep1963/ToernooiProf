@@ -80,10 +80,80 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       additionalFilters
     );
 
-    const results: Record<string, unknown>[] = [];
+    let results: Record<string, unknown>[] = [];
     snapshot.docs.forEach((doc) => {
       results.push({ id: doc.id, ...doc.data() });
     });
+
+    // Fallback: ToernooiProf gebruikt uitslagen-collectie (tp_uitslagen), niet results (ClubMatch)
+    if (results.length === 0) {
+      let uitslagenQuery = db.collection('uitslagen')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('gespeeld', '==', gespeeldParam ? parseInt(gespeeldParam, 10) : 1);
+
+      if (periodeParam) {
+        const periode = parseInt(periodeParam, 10);
+        if (!isNaN(periode)) uitslagenQuery = uitslagenQuery.where('t_ronde', '==', periode);
+      }
+
+      const uitslagenSnap = await uitslagenQuery.get();
+
+      // Haal spelers op voor namen
+      const spelersSnap = await db.collection('spelers')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .get();
+      const spelerMap = new Map<number, string>();
+      spelersSnap.docs.forEach(d => {
+        const d_ = d.data();
+        const nr = Number(d_.sp_nummer);
+        const naam = d_.sp_naam;
+        if (nr && naam) spelerMap.set(nr, naam);
+      });
+
+      const compSnap = await db.collection('toernooien')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .limit(1)
+        .get();
+      let speeldatumBase = '2000-01-01';
+      if (!compSnap.empty) {
+        const ds = compSnap.docs[0].data()?.datum_start as string;
+        if (ds && /^\d{4}-\d{2}-\d{2}/.test(ds)) speeldatumBase = ds.slice(0, 10);
+      }
+
+      results = uitslagenSnap.docs.map((doc) => {
+        const u = doc.data();
+        const tRonde = Number(u.t_ronde) || 1;
+        const pRonde = Number(u.p_ronde) || 1;
+        const koppel = Number(u.koppel) || 1;
+        const d = new Date(speeldatumBase);
+        d.setDate(d.getDate() + (tRonde - 1));
+        const speeldatum = d.toISOString().slice(0, 10);
+        const sp1Nr = Number(u.sp_nummer_1);
+        const sp2Nr = Number(u.sp_nummer_2);
+        return {
+          id: doc.id,
+          uitslag_code: u.sp_partcode || `${tRonde}_${pRonde}_${koppel}`,
+          speeldatum,
+          periode: tRonde,
+          sp_1_nr: sp1Nr,
+          sp_1_naam: spelerMap.get(sp1Nr) || `Speler ${sp1Nr}`,
+          sp_1_cargem: Number(u.sp1_car_gem) || 0,
+          sp_1_hs: Number(u.sp1_hs) || 0,
+          sp_1_punt: Number(u.sp1_punt) || 0,
+          sp_2_nr: sp2Nr,
+          sp_2_naam: spelerMap.get(sp2Nr) || `Speler ${sp2Nr}`,
+          sp_2_cargem: Number(u.sp2_car_gem) || 0,
+          sp_2_hs: Number(u.sp2_hs) || 0,
+          sp_2_punt: Number(u.sp2_punt) || 0,
+          brt: Number(u.brt) || 0,
+          gespeeld: Number(u.gespeeld) || 0,
+        };
+      });
+      console.log(`[RESULTS] Fallback uitslagen: ${results.length} records voor ToernooiProf-model`);
+    }
 
     // Filter by date range if provided (client-side filtering since Firestore date comparison is complex)
     let filteredResults = results;

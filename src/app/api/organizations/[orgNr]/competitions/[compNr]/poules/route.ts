@@ -41,7 +41,37 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .get();
     }
 
-    const poules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const rawDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // ToernooiProf: elk doc = één speler-in-poule. Groepeer op (ronde_nr, poule_nr) tot poules.
+    const hasSpNummer = rawDocs.some((d: any) => d.sp_nummer != null);
+    let poules: any[];
+
+    if (hasSpNummer && rawDocs.length > 0) {
+      const byPoule = new Map<string, any[]>();
+      for (const d of rawDocs) {
+        const r = Number(d.ronde_nr) ?? 1;
+        const p = Number(d.poule_nr) ?? 1;
+        const key = `${r}_${p}`;
+        if (!byPoule.has(key)) byPoule.set(key, []);
+        byPoule.get(key)!.push(d);
+      }
+      poules = Array.from(byPoule.entries()).map(([key, docs]) => {
+        const [ronde, pouleNr] = key.split('_').map(Number);
+        const first = docs[0];
+        return {
+          id: `rn${ronde}_pn${pouleNr}`,
+          ronde_nr: ronde,
+          poule_nr: pouleNr,
+          poule_naam: `Poule ${String.fromCharCode(64 + pouleNr)}`,
+          gebruiker_nr: first.gebruiker_nr,
+          t_nummer: first.t_nummer,
+        };
+      });
+      poules.sort((a, b) => a.poule_nr - b.poule_nr);
+    } else {
+      poules = rawDocs;
+    }
 
     return NextResponse.json({ poules });
   } catch (error) {

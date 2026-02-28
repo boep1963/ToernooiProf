@@ -19,16 +19,68 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (authResult instanceof NextResponse) return authResult;
 
     const orgNummer = authResult.orgNummer;
-    const players = await getPoulePlayers(pouleId);
+    const compNumber = parseInt(compNr, 10);
+    let players = await getPoulePlayers(pouleId);
+
+    // Fallback: ToernooiProf gebruikt poules-collectie (tp_poules) - elke doc = één speler in poule
+    if (players.length === 0) {
+      const match = pouleId.match(/^rn(\d+)_pn(\d+)$/);
+      if (match) {
+        const rondeNr = parseInt(match[1], 10);
+        const pouleNr = parseInt(match[2], 10);
+        const poulesSnap = await db.collection('poules')
+          .where('gebruiker_nr', '==', orgNummer)
+          .where('t_nummer', '==', compNumber)
+          .where('ronde_nr', '==', rondeNr)
+          .where('poule_nr', '==', pouleNr)
+          .get();
+
+        const spNummers = poulesSnap.docs.map(d => Number(d.data()?.sp_nummer)).filter(Boolean);
+        let spelerMap = new Map<number, string>();
+        if (spNummers.length > 0) {
+          const spelersSnap = await db.collection('spelers')
+            .where('gebruiker_nr', '==', orgNummer)
+            .where('t_nummer', '==', compNumber)
+            .get();
+          spelersSnap.docs.forEach(d => {
+            const d_ = d.data();
+            const nr = Number(d_.sp_nummer);
+            if (nr) spelerMap.set(nr, (d_.sp_naam as string) || `Speler ${nr}`);
+          });
+        }
+
+        const mapped = poulesSnap.docs.map(doc => {
+          const u = doc.data();
+          const spNr = Number(u.sp_nummer);
+          return {
+            id: doc.id,
+            spc_nummer: spNr,
+            moyenne_start: Number(u.sp_moy) || 0,
+            caramboles_start: Number(u.sp_car) || 0,
+            naam: spelerMap.get(spNr) || `Speler ${spNr}`,
+            sp_volgnr: Number(u.sp_volgnr) || 0,
+          };
+        });
+        mapped.sort((a: any, b: any) => a.sp_volgnr - b.sp_volgnr);
+        players = mapped;
+      }
+    }
 
     if (players.length === 0) {
       return NextResponse.json({ players: [] });
     }
 
-    // Enrich with names from members/competition_players
-    const enrichedPlayers = await batchEnrichPlayerNames(orgNummer, players as any);
+    // Enrich with names from members/competition_players (ClubMatch)
+    const enrichedPlayers = players.every((p: any) => p.naam)
+      ? players
+      : await batchEnrichPlayerNames(orgNummer, players as any);
 
-    return NextResponse.json({ players: enrichedPlayers });
+    return NextResponse.json({
+      players: enrichedPlayers.map((p: any) => ({
+        ...p,
+        naam: p.naam ?? (p.spa_vnaam && p.spa_anaam ? `${p.spa_vnaam} ${(p.spa_tv || '')} ${p.spa_anaam}`.trim() : `Speler ${p.spc_nummer}`),
+      })),
+    });
   } catch (error) {
     console.error('[POULE_PLAYERS] Error fetching players:', error);
     return NextResponse.json(

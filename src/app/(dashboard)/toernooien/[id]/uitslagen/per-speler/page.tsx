@@ -20,11 +20,14 @@ interface CompetitionData {
   periode: number;
 }
 
+/** Spelers kunnen uit spelers-collectie komen (sp_nummer, sp_naam) of members (spc_nummer, spa_vnaam, spa_anaam) */
 interface PlayerData {
-  spc_nummer: number;
-  spa_vnaam: string;
-  spa_tv: string;
-  spa_anaam: string;
+  sp_nummer?: number;
+  sp_naam?: string;
+  spc_nummer?: number;
+  spa_vnaam?: string;
+  spa_tv?: string;
+  spa_anaam?: string;
 }
 
 interface ResultData {
@@ -166,8 +169,12 @@ export default function PlayerResultsPage({
   }, []);
 
   const formatPlayerName = (player: PlayerData) => {
-    return `${player.spa_vnaam} ${player.spa_tv || ''} ${player.spa_anaam}`.replace(/\s+/g, ' ').trim();
+    if (player.sp_naam) return player.sp_naam;
+    const parts = [player.spa_vnaam, player.spa_tv, player.spa_anaam].filter(Boolean);
+    return parts.join(' ').replace(/\s+/g, ' ').trim() || 'Onbekende speler';
   };
+
+  const getPlayerNr = (player: PlayerData) => player.sp_nummer ?? player.spc_nummer ?? 0;
 
   const fetchInitialData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -236,7 +243,7 @@ export default function PlayerResultsPage({
       // Build player lookup map for opponent names
       const playerLookup: Record<number, PlayerData> = {};
       players.forEach(player => {
-        playerLookup[player.spc_nummer] = player;
+        playerLookup[getPlayerNr(player)] = player;
       });
 
       // Transform results into player-centric view
@@ -370,7 +377,7 @@ export default function PlayerResultsPage({
     );
   }
 
-  const selectedPlayer = players.find(p => p.spc_nummer === selectedPlayerNr);
+  const selectedPlayer = players.find(p => getPlayerNr(p) === selectedPlayerNr);
 
   return (
     <div>
@@ -416,7 +423,7 @@ export default function PlayerResultsPage({
             >
               <option value="">-- Kies een speler --</option>
               {players.map((player) => (
-                <option key={player.spc_nummer} value={player.spc_nummer}>
+                <option key={getPlayerNr(player)} value={getPlayerNr(player)}>
                   {formatPlayerName(player)}
                 </option>
               ))}
