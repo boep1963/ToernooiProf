@@ -463,8 +463,8 @@ export default function CompetitieSpelersPage({
           {DISCIPLINES[competition.discipline]} | Formule: Car = Moyenne x {multiplier} | Min. caramboles: {competition.min_car} | Periode {selectedPeriod}
         </div>
         <div className="text-sm text-gray-600">
-          Afgedrukt: {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
-          {new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+          Afgedrukt: <span suppressHydrationWarning>{new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
+          {new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         <div className="border-b-2 border-gray-300 mt-3 mb-4"></div>
       </div>

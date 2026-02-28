@@ -598,7 +598,7 @@ export default function CompetiteDagplanningPage({
         <div className="text-sm text-gray-700 space-y-1">
           <p><strong>Discipline:</strong> {DISCIPLINES[competition.discipline]}</p>
           <p><strong>Periode:</strong> {competition.periode || 1}</p>
-          <p><strong>Afgedrukt:</strong> {new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+          <p><strong>Afgedrukt:</strong> <span suppressHydrationWarning>{new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></p>
         </div>
         <hr className="mt-4 border-gray-300" />
 

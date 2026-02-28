@@ -323,13 +323,13 @@ export default function LedenPage() {
           <div id="print-header" className="hidden print:block mb-4">
             <h1 className="text-xl font-bold mb-2">{organization?.org_naam || 'Ledenoverzicht'}</h1>
             <p className="text-sm mb-1">Ledenbeheer</p>
-            <p className="text-xs">Afgedrukt op: {new Date().toLocaleDateString('nl-NL', {
+            <p className="text-xs">Afgedrukt op: <span suppressHydrationWarning>{new Date().toLocaleDateString('nl-NL', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
-            })}</p>
+            })}</span></p>
           </div>
 
           <div id="print-area" className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">

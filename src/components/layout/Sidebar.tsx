@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -91,6 +91,11 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { isSuperAdmin } = useSuperAdmin();
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   // Build nav items: base items + conditional admin item + trailing items
   const navItems = useMemo(() => {
@@ -180,8 +185,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Footer with theme toggle */}
         <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              &copy; {new Date().getFullYear()} ClubMatch
+            <p className="text-xs text-slate-400 dark:text-slate-500" suppressHydrationWarning>
+              &copy; {year ?? '–'} ClubMatch
             </p>
             <ThemeToggle />
           </div>
