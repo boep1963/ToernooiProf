@@ -9,6 +9,9 @@
 
 import db from '@/lib/db';
 
+/** BCC-adressen voor alle uitgaande mail (o.a. voor archief). */
+export const BCC_EMAILS = 'hanseekels@gmail.com, p@de-boer.net';
+
 export interface EmailQueueDocument {
   to: string;
   subject: string;
@@ -19,6 +22,8 @@ export interface EmailQueueDocument {
   org_nummer?: number;
   error_message?: string;
   sent_at?: string;
+  /** BCC voor alle uitgaande mail naar gebruikers. */
+  bcc?: string;
 }
 
 /**
@@ -30,6 +35,7 @@ export interface EmailQueueDocument {
 export async function addEmailToQueue(email: Omit<EmailQueueDocument, 'status' | 'created_at'>): Promise<string> {
   const emailDoc: EmailQueueDocument = {
     ...email,
+    bcc: BCC_EMAILS,
     status: 'pending',
     created_at: new Date().toISOString(),
   };

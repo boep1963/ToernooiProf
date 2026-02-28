@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { adminAuth } from '@/lib/firebase-admin';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
+import { BCC_EMAILS } from '@/lib/emailQueue';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -140,6 +141,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         new_email: newEmail,
         created_at: new Date().toISOString(),
         processed: false,
+        bcc: BCC_EMAILS,
       });
     }
 

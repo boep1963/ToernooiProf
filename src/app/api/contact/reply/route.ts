@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { BCC_EMAILS } from '@/lib/emailQueue';
 import { cookies } from 'next/headers';
 
 // Helper to get authenticated org from session cookie
@@ -87,6 +88,7 @@ Het ClubMatch Team`,
       created_at: now,
       org_nummer: contactData.org_nummer,
       reply_to_contact: contactMessageId,
+      bcc: BCC_EMAILS,
     };
 
     const emailRef = await db.collection('email_queue').add(emailDoc);
