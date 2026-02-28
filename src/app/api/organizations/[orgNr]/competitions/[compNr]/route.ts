@@ -7,285 +7,176 @@ interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
 }
 
+/** Query helper: find toernooi by org_nummer + t_nummer (or comp_nr alias) */
+async function findToernooi(orgNummer: number, compNumber: number) {
+  const snapshot = await db.collection('toernooien')
+    .where('org_nummer', '==', orgNummer)
+    .where('t_nummer', '==', compNumber)
+    .limit(1)
+    .get();
+  if (!snapshot.empty) return snapshot.docs[0];
+
+  // Fallback: try comp_nr alias (older documents)
+  const fallback = await db.collection('toernooien')
+    .where('org_nummer', '==', orgNummer)
+    .where('comp_nr', '==', compNumber)
+    .limit(1)
+    .get();
+  return fallback.empty ? null : fallback.docs[0];
+}
+
 /**
  * GET /api/organizations/:orgNr/competitions/:compNr
- * Get a specific competition
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = authResult.orgNummer;
 
     const compNumber = parseInt(compNr, 10);
     if (isNaN(compNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldige parameters' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
     }
 
-    console.log('[COMPETITION] Querying database for competition:', compNumber, 'in org:', orgNummer);
-    const snapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
-
-    if (snapshot.empty) {
-      return NextResponse.json(
-        { error: 'Competitie niet gevonden' },
-        { status: 404 }
-      );
+    const doc = await findToernooi(orgNummer, compNumber);
+    if (!doc) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
     }
 
-    const doc = snapshot.docs[0];
     const data = doc.data() as Record<string, unknown>;
 
-    // Normaliseer veldnamen: Firestore kan puntensysteem of comp_datum onder andere key hebben
-    const puntenSysRaw = data.punten_sys ?? data.puntensysteem;
-    const punten_sys = typeof puntenSysRaw === 'number' ? puntenSysRaw : Number(puntenSysRaw) || 1;
-    const comp_datum = (data.comp_datum ?? data.datum ?? '') as string;
-
+    // Normalise: ensure routing aliases are present
     const normalized = {
       ...data,
-      punten_sys,
-      comp_datum: comp_datum || (data.comp_datum as string) || '',
+      id: doc.id,
+      comp_nr: data.t_nummer ?? data.comp_nr,
+      comp_naam: data.t_naam ?? data.comp_naam,
+      comp_datum: data.t_datum ?? data.comp_datum ?? '',
+      punten_sys: data.t_punten_sys ?? data.punten_sys ?? 1,
+      moy_form: data.t_moy_form ?? data.moy_form ?? 3,
+      min_car: data.t_min_car ?? data.min_car ?? 0,
+      max_beurten: data.t_max_beurten ?? data.max_beurten ?? 0,
+      periode: data.t_ronde ?? data.periode ?? 0,
     };
 
-    return cachedJsonResponse({ id: doc.id, ...normalized }, 'default');
+    return cachedJsonResponse(normalized, 'default');
   } catch (error) {
-    console.error('[COMPETITION] Error fetching competition:', error);
-    return NextResponse.json(
-      { error: 'Fout bij ophalen competitie' },
-      { status: 500 }
-    );
+    console.error('[TOERNOOI] Error fetching:', error);
+    return NextResponse.json({ error: 'Fout bij ophalen toernooi' }, { status: 500 });
   }
 }
 
 /**
  * PUT /api/organizations/:orgNr/competitions/:compNr
- * Update competition settings
+ * Update editable tournament settings
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = authResult.orgNummer;
 
     const compNumber = parseInt(compNr, 10);
     if (isNaN(compNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldige parameters' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
     }
 
     const body = await request.json();
 
-    // Validate required fields
-    if (!body.comp_naam || typeof body.comp_naam !== 'string' || body.comp_naam.trim() === '') {
-      return NextResponse.json(
-        { error: 'Competitienaam is verplicht.' },
-        { status: 400 }
-      );
+    if (!body.t_naam && !body.comp_naam) {
+      return NextResponse.json({ error: 'Toernooinaam is verplicht.' }, { status: 400 });
     }
 
-    if (!body.comp_datum) {
-      return NextResponse.json(
-        { error: 'Datum is verplicht.' },
-        { status: 400 }
-      );
+    const doc = await findToernooi(orgNummer, compNumber);
+    if (!doc) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
     }
 
-    console.log('[COMPETITION] Updating competition:', compNumber, 'in org:', orgNummer);
+    const naam = (body.t_naam ?? body.comp_naam ?? '').trim();
+    const datum = body.t_datum ?? body.comp_datum ?? '';
 
-    // Find the competition
-    const snapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
-      .get();
-
-    if (snapshot.empty) {
-      return NextResponse.json(
-        { error: 'Competitie niet gevonden' },
-        { status: 404 }
-      );
-    }
-
-    const doc = snapshot.docs[0];
-
-    // Build update object with only allowed fields
     const updateData: Record<string, unknown> = {
-      comp_naam: body.comp_naam.trim(),
-      comp_datum: body.comp_datum,
-      discipline: Number(body.discipline) || 1,
-      punten_sys: Number(body.punten_sys) || 1,
-      moy_form: Number(body.moy_form) || 3,
-      min_car: Number(body.min_car) || 10,
-      max_beurten: Number(body.max_beurten) || 30,
-      vast_beurten: Number(body.vast_beurten) || 0,
-      sorteren: Number(body.sorteren) || 1,
+      t_naam: naam,
+      comp_naam: naam,
+      t_datum: datum,
+      comp_datum: datum,
+      datum_start: body.datum_start ?? '',
+      datum_eind: body.datum_eind ?? '',
+      openbaar: Number(body.openbaar) || 0,
       updated_at: new Date().toISOString(),
     };
 
     await doc.ref.update(updateData);
 
-    console.log(`[TOURNAMENT] Tournament ${compNumber} updated successfully`);
-
     return NextResponse.json({
       id: doc.id,
       org_nummer: orgNummer,
+      t_nummer: compNumber,
       comp_nr: compNumber,
       ...updateData,
     });
   } catch (error) {
-    console.error('[COMPETITION] Error updating competition:', error);
-    return NextResponse.json(
-      { error: 'Fout bij bijwerken competitie' },
-      { status: 500 }
-    );
+    console.error('[TOERNOOI] Error updating:', error);
+    return NextResponse.json({ error: 'Fout bij bijwerken toernooi' }, { status: 500 });
   }
 }
 
 /**
  * DELETE /api/organizations/:orgNr/competitions/:compNr
- * Delete a competition and cascade delete all associated data:
- * - competition_players
- * - matches
- * - results
+ * Delete tournament and cascade delete all related data
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr } = await params;
-
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = authResult.orgNummer;
 
     const compNumber = parseInt(compNr, 10);
     if (isNaN(compNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldige parameters' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
     }
 
-    console.log('[COMPETITION] Deleting competition:', compNumber, 'in org:', orgNummer);
+    const compDoc = await findToernooi(orgNummer, compNumber);
+    if (!compDoc) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+    }
 
-    // Find the competition
-    const compSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .limit(1)
+    const cascadeCounts = { spelers: 0, poules: 0, uitslagen: 0 };
+
+    // Cascade: spelers
+    const spelersSnap = await db.collection('spelers')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
       .get();
+    for (const doc of spelersSnap.docs) { await doc.ref.delete(); cascadeCounts.spelers++; }
 
-    if (compSnapshot.empty) {
-      return NextResponse.json(
-        { error: 'Competitie niet gevonden' },
-        { status: 404 }
-      );
-    }
-
-    const compDoc = compSnapshot.docs[0];
-    const cascadeCounts = {
-      players: 0,
-      matches: 0,
-      results: 0,
-      tables: 0,
-      score_helpers: 0,
-      score_helpers_tablet: 0,
-    };
-
-    // Cascade delete: competition_players
-    console.log('[COMPETITION] Cascade deleting competition_players for comp:', compNumber);
-    const playersSnapshot = await db.collection('competition_players')
-      .where('spc_org', '==', orgNummer)
-      .where('spc_competitie', '==', compNumber)
+    // Cascade: poules
+    const poulesSnap = await db.collection('poules')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
       .get();
-    for (const doc of playersSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.players++;
-    }
+    for (const doc of poulesSnap.docs) { await doc.ref.delete(); cascadeCounts.poules++; }
 
-    // Cascade delete: matches
-    console.log('[COMPETITION] Cascade deleting matches for comp:', compNumber);
-    const matchesSnapshot = await db.collection('matches')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
+    // Cascade: uitslagen
+    const uitslagenSnap = await db.collection('uitslagen')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
       .get();
-    for (const doc of matchesSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.matches++;
-    }
+    for (const doc of uitslagenSnap.docs) { await doc.ref.delete(); cascadeCounts.uitslagen++; }
 
-    // Cascade delete: results
-    console.log('[COMPETITION] Cascade deleting results for comp:', compNumber);
-    const resultsSnapshot = await db.collection('results')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
-    for (const doc of resultsSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.results++;
-    }
-
-    // Cascade delete: tables (if they have comp_nr field)
-    console.log('[COMPETITION] Cascade deleting tables for comp:', compNumber);
-    const tablesSnapshot = await db.collection('tables')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
-    for (const doc of tablesSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.tables++;
-    }
-
-    // Cascade delete: score_helpers
-    console.log('[COMPETITION] Cascade deleting score_helpers for comp:', compNumber);
-    const scoreHelpersSnapshot = await db.collection('score_helpers')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
-    for (const doc of scoreHelpersSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.score_helpers++;
-    }
-
-    // Cascade delete: score_helpers_tablet
-    console.log('[COMPETITION] Cascade deleting score_helpers_tablet for comp:', compNumber);
-    const scoreHelpersTabletSnapshot = await db.collection('score_helpers_tablet')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
-      .get();
-    for (const doc of scoreHelpersTabletSnapshot.docs) {
-      await doc.ref.delete();
-      cascadeCounts.score_helpers_tablet++;
-    }
-
-    // Delete the competition itself
     await compDoc.ref.delete();
 
-    console.log(`[TOURNAMENT] Tournament ${compNumber} deleted. Cascade: ${cascadeCounts.players} players, ${cascadeCounts.matches} matches, ${cascadeCounts.results} results, ${cascadeCounts.tables} tables, ${cascadeCounts.score_helpers} score_helpers, ${cascadeCounts.score_helpers_tablet} score_helpers_tablet`);
-
     return NextResponse.json({
-      message: 'Competitie succesvol verwijderd',
-      comp_nr: compNumber,
+      message: 'Toernooi succesvol verwijderd',
+      t_nummer: compNumber,
       cascade_deleted: cascadeCounts,
     });
   } catch (error) {
-    console.error('[COMPETITION] Error deleting competition:', error);
-    return NextResponse.json(
-      { error: 'Fout bij verwijderen competitie' },
-      { status: 500 }
-    );
+    console.error('[TOERNOOI] Error deleting:', error);
+    return NextResponse.json({ error: 'Fout bij verwijderen toernooi' }, { status: 500 });
   }
 }

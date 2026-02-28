@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { normalizeOrgNummer, logQueryResult } from '@/lib/orgNumberUtils';
-import { queryWithOrgComp } from '@/lib/firestoreUtils';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
@@ -11,43 +10,40 @@ interface RouteParams {
 
 /**
  * GET /api/organizations/:orgNr/competitions
- * List all competitions for an organization
+ * List all tournaments for an organization
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
 
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = normalizeOrgNummer(authResult.orgNummer);
 
-    console.log('[COMPETITIONS] Querying database for competitions of org:', orgNummer);
-    const snapshot = await queryWithOrgComp(
-      db.collection('competitions'),
-      orgNummer,
-      null
-    );
+    console.log('[TOERNOOIEN] Querying database for org:', orgNummer);
+    const snapshot = await db.collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .get();
 
-    const competitions = snapshot.docs.map(doc => {
-      const data = doc.data();
+    const toernooien = snapshot.docs.map(doc => {
+      const data = doc.data() ?? {};
       return {
         id: doc.id,
         ...data,
-        // Ensure punten_sys has a default value if missing or invalid
-        punten_sys: (typeof data.punten_sys === 'number' && data.punten_sys >= 1 && data.punten_sys <= 3)
-          ? data.punten_sys
-          : 1, // Default to WRV 2-1-0
+        // Backward compat aliases
+        comp_nr: data.t_nummer ?? data.comp_nr,
+        comp_naam: data.t_naam ?? data.comp_naam,
+        comp_datum: data.t_datum ?? data.comp_datum,
+        punten_sys: data.t_punten_sys ?? data.punten_sys ?? 1,
       };
     });
 
-    logQueryResult('competitions', orgNummer, competitions.length);
-    console.log(`[COMPETITIONS] Found ${competitions.length} competitions`);
-    return cachedJsonResponse(competitions, 'default');
+    logQueryResult('toernooien', orgNummer, toernooien.length);
+    return cachedJsonResponse(toernooien, 'default');
   } catch (error) {
-    console.error('[COMPETITIONS] Error fetching competitions:', error);
+    console.error('[TOERNOOIEN] Error fetching:', error);
     return NextResponse.json(
-      { error: 'Fout bij ophalen competities.' },
+      { error: 'Fout bij ophalen toernooien.' },
       { status: 500 }
     );
   }
@@ -55,13 +51,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/organizations/:orgNr/competitions
- * Create a new competition
+ * Create a new tournament
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
 
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = normalizeOrgNummer(authResult.orgNummer);
@@ -69,75 +64,76 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
 
     // Validate required fields
-    if (!body.comp_naam || typeof body.comp_naam !== 'string' || body.comp_naam.trim() === '') {
+    if (!body.t_naam || typeof body.t_naam !== 'string' || body.t_naam.trim() === '') {
       return NextResponse.json(
-        { error: 'Competitienaam is verplicht.' },
+        { error: 'Toernooinaam is verplicht.' },
         { status: 400 }
       );
     }
 
-    if (!body.comp_datum) {
-      return NextResponse.json(
-        { error: 'Datum is verplicht.' },
-        { status: 400 }
-      );
-    }
-
-    if (!body.discipline || body.discipline < 1 || body.discipline > 5) {
+    if (body.discipline === undefined || body.discipline < 1 || body.discipline > 5) {
       return NextResponse.json(
         { error: 'Ongeldige discipline.' },
         { status: 400 }
       );
     }
 
-    // Generate next competition number for this organization
-    console.log('[COMPETITIONS] Generating next comp_nr for org:', orgNummer);
-    const existingSnapshot = await queryWithOrgComp(
-      db.collection('competitions'),
-      orgNummer,
-      null
-    );
+    // Generate next t_nummer for this organization
+    const existingSnapshot = await db.collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .get();
 
-    let maxCompNr = 0;
+    let maxTNummer = 0;
     existingSnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data && typeof data.comp_nr === 'number' && data.comp_nr > maxCompNr) {
-        maxCompNr = data.comp_nr;
+      const data = doc.data() ?? {};
+      const nr = data.t_nummer ?? data.comp_nr ?? 0;
+      if (typeof nr === 'number' && nr > maxTNummer) {
+        maxTNummer = nr;
       }
     });
 
-    const newCompNr = maxCompNr + 1;
+    const newTNummer = maxTNummer + 1;
 
-    const competitionData = {
+    const toernooiData = {
       org_nummer: orgNummer,
-      comp_nr: newCompNr,
-      comp_naam: body.comp_naam.trim(),
-      comp_datum: body.comp_datum,
+      gebruiker_nr: orgNummer,
+      t_nummer: newTNummer,
+      comp_nr: newTNummer, // routing alias
+      t_naam: body.t_naam.trim(),
+      comp_naam: body.t_naam.trim(), // routing alias
+      t_datum: body.t_datum ?? '',
+      comp_datum: body.t_datum ?? '', // routing alias
+      datum_start: body.datum_start ?? '',
+      datum_eind: body.datum_eind ?? '',
       discipline: Number(body.discipline),
-      periode: Number(body.periode) || 1,
-      punten_sys: Number(body.punten_sys) || 1,
-      moy_form: Number(body.moy_form) || 3,
-      min_car: Number(body.min_car) || 10,
-      max_beurten: Number(body.max_beurten) || 30,
-      vast_beurten: Number(body.vast_beurten) || 0,
-      sorteren: Number(body.sorteren) || 1,
+      t_car_sys: Number(body.t_car_sys) || 1,
+      t_moy_form: Number(body.t_moy_form) || 3,
+      t_punten_sys: Number(body.t_punten_sys) || 1,
+      punten_sys: Number(body.t_punten_sys) || 1, // routing alias
+      t_min_car: Number(body.t_min_car) || 0,
+      min_car: Number(body.t_min_car) || 0, // routing alias
+      t_max_beurten: 0,
+      max_beurten: 0, // routing alias
+      t_gestart: 0,
+      t_ronde: 0,
+      openbaar: Number(body.openbaar) || 0,
+      created_at: new Date().toISOString(),
     };
 
-    console.log('[COMPETITIONS] Creating new competition in database:', competitionData.comp_naam);
-    const docRef = await db.collection('competitions').add(competitionData);
+    console.log('[TOERNOOIEN] Creating:', toernooiData.t_naam);
+    const docRef = await db.collection('toernooien').add(toernooiData);
 
-    console.log('[TOURNAMENTS] Tournament created successfully, comp_nr:', newCompNr);
     return NextResponse.json({
       success: true,
       competition: {
         id: docRef.id,
-        ...competitionData,
+        ...toernooiData,
       },
     }, { status: 201 });
   } catch (error) {
-    console.error('[COMPETITIONS] Error creating competition:', error);
+    console.error('[TOERNOOIEN] Error creating:', error);
     return NextResponse.json(
-      { error: 'Fout bij aanmaken competitie.' },
+      { error: 'Fout bij aanmaken toernooi.' },
       { status: 500 }
     );
   }

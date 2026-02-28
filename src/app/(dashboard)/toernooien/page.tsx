@@ -64,28 +64,13 @@ export default function ToernooienPage() {
     if (!orgNummer) return;
     setLoadingStats(true);
     try {
-      const [playersRes, resultsRes, matchesRes] = await Promise.all([
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/results`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`),
-      ]);
-
-      let players = 0, results = 0, matches = 0;
-
+      const playersRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`);
+      let players = 0;
       if (playersRes.ok) {
         const data = await playersRes.json();
-        players = data.players?.length || 0;
+        players = data.count ?? data.players?.length ?? 0;
       }
-      if (resultsRes.ok) {
-        const data = await resultsRes.json();
-        results = data.results?.length || 0;
-      }
-      if (matchesRes.ok) {
-        const data = await matchesRes.json();
-        matches = data.matches?.length || 0;
-      }
-
-      setDeleteStats({ players, results, matches });
+      setDeleteStats({ players, results: 0, matches: 0 });
     } catch {
       setDeleteStats({ players: 0, results: 0, matches: 0 });
     } finally {
@@ -283,10 +268,9 @@ export default function ToernooienPage() {
                 </div>
               ) : deleteStats ? (
                 <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
-                  <li><strong>{deleteStats.players} speler(s)</strong> uit dit toernooi</li>
-                  <li><strong>{deleteStats.results} uitslag{deleteStats.results !== 1 ? 'en' : ''}</strong> (alle gespeelde partijen)</li>
-                  <li><strong>{deleteStats.matches} wedstrijd{deleteStats.matches !== 1 ? 'en' : ''}</strong> uit de planning</li>
-                  <li>Alle periodes en instellingen</li>
+                  <li><strong>{deleteStats.players} speler(s)</strong> inclusief alle uitslagen en poule-indeeling</li>
+                  <li>Alle wedstrijden en uitslagen</li>
+                  <li>Alle ronde-instellingen</li>
                 </ul>
               ) : null}
               {!loadingStats && deleteStats && (deleteStats.results > 0 || deleteStats.players > 0) && (

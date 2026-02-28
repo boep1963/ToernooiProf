@@ -1,4 +1,30 @@
-// Organization (mapped from bj_organisaties)
+// Gebruiker (mapped from tp_gebruikers)
+export interface Gebruiker {
+  gebruiker_nr: number;
+  gebruiker_code: string;
+  openbaar: number; // 0=privé, 1=openbaar, 2=standaard
+  gebruiker_naam: string;
+  loc_naam: string;
+  loc_straat: string;
+  loc_pc: string;
+  loc_plaats: string;
+  gebruiker_logo: string;
+  tp_wl_naam: string;
+  tp_wl_email: string;
+  toon_email: number;
+  aantal_tafels: number;
+  return_code: number;
+  time_start: number;
+  code_ontvangen: number;
+  date_start: string;
+  date_inlog: string;
+  nieuwsbrief: number;
+  reminder_send: number;
+  firebase_uid?: string;
+  theme_preference?: 'light' | 'dark';
+}
+
+// Organization – alias for Gebruiker (kept for auth compatibility)
 export interface Organization {
   org_nummer: number;
   org_code: string;
@@ -18,112 +44,85 @@ export interface Organization {
   theme_preference?: 'light' | 'dark';
 }
 
-// Member (mapped from bj_spelers_algemeen)
-export interface Member {
-  spa_nummer: number;
-  spa_vnaam: string;
-  spa_tv: string;
-  spa_anaam: string;
-  spa_org: number;
-  spa_moy_lib: number;
-  spa_moy_band: number;
-  spa_moy_3bkl: number;
-  spa_moy_3bgr: number;
-  spa_moy_kad: number;
-}
-
-// Tournament (mapped from bj_competities)
+// Tournament (mapped from tp_data)
 export interface Tournament {
-  org_nummer: number;
-  comp_nr: number;
-  comp_naam: string;
-  comp_datum: string;
-  discipline: number; // 1=Libre, 2=Bandstoten, 3=Driebanden klein, 4=Driebanden groot, 5=Kader
-  periode: number;
-  punten_sys: number;
-  moy_form: number; // 1=x15, 2=x20, 3=x25, 4=x30, 5=x40, 6=x50, 7=x60
-  min_car: number;
-  max_beurten: number;
-  vast_beurten: number;
-  sorteren: number; // 1=first name first, 2=last name first
+  gebruiker_nr: number;  // = org_nummer (routing key)
+  t_nummer: number;      // = comp_nr (routing key)
+  t_naam: string;        // tournament name
+  t_datum: string;       // free text "sub-titel" (not a date!)
+  datum_start: string;   // start date dd-mm-yyyy
+  datum_eind: string;    // end date dd-mm-yyyy
+  discipline: number;    // 1=Libre, 2=Bandstoten, 3=Driebanden klein, 4=Driebanden groot, 5=Kader
+  t_car_sys: number;     // 1=moyenne-formule, 2=vrije invoer
+  t_moy_form: number;    // 1=x20, 2=x25, 3=x30, 4=x40, 5=x50, 6=x60
+  t_punten_sys: number;  // 1=WRV 2-1-0, 2=10-punten, 3=Belgisch
+  t_min_car: number;
+  t_max_beurten: number; // 0=geen limiet
+  t_gestart: number;     // 0=nee, 1=ja
+  t_ronde: number;       // huidige ronde
+  openbaar: number;      // 0=nee, 1=ja (stand openbaar)
+  // Legacy routing aliases (kept for URL routing compatibility)
+  org_nummer?: number;
+  comp_nr?: number;
+  comp_naam?: string;
 }
 
-// Tournament Player (mapped from bj_spelers_comp)
+// TournamentPlayer (mapped from tp_spelers)
 export interface TournamentPlayer {
-  spc_nummer: number;
-  spc_org: number;
-  spc_competitie: number;
-  spc_moyenne_1: number;
-  spc_moyenne_2: number;
-  spc_moyenne_3: number;
-  spc_moyenne_4: number;
-  spc_moyenne_5: number;
-  spc_car_1: number;
-  spc_car_2: number;
-  spc_car_3: number;
-  spc_car_4: number;
-  spc_car_5: number;
+  gebruiker_nr: number;
+  t_nummer: number;
+  sp_nummer: number;
+  sp_naam: string;       // één naamveld (niet gesplitst!)
+  sp_startmoy: number;   // startmoyenne
+  sp_startcar: number;   // te maken caramboles (0 bij moyenne-formule)
 }
 
-// Match (mapped from bj_partijen)
-export interface Match {
-  org_nummer: number;
-  comp_nr: number;
-  nummer_A: number;
-  naam_A: string;
-  cartem_A: number;
-  tafel: string; // binary string for table assignment
-  nummer_B: number;
-  naam_B: string;
-  cartem_B: number;
-  periode: number;
-  uitslag_code: string;
-  gespeeld: number; // 0=not played, 1=played
+// Poule assignment (mapped from tp_poules)
+export interface Poule {
+  poule_id?: number;
+  gebruiker_nr: number;
+  t_nummer: number;
+  sp_nummer: number;     // FK naar tp_spelers
+  sp_moy: number;        // moyenne in deze ronde
+  sp_car: number;        // te maken caramboles in deze ronde
+  sp_volgnr: number;     // volgorde in poule
+  poule_nr: number;      // poule 1..25
+  ronde_nr: number;      // toernooironde 1..n
 }
 
-// Result (mapped from bj_uitslagen)
-export interface Result {
-  org_nummer: number;
-  comp_nr: number;
-  uitslag_code: string;
-  periode: number;
-  speeldatum: Date;
-  sp_1_nr: number;
-  sp_1_naam?: string; // Denormalized player 1 name for performance
-  sp_1_cartem: number;
-  sp_1_cargem: number;
-  sp_1_hs: number;
-  sp_1_punt: number;
-  brt: number;
-  sp_2_nr: number;
-  sp_2_naam?: string; // Denormalized player 2 name for performance
-  sp_2_cartem: number;
-  sp_2_cargem: number;
-  sp_2_hs: number;
-  sp_2_punt: number;
-  gespeeld: number;
+// Uitslag (mapped from tp_uitslagen – combineert partij + uitslag)
+export interface Uitslag {
+  uitslag_id?: number;
+  gebruiker_nr: number;
+  t_nummer: number;
+  sp_nummer_1: number;   // FK naar tp_spelers
+  sp_volgnummer_1: number;
+  sp_nummer_2: number;
+  sp_volgnummer_2: number;
+  sp_poule: number;      // poulenummer
+  t_ronde: number;       // toernooironde
+  p_ronde: number;       // partijronde
+  koppel: number;        // koppelnummer
+  sp_partcode: string;   // "ronde_koppel" bijv. "1_1"
+  sp1_car_tem: number;   // te maken caramboles speler 1
+  sp2_car_tem: number;
+  sp1_car_gem: number;   // gemaakte caramboles speler 1
+  sp2_car_gem: number;
+  brt: number;           // beurten
+  sp1_hs: number;        // hoogste serie speler 1
+  sp2_hs: number;
+  sp1_punt: number;      // punten speler 1
+  sp2_punt: number;
+  gespeeld: number;      // 0=nee, 1=ja, 8=gekoppeld, 9=bezig
+  tafel_nr: number;      // 0=allemaal
 }
 
-// Table (mapped from bj_tafel)
-export interface Table {
-  org_nummer: number;
-  comp_nr: number;
-  u_code: string;
-  tafel_nr: number;
-  status: number; // 0=waiting, 1=started, 2=result
-}
-
-// Device Configuration (mapped from bj_bediening)
-export interface DeviceConfig {
-  org_nummer: number;
-  tafel_nr: number;
-  soort: number; // 1=mouse, 2=tablet
-}
-
-// Score Helper (mapped from bj_uitslag_hulp)
+// Score helper (mapped from tp_uitslag_hulp – tijdelijke tussenstand scorebord)
 export interface ScoreHelper {
-  org_nummer: number;
-  comp_nr: number;
+  gebruiker_nr: number;
+  t_nummer: number;
+  t_ronde: number;
+  poule_nr: number;
   uitslag_code: string;
   car_A_tem: number;
   car_A_gem: number;
@@ -136,41 +135,19 @@ export interface ScoreHelper {
   alert: number;
 }
 
-// Score Helper Tablet (mapped from bj_uitslag_hulp_tablet)
+// Score helper tablet (mapped from tp_uitslag_hulp_tablet)
 export interface ScoreHelperTablet extends ScoreHelper {
   tafel_nr: number;
   serie_A: number;
   serie_B: number;
 }
 
-// Discipline names
-export const DISCIPLINES: Record<number, string> = {
-  1: 'Libre',
-  2: 'Bandstoten',
-  3: 'Driebanden klein',
-  4: 'Driebanden groot',
-  5: 'Kader',
-};
-
-// Moyenne formula multipliers
-export const MOYENNE_MULTIPLIERS: Record<number, number> = {
-  1: 15,
-  2: 20,
-  3: 25,
-  4: 30,
-  5: 40,
-  6: 50,
-};
-
-// Moyenne formula labels for dropdowns (full text)
-export const MOYENNE_FORMULE_LABELS: Record<number, string> = {
-  1: 'Te maken car = Moyenne x 15',
-  2: 'Te maken car = Moyenne x 20',
-  3: 'Te maken car = Moyenne x 25',
-  4: 'Te maken car = Moyenne x 30',
-  5: 'Te maken car = Moyenne x 40',
-  6: 'Te maken car = Moyenne x 50',
-};
+// Device Configuration (mapped from tp_bediening)
+export interface DeviceConfig {
+  gebruiker_nr: number;
+  taf_nr: number;
+  soort: number; // 1=mouse, 2=tablet
+}
 
 // Standing entry for display
 export interface StandingEntry {
@@ -186,3 +163,45 @@ export interface StandingEntry {
   hoogsteSerie: number;
   punten: number;
 }
+
+// Discipline names
+export const DISCIPLINES: Record<number, string> = {
+  1: 'Libre',
+  2: 'Bandstoten',
+  3: 'Driebanden klein',
+  4: 'Driebanden groot',
+  5: 'Kader',
+};
+
+// Caramboles system labels (t_car_sys)
+export const CAR_SYSTEMEN: Record<number, string> = {
+  1: 'Moyenne-formule',
+  2: 'Vrije invoer',
+};
+
+// Puntensystem labels (t_punten_sys)
+export const PUNTEN_SYSTEMEN: Record<number, string> = {
+  1: 'WRV 2-1-0',
+  2: '10-punten',
+  3: 'Belgisch (12-punten)',
+};
+
+// Moyenne formula multipliers (t_moy_form: 1=x20, 2=x25, 3=x30, 4=x40, 5=x50, 6=x60)
+export const MOYENNE_MULTIPLIERS: Record<number, number> = {
+  1: 20,
+  2: 25,
+  3: 30,
+  4: 40,
+  5: 50,
+  6: 60,
+};
+
+// Moyenne formula labels for dropdowns (full text)
+export const MOYENNE_FORMULE_LABELS: Record<number, string> = {
+  1: 'Te maken car = Moyenne x 20',
+  2: 'Te maken car = Moyenne x 25',
+  3: 'Te maken car = Moyenne x 30',
+  4: 'Te maken car = Moyenne x 40',
+  5: 'Te maken car = Moyenne x 50',
+  6: 'Te maken car = Moyenne x 60',
+};

@@ -14,25 +14,34 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
   3: 'Belgisch (12-punten)',
 };
 
-/** Decode punten_sys voor weergave: 10000→1, 20000→2, 30000→3 (zoals in DB bij WRV-bonus encoding). */
-function getPuntenSysLabel(punten_sys: number): string {
-  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
-  return PUNTEN_SYSTEMEN[baseSys] ?? 'Onbekend';
-}
+const CAR_SYSTEMEN: Record<number, string> = {
+  1: 'Moyenne-formule (automatisch berekend)',
+  2: 'Vrije invoer (per speler opgeven)',
+};
 
 interface TournamentData {
   id: string;
-  comp_nr: number;
-  comp_naam: string;
-  comp_datum: string;
+  t_nummer: number;
+  comp_nr?: number;
+  t_naam: string;
+  comp_naam?: string;
+  t_datum: string;
+  comp_datum?: string;
+  datum_start: string;
+  datum_eind: string;
   discipline: number;
-  periode: number;
-  punten_sys: number;
-  moy_form: number;
-  min_car: number;
-  max_beurten: number;
-  vast_beurten: number;
-  sorteren: number;
+  t_car_sys: number;
+  t_moy_form: number;
+  moy_form?: number;
+  t_punten_sys: number;
+  punten_sys?: number;
+  t_min_car: number;
+  min_car?: number;
+  t_max_beurten: number;
+  t_gestart: number;
+  t_ronde: number;
+  periode?: number;
+  openbaar: number;
 }
 
 export default function ToernooiBewerkenPage({
@@ -53,15 +62,11 @@ export default function ToernooiBewerkenPage({
   const [tournament, setTournament] = useState<TournamentData | null>(null);
 
   const [formData, setFormData] = useState({
-    comp_naam: '',
-    comp_datum: '',
-    discipline: 1,
-    punten_sys: 1,
-    moy_form: 3,
-    min_car: 10,
-    max_beurten: 30,
-    vast_beurten: 0,
-    sorteren: 1,
+    t_naam: '',
+    t_datum: '',
+    datum_start: '',
+    datum_eind: '',
+    openbaar: 0,
   });
 
   const fetchTournament = useCallback(async () => {
@@ -73,15 +78,11 @@ export default function ToernooiBewerkenPage({
         const data: TournamentData = await res.json();
         setTournament(data);
         setFormData({
-          comp_naam: data.comp_naam || '',
-          comp_datum: (data.comp_datum ?? '') as string,
-          discipline: Number(data.discipline) || 1,
-          punten_sys: Number(data.punten_sys) || 1,
-          moy_form: Number(data.moy_form) || 3,
-          min_car: Number(data.min_car) ?? 10,
-          max_beurten: Number(data.max_beurten) ?? 30,
-          vast_beurten: Number(data.vast_beurten) ?? 0,
-          sorteren: Number(data.sorteren) || 1,
+          t_naam: data.t_naam ?? data.comp_naam ?? '',
+          t_datum: data.t_datum ?? data.comp_datum ?? '',
+          datum_start: data.datum_start ?? '',
+          datum_eind: data.datum_eind ?? '',
+          openbaar: Number(data.openbaar) || 0,
         });
       } else {
         setError('Toernooi niet gevonden.');
@@ -93,9 +94,7 @@ export default function ToernooiBewerkenPage({
     }
   }, [orgNummer, compNr]);
 
-  useEffect(() => {
-    fetchTournament();
-  }, [fetchTournament]);
+  useEffect(() => { fetchTournament(); }, [fetchTournament]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -103,13 +102,8 @@ export default function ToernooiBewerkenPage({
       ...prev,
       [name]: type === 'number' ? Number(value) : value,
     }));
-    // Clear field error when user starts typing
     if (fieldErrors[name]) {
-      setFieldErrors(prev => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
+      setFieldErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     }
   };
 
@@ -125,14 +119,8 @@ export default function ToernooiBewerkenPage({
       return;
     }
 
-    // Validate required fields
     const errors: Record<string, string> = {};
-    if (!formData.comp_naam.trim()) {
-      errors.comp_naam = 'Toernooinaam is verplicht.';
-    }
-    if (!formData.comp_datum) {
-      errors.comp_datum = 'Datum is verplicht.';
-    }
+    if (!formData.t_naam.trim()) errors.t_naam = 'Toernooinaam is verplicht.';
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setIsSubmitting(false);
@@ -141,20 +129,15 @@ export default function ToernooiBewerkenPage({
     setFieldErrors({});
 
     try {
-      const submitData = {
-        ...formData,
-      };
       const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
-        setSuccess(`Toernooi "${formData.comp_naam}" is succesvol bijgewerkt!`);
-        setTimeout(() => {
-          router.replace(`/toernooien/${compNr}`);
-        }, 1500);
+        setSuccess(`Toernooi "${formData.t_naam}" is succesvol bijgewerkt!`);
+        setTimeout(() => router.replace(`/toernooien/${compNr}`), 1500);
       } else {
         const data = await res.json();
         setError(data.error || 'Fout bij bijwerken toernooi.');
@@ -179,35 +162,31 @@ export default function ToernooiBewerkenPage({
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
         <p className="text-slate-600 dark:text-slate-400">{error}</p>
-        <Link
-          href="/toernooien"
-          className="mt-4 inline-block px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-        >
+        <Link href="/toernooien" className="mt-4 inline-block px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
           Naar toernooioverzicht
         </Link>
       </div>
     );
   }
 
+  const compNaam = tournament?.t_naam ?? tournament?.comp_naam ?? '';
+  const periode = tournament?.t_ronde ?? tournament?.periode ?? 0;
+
   return (
     <div>
       {tournament && (
-        <CompetitionSubNav compNr={compNr} compNaam={tournament.comp_naam} periode={tournament.periode || 1} />
+        <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} />
       )}
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-          Toernooi bewerken
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Wijzig de instellingen van het toernooi.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Toernooi bewerken</h1>
+        <p className="text-slate-600 dark:text-slate-400">Wijzig de instellingen van het toernooi.</p>
       </div>
 
       {error && (
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors" aria-label="Melding sluiten">
+          <button onClick={() => setError('')} className="ml-3 text-red-500 hover:text-red-700" aria-label="Sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -216,143 +195,118 @@ export default function ToernooiBewerkenPage({
       {success && (
         <div role="status" className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-sm border border-orange-200 dark:border-orange-800 flex items-center justify-between">
           <span>{success}</span>
-          <button onClick={() => setSuccess('')} className="ml-3 text-orange-500 hover:text-orange-700 dark:hover:text-orange-300 transition-colors" aria-label="Melding sluiten">
+          <button onClick={() => setSuccess('')} className="ml-3 text-orange-500" aria-label="Sluiten">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
-        {/* Editable Fields: Name, Date, Sorting */}
+        {/* Editable fields */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Algemene gegevens
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Algemene gegevens</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="comp_naam" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="t_naam" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Toernooinaam <span className="text-red-500">*</span>
               </label>
               <input
-                id="comp_naam"
-                name="comp_naam"
-                type="text"
-                value={formData.comp_naam}
-                onChange={handleChange}
-                placeholder="Bijv. Wintercompetitie 2026"
-                required
-                aria-required="true"
-                aria-invalid={!!fieldErrors.comp_naam}
-                aria-describedby={fieldErrors.comp_naam ? 'comp_naam-error' : undefined}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_naam ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
+                id="t_naam" name="t_naam" type="text"
+                value={formData.t_naam} onChange={handleChange}
+                required aria-required="true"
+                aria-invalid={!!fieldErrors.t_naam}
+                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors ${fieldErrors.t_naam ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
               />
-              {fieldErrors.comp_naam && (
-                <p id="comp_naam-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_naam}</p>
+              {fieldErrors.t_naam && (
+                <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.t_naam}</p>
               )}
             </div>
+
             <div>
-              <label htmlFor="comp_datum" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Datum <span className="text-red-500">*</span>
+              <label htmlFor="t_datum" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Sub-titel
               </label>
               <input
-                id="comp_datum"
-                name="comp_datum"
-                type="text"
-                value={formData.comp_datum}
-                onChange={handleChange}
-                placeholder="Bijv. 14-02-2026 of seizoen 2026"
-                required
-                aria-required="true"
-                aria-invalid={!!fieldErrors.comp_datum}
-                aria-describedby={fieldErrors.comp_datum ? 'comp_datum-error' : undefined}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors ${fieldErrors.comp_datum ? 'border-red-500 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
+                id="t_datum" name="t_datum" type="text"
+                value={formData.t_datum} onChange={handleChange}
+                placeholder="Bijv. Seizoen 2026 of Klasse A"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               />
-              {fieldErrors.comp_datum && (
-                <p id="comp_datum-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-200">{fieldErrors.comp_datum}</p>
-              )}
             </div>
+
             <div>
-              <label htmlFor="sorteren" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Naam sortering
+              <label htmlFor="datum_start" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Datum start
+              </label>
+              <input
+                id="datum_start" name="datum_start" type="date"
+                value={formData.datum_start} onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="datum_eind" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Datum eind
+              </label>
+              <input
+                id="datum_eind" name="datum_eind" type="date"
+                value={formData.datum_eind} onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="openbaar" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Stand openbaar
               </label>
               <select
-                id="sorteren"
-                name="sorteren"
-                value={formData.sorteren}
-                onChange={handleChange}
+                id="openbaar" name="openbaar"
+                value={formData.openbaar} onChange={handleChange}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               >
-                <option value={1}>Voornaam eerst</option>
-                <option value={2}>Achternaam eerst</option>
+                <option value={0}>Nee</option>
+                <option value={1}>Ja</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Read-only fields: set at creation, cannot be changed */}
-        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Discipline & Spelinstellingen
-            </h2>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
-              Alleen-lezen
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Deze instellingen zijn vastgelegd bij het aanmaken van het toernooi en kunnen niet meer worden gewijzigd.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Discipline
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {DISCIPLINES[formData.discipline as keyof typeof DISCIPLINES] || 'Onbekend'}
-              </div>
+        {/* Read-only fields set at creation */}
+        {tournament && (
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Discipline & Spelinstellingen
+              </h2>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
+                Alleen-lezen
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Puntensysteem
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {getPuntenSysLabel(formData.punten_sys)}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Moyenne-formule
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {MOYENNE_FORMULE_LABELS[formData.moy_form as keyof typeof MOYENNE_FORMULE_LABELS] || 'Onbekend'}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Min. caramboles
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {formData.min_car}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Max aantal beurten
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {formData.max_beurten}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                Vast aantal beurten
-              </label>
-              <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
-                {formData.vast_beurten === 1 ? 'Ja' : 'Nee'}
-              </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              Deze instellingen zijn vastgelegd bij het aanmaken en kunnen niet worden gewijzigd.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                ['Discipline', DISCIPLINES[tournament.discipline] || 'Onbekend'],
+                ['Puntensysteem', PUNTEN_SYSTEMEN[tournament.t_punten_sys ?? tournament.punten_sys ?? 1] || 'Onbekend'],
+                ['Caramboles-systeem', CAR_SYSTEMEN[tournament.t_car_sys] || 'Onbekend'],
+                ['Moyenne-formule', tournament.t_car_sys === 1
+                  ? (MOYENNE_FORMULE_LABELS[tournament.t_moy_form ?? tournament.moy_form ?? 3] || 'Onbekend')
+                  : 'N.v.t.'],
+                ['Min. caramboles', String(tournament.t_min_car ?? tournament.min_car ?? 0)],
+                ['Max. beurten', tournament.t_max_beurten === 0 ? 'Geen limiet' : String(tournament.t_max_beurten)],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</label>
+                  <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                    {value}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Submit */}
         <div className="flex items-center gap-3">

@@ -27,15 +27,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let snapshot;
     if (rondeNr !== null) {
       snapshot = await db.collection('poules')
-        .where('org_nummer', '==', orgNummer)
-        .where('comp_nr', '==', compNumber)
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
         .where('ronde_nr', '==', rondeNr)
         .orderBy('poule_nr', 'asc')
         .get();
     } else {
       snapshot = await db.collection('poules')
-        .where('org_nummer', '==', orgNummer)
-        .where('comp_nr', '==', compNumber)
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
         .orderBy('ronde_nr', 'asc')
         .orderBy('poule_nr', 'asc')
         .get();

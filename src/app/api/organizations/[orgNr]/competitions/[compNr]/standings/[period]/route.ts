@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { formatPlayerName } from '@/lib/billiards';
-import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
-import standingsCache from '@/lib/standingsCache';
+import { validateOrgAccess } from '@/lib/auth-helper';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface RouteParams {
@@ -11,135 +9,113 @@ interface RouteParams {
 
 /**
  * GET /api/organizations/:orgNr/competitions/:compNr/standings/:period
- * Calculate and return standings for a competition period.
  *
- * Aggregates all results for the given period and calculates:
- * - matches played, caramboles made/target, percentage, turns, moyenne, highest serie, points
- * - Sort: points desc, percentage desc, moyenne desc, highest serie desc
+ * Calculate standings from tp_uitslagen (gespeeld=1).
+ * period = ronde_nr (1..n), or 0 = totaal (all rounds)
+ * Query param: poule_nr (optional, integer)
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr, compNr, period } = await params;
-    const orgNummer = parseInt(orgNr, 10);
+
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
     const compNumber = parseInt(compNr, 10);
-    const periodNumber = parseInt(period, 10);
+    const rondeNr = parseInt(period, 10); // 0 = totaal
+    if (isNaN(orgNummer) || isNaN(compNumber) || isNaN(rondeNr)) {
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
+    }
 
     const { searchParams } = new URL(request.url);
-    const pouleId = searchParams.get('poule_id');
+    // Accept both poule_nr (integer) and poule_id (for backward compat)
+    const pouleNrRaw = searchParams.get('poule_nr') ?? searchParams.get('poule_id');
+    const pouleNr = pouleNrRaw ? parseInt(pouleNrRaw, 10) : null;
 
-    if (isNaN(orgNummer) || isNaN(compNumber) || isNaN(periodNumber)) {
-      return NextResponse.json(
-        { error: 'Ongeldige parameters' },
-        { status: 400 }
-      );
-    }
+    console.log(`[STANDINGS] org=${orgNummer} comp=${compNumber} ronde=${rondeNr} poule=${pouleNr ?? 'alle'}`);
 
-    console.log(`[STANDINGS] Calculating standings for competition ${compNumber}, period ${periodNumber}, org ${orgNummer}${pouleId ? `, poule ${pouleId}` : ''}`);
-
-    // Check cache first (add pouleId to cache key)
-    const cacheKey = pouleId ? `${periodNumber}_${pouleId}` : String(periodNumber);
-    const cachedStandings = standingsCache.get(orgNummer, compNumber, cacheKey as any);
-    if (cachedStandings) {
-      console.log('[STANDINGS] Returning cached standings');
-      return cachedJsonResponse(cachedStandings, 'default');
-    }
-
-    // Fetch competition details
-    const compSnapshot = await db.collection('competitions')
+    // Fetch tournament for metadata
+    const compSnap = await db.collection('toernooien')
       .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber)
+      .where('t_nummer', '==', compNumber)
       .limit(1)
       .get();
 
-    if (compSnapshot.empty) {
-      return NextResponse.json(
-        { error: 'Competitie niet gevonden' },
-        { status: 404 }
-      );
+    if (compSnap.empty) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
     }
 
-    const compData = compSnapshot.docs[0].data();
-    const sorteren = Number(compData?.sorteren) || 1;
-    const punten_sys = Number(compData?.punten_sys ?? compData?.puntensysteem) || 1;
+    const compData = compSnap.docs[0].data();
+    const puntenSys = Number(compData?.t_punten_sys ?? compData?.punten_sys) || 1;
 
-    let playersSnapshot;
-    if (pouleId) {
-      // Fetch only players in this poule
-      playersSnapshot = await db.collection('poule_players')
-        .where('poule_id', '==', pouleId)
+    // Fetch spelers for this tournament
+    const spelersSnap = await db.collection('spelers')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .get();
+
+    const spelerMap: Record<number, string> = {};
+    spelersSnap.docs.forEach(d => {
+      const data = d.data() ?? {};
+      const nr = (data.sp_nummer as number) || 0;
+      if (nr) spelerMap[nr] = (data.sp_naam as string) || `Speler ${nr}`;
+    });
+
+    // If filtering by poule, get only sp_nummers in that poule
+    let pouleSpelers: Set<number> | null = null;
+    if (pouleNr !== null && !isNaN(pouleNr)) {
+      const poulesSnap = await db.collection('poules')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('poule_nr', '==', pouleNr)
         .get();
-    } else {
-      // Fetch all competition players
-      playersSnapshot = await db.collection('competition_players')
-        .where('spc_org', '==', orgNummer)
-        .where('spc_competitie', '==', compNumber)
-        .get();
+
+      pouleSpelers = new Set<number>();
+      poulesSnap.docs.forEach(d => {
+        const nr = (d.data()?.sp_nummer as number) || 0;
+        if (nr) pouleSpelers!.add(nr);
+      });
     }
 
-    // Prepare players for batch enrichment
-    const playersToEnrich = playersSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ref: doc.ref,
-      spc_nummer: doc.data().spc_nummer,
-      ...doc.data()
-    }));
+    // Fetch uitslagen (gespeeld=1)
+    let uitslagenQuery = db.collection('uitslagen')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('gespeeld', '==', 1);
 
-    // Use batch enrichment to fetch all missing names efficiently
-    const enrichedPlayers = await batchEnrichPlayerNames(
-      orgNummer,
-      playersToEnrich,
-      true // persist to Firestore
-    );
-
-    // Build player name map from enriched players (exclude players without moyenne in this period)
-    const playerMap: Record<number, { name: string; nr: number; playerRef?: any }> = {};
-
-    for (const player of enrichedPlayers) {
-      if (periodNumber >= 1 && !pouleId) {
-        const moyKey = `spc_moyenne_${periodNumber}`;
-        const moy = Number((player as Record<string, unknown>)[moyKey]) || 0;
-        if (moy <= 0) continue;
-      }
-      const nr = Number(player.spc_nummer);
-      const name = formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, sorteren);
-      playerMap[nr] = { name, nr, playerRef: player };
+    if (rondeNr !== 0) {
+      uitslagenQuery = uitslagenQuery.where('t_ronde', '==', rondeNr);
     }
 
-    // Fetch all results for this competition and period
-    // Period 0 means "Totaal" (all periods combined)
-    let resultsQuery = db.collection('results')
-      .where('org_nummer', '==', orgNummer)
-      .where('comp_nr', '==', compNumber);
-
-    if (periodNumber !== 0) {
-      resultsQuery = resultsQuery.where('periode', '==', periodNumber);
+    if (pouleNr !== null && !isNaN(pouleNr)) {
+      uitslagenQuery = uitslagenQuery.where('sp_poule', '==', pouleNr);
     }
 
-    if (pouleId) {
-      resultsQuery = resultsQuery.where('poule_id', '==', pouleId);
-    }
+    const uitslagenSnap = await uitslagenQuery.get();
 
-    const resultsSnapshot = await resultsQuery.get();
-
-    // Initialize standings per player
-    const standingsMap: Record<number, {
-      playerNr: number;
-      playerName: string;
+    // Standings map: sp_nummer → stats
+    const statsMap: Record<number, {
+      sp_nummer: number;
+      sp_naam: string;
       matchesPlayed: number;
       carambolesGemaakt: number;
       carambolesTeMaken: number;
       beurten: number;
       hoogsteSerie: number;
       punten: number;
-      partijMoyennes: number[]; // Track individual match moyennes for P.moy calculation
+      partijMoyennes: number[];
     }> = {};
 
-    // Initialize all players with zero stats
-    for (const nr of Object.keys(playerMap)) {
-      const playerNr = parseInt(nr, 10);
-      standingsMap[playerNr] = {
-        playerNr,
-        playerName: playerMap[playerNr].name,
+    // Initialize for all relevant spelers
+    const relevantSpelers = pouleSpelers
+      ? Array.from(pouleSpelers)
+      : Object.keys(spelerMap).map(Number);
+
+    for (const nr of relevantSpelers) {
+      statsMap[nr] = {
+        sp_nummer: nr,
+        sp_naam: spelerMap[nr] ?? `Speler ${nr}`,
         matchesPlayed: 0,
         carambolesGemaakt: 0,
         carambolesTeMaken: 0,
@@ -150,120 +126,77 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       };
     }
 
-    // Aggregate results
-    resultsSnapshot.forEach((doc) => {
-      const result = doc.data();
-      if (!result) return;
+    // Aggregate from uitslagen (tp_uitslagen field names)
+    uitslagenSnap.forEach(doc => {
+      const u = doc.data() ?? {};
+      const sp1 = Number(u.sp_nummer_1);
+      const sp2 = Number(u.sp_nummer_2);
+      const brt = Number(u.brt) || 0;
+      const sp1gem = Number(u.sp1_car_gem) || 0;
+      const sp2gem = Number(u.sp2_car_gem) || 0;
+      const sp1tem = Number(u.sp1_car_tem) || 0;
+      const sp2tem = Number(u.sp2_car_tem) || 0;
+      const sp1hs = Number(u.sp1_hs) || 0;
+      const sp2hs = Number(u.sp2_hs) || 0;
+      const sp1punt = Number(u.sp1_punt) || 0;
+      const sp2punt = Number(u.sp2_punt) || 0;
 
-      const p1Punt = Number(result.sp_1_punt) || 0;
-      const p2Punt = Number(result.sp_2_punt) || 0;
-      const brt = Number(result.brt) || 0;
-      const p1Car = Number(result.sp_1_cargem) || 0;
-      const p2Car = Number(result.sp_2_cargem) || 0;
-      const p1Target = pouleId ? (Number((playerMap[Number(result.sp_1_nr)]?.playerRef as any)?.caramboles_start) || 0) : (Number(result.sp_1_cartem) || 0);
-      const p2Target = pouleId ? (Number((playerMap[Number(result.sp_2_nr)]?.playerRef as any)?.caramboles_start) || 0) : (Number(result.sp_2_cartem) || 0);
-
-      // Player 1 stats
-      const p1Nr = Number(result.sp_1_nr);
-      if (standingsMap[p1Nr]) {
-        standingsMap[p1Nr].matchesPlayed += 1;
-        standingsMap[p1Nr].carambolesGemaakt += p1Car;
-        standingsMap[p1Nr].carambolesTeMaken += Number(result.sp_1_cartem) || 0;
-        standingsMap[p1Nr].beurten += brt;
-        standingsMap[p1Nr].hoogsteSerie = Math.max(
-          standingsMap[p1Nr].hoogsteSerie,
-          Number(result.sp_1_hs) || 0
-        );
-        standingsMap[p1Nr].punten += p1Punt;
-        // For P.moy: only track match moyenne if player won or drew
-        if (p1Punt >= p2Punt && brt > 0) {
-          standingsMap[p1Nr].partijMoyennes.push(p1Car / brt);
+      // Player 1
+      if (statsMap[sp1]) {
+        statsMap[sp1].matchesPlayed++;
+        statsMap[sp1].carambolesGemaakt += sp1gem;
+        statsMap[sp1].carambolesTeMaken += sp1tem;
+        statsMap[sp1].beurten += brt;
+        statsMap[sp1].hoogsteSerie = Math.max(statsMap[sp1].hoogsteSerie, sp1hs);
+        statsMap[sp1].punten += sp1punt;
+        if (brt > 0 && sp1punt >= sp2punt) {
+          statsMap[sp1].partijMoyennes.push(sp1gem / brt);
         }
-      } else if (playerMap[p1Nr]) {
-        // Player has moyenne in this period - add them
-        const partijMoyennes: number[] = [];
-        if (p1Punt >= p2Punt && brt > 0) {
-          partijMoyennes.push(p1Car / brt);
-        }
-        standingsMap[p1Nr] = {
-          playerNr: p1Nr,
-          playerName: playerMap[p1Nr].name,
-          matchesPlayed: 1,
-          carambolesGemaakt: p1Car,
-          carambolesTeMaken: Number(result.sp_1_cartem) || 0,
-          beurten: brt,
-          hoogsteSerie: Number(result.sp_1_hs) || 0,
-          punten: p1Punt,
-          partijMoyennes,
-        };
       }
 
-      // Player 2 stats
-      const p2Nr = Number(result.sp_2_nr);
-      if (standingsMap[p2Nr]) {
-        standingsMap[p2Nr].matchesPlayed += 1;
-        standingsMap[p2Nr].carambolesGemaakt += p2Car;
-        standingsMap[p2Nr].carambolesTeMaken += Number(result.sp_2_cartem) || 0;
-        standingsMap[p2Nr].beurten += brt;
-        standingsMap[p2Nr].hoogsteSerie = Math.max(
-          standingsMap[p2Nr].hoogsteSerie,
-          Number(result.sp_2_hs) || 0
-        );
-        standingsMap[p2Nr].punten += p2Punt;
-        // For P.moy: only track match moyenne if player won or drew
-        if (p2Punt >= p1Punt && brt > 0) {
-          standingsMap[p2Nr].partijMoyennes.push(p2Car / brt);
+      // Player 2
+      if (statsMap[sp2]) {
+        statsMap[sp2].matchesPlayed++;
+        statsMap[sp2].carambolesGemaakt += sp2gem;
+        statsMap[sp2].carambolesTeMaken += sp2tem;
+        statsMap[sp2].beurten += brt;
+        statsMap[sp2].hoogsteSerie = Math.max(statsMap[sp2].hoogsteSerie, sp2hs);
+        statsMap[sp2].punten += sp2punt;
+        if (brt > 0 && sp2punt >= sp1punt) {
+          statsMap[sp2].partijMoyennes.push(sp2gem / brt);
         }
-      } else if (playerMap[p2Nr]) {
-        // Player has moyenne in this period - add them
-        const partijMoyennes: number[] = [];
-        if (p2Punt >= p1Punt && brt > 0) {
-          partijMoyennes.push(p2Car / brt);
-        }
-        standingsMap[p2Nr] = {
-          playerNr: p2Nr,
-          playerName: playerMap[p2Nr].name,
-          matchesPlayed: 1,
-          carambolesGemaakt: p2Car,
-          carambolesTeMaken: Number(result.sp_2_cartem) || 0,
-          beurten: brt,
-          hoogsteSerie: Number(result.sp_2_hs) || 0,
-          punten: p2Punt,
-          partijMoyennes,
-        };
       }
     });
 
-    // Calculate derived fields and sort
-    const standings = Object.values(standingsMap).map((entry) => {
+    // Calculate derived stats
+    const standings = Object.values(statsMap).map((entry, i) => {
       const percentage = entry.carambolesTeMaken > 0
-        ? (entry.carambolesGemaakt / entry.carambolesTeMaken) * 100
+        ? Math.floor((entry.carambolesGemaakt / entry.carambolesTeMaken) * 100 * 1000) / 1000
         : 0;
       const moyenne = entry.beurten > 0
-        ? entry.carambolesGemaakt / entry.beurten
+        ? Math.floor((entry.carambolesGemaakt / entry.beurten) * 1000) / 1000
         : 0;
-      // P.moy = highest moyenne from matches the player won or drew
-      // If no wins or draws, P.moy = 0.000
       const partijMoyenne = entry.partijMoyennes.length > 0
-        ? Math.max(...entry.partijMoyennes)
+        ? Math.floor(Math.max(...entry.partijMoyennes) * 1000) / 1000
         : 0;
 
       return {
-        playerNr: entry.playerNr,
-        playerName: entry.playerName,
+        rank: i + 1,
+        playerNr: entry.sp_nummer,
+        playerName: entry.sp_naam,
         matchesPlayed: entry.matchesPlayed,
         carambolesGemaakt: entry.carambolesGemaakt,
         carambolesTeMaken: entry.carambolesTeMaken,
+        percentage,
         beurten: entry.beurten,
+        moyenne,
+        partijMoyenne,
         hoogsteSerie: entry.hoogsteSerie,
         punten: entry.punten,
-        percentage: Math.floor(percentage * 1000) / 1000,
-        moyenne: Math.floor(moyenne * 1000) / 1000,
-        partijMoyenne: Math.floor(partijMoyenne * 1000) / 1000,
       };
     });
 
-    // Sort: points desc, percentage desc, moyenne desc, highest serie desc
+    // Sort: punten desc, percentage desc, moyenne desc, hoogste serie desc
     standings.sort((a, b) => {
       if (b.punten !== a.punten) return b.punten - a.punten;
       if (b.percentage !== a.percentage) return b.percentage - a.percentage;
@@ -271,32 +204,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return b.hoogsteSerie - a.hoogsteSerie;
     });
 
-    // Assign ranks
-    const rankedStandings = standings.map((entry, index) => ({
-      rank: index + 1,
-      ...entry,
-    }));
-
-    console.log(`[STANDINGS] Calculated standings for ${rankedStandings.length} players`);
+    standings.forEach((s, i) => { s.rank = i + 1; });
 
     const responseData = {
-      standings: rankedStandings,
-      count: rankedStandings.length,
+      standings,
+      count: standings.length,
       competition: {
         comp_nr: compNumber,
-        comp_naam: compData?.comp_naam || '',
+        t_nummer: compNumber,
+        comp_naam: compData?.t_naam ?? compData?.comp_naam ?? '',
         discipline: compData?.discipline || 1,
-        punten_sys,
-        periode: periodNumber,
+        punten_sys: puntenSys,
+        t_punten_sys: puntenSys,
+        periode: rondeNr,
       },
     };
 
-    // Cache the response for 30 seconds
-    standingsCache.set(orgNummer, compNumber, cacheKey as any, responseData);
-
     return cachedJsonResponse(responseData, 'default');
   } catch (error) {
-    console.error('[STANDINGS] Error calculating standings:', error);
+    console.error('[STANDINGS] Error:', error);
     return NextResponse.json(
       { error: 'Fout bij berekenen stand', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }

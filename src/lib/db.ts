@@ -535,8 +535,8 @@ export async function initializeCollections(): Promise<string[]> {
   if (!instance.isFirestore) {
     // Local mode: ensure JSON files exist
     const requiredCollections = [
-      'organizations', 'competitions', 'members', 'competition_players',
-      'matches', 'results', 'tables', 'device_config',
+      'gebruikers', 'toernooien', 'spelers', 'poules',
+      'uitslagen', 'device_config',
       'score_helpers', 'score_helpers_tablet',
     ];
     ensureDbDir();
@@ -553,8 +553,8 @@ export async function initializeCollections(): Promise<string[]> {
 
   // Firestore mode: ensure all required collections exist by checking and creating if needed
   const requiredCollections = [
-    'organizations', 'competitions', 'members', 'competition_players',
-    'matches', 'results', 'tables', 'device_config',
+    'gebruikers', 'toernooien', 'spelers', 'poules',
+    'uitslagen', 'device_config',
     'score_helpers', 'score_helpers_tablet',
   ];
 

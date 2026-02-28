@@ -11,17 +11,15 @@ import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
   id: string;
-  comp_nr: number;
-  comp_naam: string;
-  comp_datum: string;
+  t_nummer: number;
+  comp_nr?: number;
+  t_naam: string;
+  comp_naam?: string;
   discipline: number;
-  punten_sys: number;
-  moy_form: number;
-  min_car: number;
-  max_beurten: number;
-  vast_beurten: number;
-  sorteren: number;
-  periode: number;
+  t_punten_sys: number;
+  punten_sys?: number;
+  t_ronde: number;
+  periode?: number;
 }
 
 interface StandingEntry {
@@ -47,8 +45,7 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 };
 
 function getPuntenSysLabel(punten_sys: number): string {
-  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
-  return PUNTEN_SYSTEMEN[baseSys] || '';
+  return PUNTEN_SYSTEMEN[punten_sys] || '';
 }
 
 /**
@@ -56,14 +53,9 @@ function getPuntenSysLabel(punten_sys: number): string {
  * WRV = 2 (of 3 bij extra punt boven moyenne), 10-punten = 10, Belgisch = 12.
  */
 function getMaxPointsPerMatch(punten_sys: number): number {
-  const baseSys = punten_sys >= 10000 ? Math.floor(punten_sys / 10000) : punten_sys;
-  if (baseSys === 1) {
-    // WRV: 3 als bonus (extra punt boven moyenne) actief, anders 2
-    const hasBonus = punten_sys >= 11000; // 11xxx = winst-/remise-/verliesbonus
-    return hasBonus ? 3 : 2;
-  }
-  if (baseSys === 2) return 10;
-  if (baseSys === 3) return 12;
+  if (punten_sys === 1) return 2;
+  if (punten_sys === 2) return 10;
+  if (punten_sys === 3) return 12;
   return 2;
 }
 
@@ -155,7 +147,7 @@ export default function ToernooiStandPage({
            setSelectedPouleId(pouleIdParam);
         }
 
-        setSelectedPeriod(data.periode || 1);
+        setSelectedPeriod(data.t_ronde ?? data.periode ?? 1);
         return data;
       } else {
         setError('Toernooi niet gevonden.');
@@ -195,13 +187,13 @@ export default function ToernooiStandPage({
     try {
       const url = new URL(`/api/organizations/${orgNummer}/competitions/${compNr}/standings/${period}`, window.location.origin);
       if (pouleId) {
-        url.searchParams.set('poule_id', pouleId);
+        url.searchParams.set('poule_nr', pouleId);
       }
       const res = await fetch(url.toString());
       if (res.ok) {
         const data = await res.json();
         const standingsData = data.standings || [];
-        const punten_sys = Number(data.competition?.punten_sys) || 1;
+        const punten_sys = Number(data.competition?.t_punten_sys ?? data.competition?.punten_sys) || 1;
         const maxPointsPerMatch = getMaxPointsPerMatch(punten_sys);
 
         const standingsWithPercentage = standingsData.map((entry: StandingEntry) => {
@@ -316,14 +308,14 @@ export default function ToernooiStandPage({
   return (
     <div>
       <div className="print:hidden">
-        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
+        <CompetitionSubNav compNr={compNr} compNaam={competition.t_naam ?? competition.comp_naam ?? ''} periode={competition.t_ronde ?? competition.periode ?? 1} />
       </div>
 
       {/* Print-only header */}
       <div className="hidden print:block mb-6">
-        <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ToernooiProf'} - {competition.comp_naam}</h1>
+        <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ToernooiProf'} - {competition.t_naam ?? competition.comp_naam}</h1>
         <div className="text-sm mb-2">
-          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
+          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.t_punten_sys ?? competition.punten_sys ?? 1) ? ` | ${getPuntenSysLabel(competition.t_punten_sys ?? competition.punten_sys ?? 1)}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle rondes)' : `Ronde ${selectedPeriod}`}
         </div>
         <div className="text-sm text-gray-600">
           Afgedrukt: <span suppressHydrationWarning>{new Date().toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })},{' '}
@@ -334,15 +326,15 @@ export default function ToernooiStandPage({
 
       <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Stand - {competition.comp_naam}
-          {selectedPouleId && poules.find(p => p.id === selectedPouleId) && (
+          Stand – {competition.t_naam ?? competition.comp_naam}
+          {selectedPouleId && (
             <span className="ml-2 text-orange-600 dark:text-orange-400">
-              ({poules.find(p => p.id === selectedPouleId).poule_naam})
+              (Poule {selectedPouleId})
             </span>
           )}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.punten_sys) ? ` | ${getPuntenSysLabel(competition.punten_sys)}` : ''}
+          {DISCIPLINES[competition.discipline]} | {getPuntenSysLabel(competition.t_punten_sys ?? competition.punten_sys ?? 1)}
         </p>
       </div>
 
@@ -364,10 +356,10 @@ export default function ToernooiStandPage({
       <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
         <div className="flex items-center gap-2">
           <label htmlFor="period-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Periode:
+            Ronde:
           </label>
           <div className="flex gap-1">
-            {Array.from({ length: Math.max(competition.periode || 1, 5) }, (_, i) => i + 1).map((p) => (
+            {Array.from({ length: Math.max(competition.t_ronde ?? competition.periode ?? 1, 1) }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
                 onClick={() => handlePeriodChange(p)}
@@ -375,9 +367,7 @@ export default function ToernooiStandPage({
                 className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${
                   selectedPeriod === p
                     ? 'bg-orange-600 text-white shadow-sm'
-                    : p <= (competition.periode || 1)
-                    ? 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                 }`}
               >
                 {p}
@@ -389,7 +379,7 @@ export default function ToernooiStandPage({
               className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
                 selectedPeriod === 0
                   ? 'bg-orange-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50'
               }`}
             >
               Totaal
@@ -467,13 +457,13 @@ export default function ToernooiStandPage({
             </svg>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
-            Er zijn nog geen uitslagen voor deze periode. Voer eerst uitslagen in via de Matrix.
+            Er zijn nog geen uitslagen voor deze ronde. Voer eerst uitslagen in via het Uitslagbeheer.
           </p>
           <button
-            onClick={() => router.push(`/toernooien/${compNr}/matrix`)}
+            onClick={() => router.push(`/toernooien/${compNr}/planning`)}
             className="mt-4 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm"
           >
-            Naar Matrix
+            Naar Uitslagbeheer
           </button>
         </div>
       )}
@@ -561,7 +551,7 @@ export default function ToernooiStandPage({
           </div>
           <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | {selectedPeriod === 0 ? 'Totaal (alle perioden)' : `Periode ${selectedPeriod}`}
+              {standings.length} {standings.length === 1 ? 'speler' : 'spelers'} | {selectedPeriod === 0 ? 'Totaal (alle rondes)' : `Ronde ${selectedPeriod}`}
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {sortByPercentage

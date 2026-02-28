@@ -12,7 +12,7 @@ const html = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClubMatch</title>
+  <title>ToernooiProf</title>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; color: #1e293b; }
     h1 { color: #166534; }
@@ -21,7 +21,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <h1>ClubMatch</h1>
+  <h1>ToernooiProf</h1>
   <p>Deze statische pagina is alleen bedoeld voor Firebase Hosting-configuratie.</p>
   <p>De volledige app (met inloggen, API’s en scoreborden) kan niet als statische export worden gehost. Gebruik <strong>Firebase App Hosting</strong> (Next.js) of een andere hostingoplossing voor de complete applicatie.</p>
 </body>
