@@ -34,6 +34,7 @@ const envPath = path.join(projectRoot, '.env.local');
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const tableArg = args.find(a => a.startsWith('--table='))?.split('=')[1];
+const fileArg = args.find(a => a.startsWith('--file='))?.split('=').slice(1).join('=');
 
 // ─── Firebase init ─────────────────────────────────────────────────────────
 function initFirebase() {
@@ -53,38 +54,89 @@ function initFirebase() {
 /**
  * Extract INSERT rows for a specific table from SQL content.
  * Returns array of column-value objects.
+ *
+ * Supports two phpMyAdmin export formats:
+ *  1. Multi-row: INSERT INTO `t` (cols) VALUES\n(r1),\n(r2),...\n(rN);
+ *  2. Single-row: INSERT INTO `t` (cols) VALUES (r1),(r2),...;
  */
 function parseInserts(sql, tableName) {
   const records = [];
-  // Match INSERT INTO `tableName` (`col1`,`col2`,...) VALUES (v1,v2,...), ...;
-  const insertRegex = new RegExp(
-    `INSERT INTO \`${tableName}\` \\(([^)]+)\\) VALUES\\s*([\\s\\S]+?);`,
-    'gi'
+  const lines = sql.split('\n');
+
+  const headerRe = new RegExp(
+    `^INSERT INTO \\\`${tableName}\\\` \\(([^)]+)\\) VALUES`,
+    'i'
   );
 
-  let match;
-  while ((match = insertRegex.exec(sql)) !== null) {
-    const colPart = match[1];
-    const valuesPart = match[2];
+  let columns = null;
+  let inInsert = false;
+  let singleLineValues = null; // for single-line INSERT
 
-    const columns = colPart
-      .split(',')
-      .map(c => c.trim().replace(/`/g, ''));
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
 
-    // Split individual value tuples – handles multiline and escaped quotes
-    const tupleRegex = /\(([^)]*(?:\([^)]*\)[^)]*)*)\)/g;
-    let tupleMatch;
-    while ((tupleMatch = tupleRegex.exec(valuesPart)) !== null) {
-      const vals = parseTupleValues(tupleMatch[1]);
-      if (vals.length !== columns.length) continue;
+    if (!inInsert) {
+      const m = headerRe.exec(trimmed);
+      if (!m) continue;
 
-      const record = {};
-      columns.forEach((col, i) => {
-        record[col] = vals[i];
-      });
-      records.push(record);
+      columns = m[1].split(',').map(c => c.trim().replace(/`/g, ''));
+      inInsert = true;
+
+      // Check if VALUES is followed by data on the SAME line
+      const afterValues = trimmed.replace(headerRe, '').trim();
+      if (afterValues.startsWith('(')) {
+        // Single-line format: parse the rest of this line (and possibly next lines)
+        singleLineValues = afterValues;
+      }
+      // Multi-line format: data starts on next line
+      continue;
+    }
+
+    // --- Multi-line format: each row on its own line ---
+    if (singleLineValues === null) {
+      if (!trimmed.startsWith('(')) {
+        inInsert = false;
+        columns = null;
+        continue;
+      }
+
+      // Remove trailing comma or semicolon
+      const rowStr = trimmed.replace(/[,;]\s*$/, '');
+      const inner = rowStr.slice(1, -1); // strip outer ()
+      const vals = parseTupleValues(inner);
+      if (vals.length === columns.length) {
+        const record = {};
+        columns.forEach((col, idx) => { record[col] = vals[idx]; });
+        records.push(record);
+      }
+
+      if (trimmed.endsWith(';') || trimmed.endsWith(');')) {
+        inInsert = false;
+        columns = null;
+      }
+      continue;
+    }
+
+    // --- Single-line format: accumulate until we hit a line ending with ; ---
+    singleLineValues += '\n' + trimmed;
+    if (trimmed.endsWith(';')) {
+      // Parse all tuples from accumulated content
+      const tupleRe = /\(([^)]*(?:\([^)]*\)[^)]*)*)\)/g;
+      let tm;
+      while ((tm = tupleRe.exec(singleLineValues)) !== null) {
+        const vals = parseTupleValues(tm[1]);
+        if (vals.length !== columns.length) continue;
+        const record = {};
+        columns.forEach((col, idx) => { record[col] = vals[idx]; });
+        records.push(record);
+      }
+      inInsert = false;
+      columns = null;
+      singleLineValues = null;
     }
   }
+
   return records;
 }
 
@@ -232,8 +284,11 @@ async function main() {
   console.log('=== ToernooiProf SQL → Firestore import ===');
   if (dryRun) console.log('DRY RUN – geen schrijfacties naar Firestore');
 
-  console.log(`SQL bestand: ${sqlFile}`);
-  const sql = readFileSync(sqlFile, 'utf-8');
+  const resolvedSqlFile = fileArg
+    ? path.resolve(projectRoot, fileArg)
+    : sqlFile;
+  console.log(`SQL bestand: ${resolvedSqlFile}`);
+  const sql = readFileSync(resolvedSqlFile, 'utf-8');
   console.log(`SQL geladen (${(sql.length / 1024 / 1024).toFixed(1)} MB)\n`);
 
   let firestoreDb;
