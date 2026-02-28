@@ -4,7 +4,7 @@
   },
   "hosting": {
     "site": "clubmatch",
-    "public": "out",
+    "public": "splash",
     "ignore": [
       "firebase.json",
       "**/.*",
