@@ -43,6 +43,12 @@ const helpTopics: HelpTopic[] = [
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
           NB: Een lid kunt u aan meerdere competities koppelen.
         </p>
+        <div>
+          <h4 className="font-semibold mb-2">Printen en exporteren</h4>
+          <p>
+            In ClubMatch betekent <strong>printen</strong> of <strong>exporteren</strong> steeds: printen naar PDF. U kunt daarmee standen, planningen of andere overzichten als PDF opslaan of afdrukken via de printoptie in uw browser (kies &quot;Opslaan als PDF&quot; of een PDF-printer).
+          </p>
+        </div>
       </div>
     ),
   },

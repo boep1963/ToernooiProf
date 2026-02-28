@@ -14,9 +14,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   outputFileTracingRoot: path.join(__dirname),
   async headers() {
     return [
