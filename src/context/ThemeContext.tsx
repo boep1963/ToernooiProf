@@ -29,7 +29,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
       resolvedTheme = initialTheme;
     } else {
       // Fall back to localStorage
-      const saved = localStorage.getItem('clubmatch-theme') as Theme;
+      const saved = localStorage.getItem('toernoiprof-theme') as Theme;
       if (saved === 'dark' || saved === 'light') {
         resolvedTheme = saved;
       } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -48,7 +48,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
 
     // Optimistic update for instant UI response
     setTheme(newTheme);
-    localStorage.setItem('clubmatch-theme', newTheme);
+    localStorage.setItem('toernoiprof-theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
 
     // Persist to Firestore in background

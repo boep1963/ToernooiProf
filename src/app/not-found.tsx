@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
       <div className="text-center max-w-md">
-        <p className="text-6xl font-bold text-green-700 dark:text-green-500 mb-4">404</p>
+        <p className="text-6xl font-bold text-orange-600 dark:text-orange-500 mb-4">404</p>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           Pagina niet gevonden
         </h1>
@@ -14,7 +14,7 @@ export default function NotFound() {
         <div className="flex gap-3 justify-center">
           <Link
             href="/dashboard"
-            className="px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg transition-colors text-sm"
+            className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors text-sm"
           >
             Naar dashboard
           </Link>

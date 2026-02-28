@@ -1,6 +1,0 @@
-=== SESSION SUMMARY - Feature #330 ===
-Date: 2026-02-25
-Agent: Coding Agent
-
-FEATURE COMPLETED: #330
-Status: PASSING (Verified with browser automation)

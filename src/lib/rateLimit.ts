@@ -44,7 +44,7 @@ const loginCodeByIp = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(10, '15 m'),
-      prefix: 'clubmatch:auth:login-code:ip',
+      prefix: 'toernooiprof:auth:login-code:ip',
     })
   : null;
 
@@ -52,7 +52,7 @@ const loginCodeByIdentifier = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(5, '15 m'),
-      prefix: 'clubmatch:auth:login-code:id',
+      prefix: 'toernooiprof:auth:login-code:id',
     })
   : null;
 
@@ -61,7 +61,7 @@ const loginByIp = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(20, '15 m'),
-      prefix: 'clubmatch:auth:login:ip',
+      prefix: 'toernooiprof:auth:login:ip',
     })
   : null;
 
@@ -70,7 +70,7 @@ const registerByIp = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(5, '15 m'),
-      prefix: 'clubmatch:auth:register:ip',
+      prefix: 'toernooiprof:auth:register:ip',
     })
   : null;
 
@@ -78,7 +78,7 @@ const registerByEmail = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(3, '1 h'),
-      prefix: 'clubmatch:auth:register:email',
+      prefix: 'toernooiprof:auth:register:email',
     })
   : null;
 
@@ -87,7 +87,7 @@ const verifyByIp = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(5, '15 m'),
-      prefix: 'clubmatch:auth:verify:ip',
+      prefix: 'toernooiprof:auth:verify:ip',
     })
   : null;
 
@@ -95,7 +95,7 @@ const verifyByEmail = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(5, '15 m'),
-      prefix: 'clubmatch:auth:verify:email',
+        prefix: 'toernooiprof:auth:verify:email',
     })
   : null;
 

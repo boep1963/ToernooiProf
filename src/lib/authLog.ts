@@ -5,7 +5,7 @@
 
 import crypto from 'crypto';
 
-const LOG_NAME = 'clubmatch-auth';
+const LOG_NAME = 'toernoiprof-auth';
 const HASH_TRUNCATE = 16;
 
 function hash(value: string): string {
