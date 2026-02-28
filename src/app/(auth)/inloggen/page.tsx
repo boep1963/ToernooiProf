@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -11,6 +12,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
   const [loginCode, setLoginCode] = useState('');
   const [email, setEmail] = useState('');
@@ -21,6 +23,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Als al ingelogd, redirect naar dashboard
+  useEffect(() => {
+    fetch('/api/auth/session', { credentials: 'include' })
+      .then((res) => { if (res.ok) router.replace('/dashboard'); })
+      .catch(() => {});
+  }, [router]);
 
   const handleCodeLogin = async (e: React.FormEvent) => {
     e.preventDefault();

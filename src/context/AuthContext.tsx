@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session on mount
     const checkSession = async () => {
       try {
-        const res = await fetch('/api/auth/session');
+        const res = await fetch('/api/auth/session', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setState({

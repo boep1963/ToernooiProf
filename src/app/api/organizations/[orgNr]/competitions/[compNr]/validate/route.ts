@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import db from '@/lib/db';
+import { validateOrgAccess } from '@/lib/auth-helper';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
 
 interface ValidationIssue {
@@ -9,81 +10,71 @@ interface ValidationIssue {
   details?: string;
 }
 
+/**
+ * Validate ToernooiProf tournament data.
+ * Uses: toernooien, spelers, uitslagen
+ */
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ orgNr: string; compNr: string }> }
 ) {
   try {
     const { orgNr, compNr } = await context.params;
-    const org_nummer = parseInt(orgNr, 10);
-    const comp_nr = parseInt(compNr, 10);
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const org_nummer = authResult.orgNummer;
 
-    if (isNaN(org_nummer) || isNaN(comp_nr)) {
+    const comp_nr = parseInt(compNr, 10);
+    if (isNaN(comp_nr)) {
       return NextResponse.json(
-        { error: 'Ongeldige organisatie of toernooi nummer.' },
+        { error: 'Ongeldig toernooi nummer.' },
         { status: 400 }
       );
     }
 
     const issues: ValidationIssue[] = [];
 
-    // 1. Get competition data
-    const competitionsSnapshot = await db
-      .collection('competitions')
+    // 1. Get toernooi (ToernooiProf: org_nummer of gebruiker_nr)
+    let toernooiSnapshot = await db
+      .collection('toernooien')
       .where('org_nummer', '==', org_nummer)
-      .where('comp_nr', '==', comp_nr)
+      .where('t_nummer', '==', comp_nr)
+      .limit(1)
       .get();
 
-    if (competitionsSnapshot.empty) {
+    if (toernooiSnapshot.empty) {
+      toernooiSnapshot = await db
+        .collection('toernooien')
+        .where('gebruiker_nr', '==', org_nummer)
+        .where('t_nummer', '==', comp_nr)
+        .limit(1)
+        .get();
+    }
+
+    if (toernooiSnapshot.empty) {
       return NextResponse.json(
         { error: 'Toernooi niet gevonden.' },
         { status: 404 }
       );
     }
 
-    const competitionDoc = competitionsSnapshot.docs[0];
-    const competition = competitionDoc.data();
+    const compDoc = toernooiSnapshot.docs[0];
+    const competition = compDoc.data() as Record<string, unknown>;
 
-    if (!competition) {
-      return NextResponse.json(
-        { error: 'Toernooigegevens ongeldig.' },
-        { status: 500 }
-      );
-    }
+    const compNaam = (competition.t_naam ?? competition.comp_naam ?? '') as string;
+    const periode = (competition.t_ronde ?? competition.periode ?? 1) as number;
 
-    // 2. Get all players in this competition
-    const playersSnapshot = await db
-      .collection('competition_players')
-      .where('spc_org', '==', org_nummer)
-      .where('spc_competitie', '==', comp_nr)
+    // 2. Get spelers (ToernooiProf: gebruiker_nr + t_nummer)
+    const spelersSnapshot = await db
+      .collection('spelers')
+      .where('gebruiker_nr', '==', org_nummer)
+      .where('t_nummer', '==', comp_nr)
       .get();
 
-    const players = playersSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const players = spelersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const playerIds = players.map((p: { sp_nummer?: number }) => p.sp_nummer).filter(Boolean);
 
-    const playerIds = players.map((p: any) => p.spc_nummer);
-
-    // 3. Verify all players exist in members table
-    if (playerIds.length > 0) {
-      for (const spa_nummer of playerIds) {
-        const memberSnapshot = await db
-          .collection('members')
-          .where('spa_org', '==', org_nummer)
-          .where('spa_nummer', '==', spa_nummer)
-          .get();
-
-        if (memberSnapshot.empty) {
-          issues.push({
-            type: 'error',
-            category: 'Spelers',
-            message: `Speler ${spa_nummer} bestaat niet in de ledenlijst`,
-            details: 'Deze speler is toegevoegd aan de toernooi maar bestaat niet meer in de ledenlijst.',
-          });
-        }
-      }
-    } else {
+    if (playerIds.length === 0) {
       issues.push({
         type: 'warning',
         category: 'Spelers',
@@ -92,183 +83,150 @@ export async function GET(
       });
     }
 
-    // 4. Get all matches for this competition
-    const matchesSnapshot = await db
-      .collection('matches')
-      .where('org_nummer', '==', org_nummer)
-      .where('comp_nr', '==', comp_nr)
+    // 3. Get uitslagen (ToernooiProf: partijen + resultaten, gebruiker_nr + t_nummer)
+    const uitslagenSnapshot = await db
+      .collection('uitslagen')
+      .where('gebruiker_nr', '==', org_nummer)
+      .where('t_nummer', '==', comp_nr)
       .get();
 
-    const matches = matchesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const uitslagen = uitslagenSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const gespeeldUitslagen = uitslagen.filter((u: { gespeeld?: number }) => (u.gespeeld ?? 0) === 1);
 
-    // 5. Verify all matches reference valid players
-    for (const match of matches) {
-      const m = match as any;
+    // 4. Validate uitslagen: spelers bestaan, geen speler tegen zichzelf
+    for (const u of uitslagen) {
+      const uDoc = u as { sp_nummer_1?: number; sp_nummer_2?: number; sp_partcode?: string };
+      const sp1 = uDoc.sp_nummer_1;
+      const sp2 = uDoc.sp_nummer_2;
+      const code = uDoc.sp_partcode ?? 'onbekend';
 
-      if (!playerIds.includes(m.nummer_A)) {
+      if (sp1 != null && !playerIds.includes(sp1)) {
         issues.push({
           type: 'error',
-          category: 'Wedstrijden',
-          message: `Wedstrijd ${m.uitslag_code} verwijst naar onbekende speler ${m.nummer_A}`,
+          category: 'Partijen',
+          message: `Partij ${code} verwijst naar onbekende speler ${sp1}`,
           details: 'Deze speler is niet toegevoegd aan het toernooi.',
         });
       }
-
-      if (!playerIds.includes(m.nummer_B)) {
+      if (sp2 != null && !playerIds.includes(sp2)) {
         issues.push({
           type: 'error',
-          category: 'Wedstrijden',
-          message: `Wedstrijd ${m.uitslag_code} verwijst naar onbekende speler ${m.nummer_B}`,
+          category: 'Partijen',
+          message: `Partij ${code} verwijst naar onbekende speler ${sp2}`,
           details: 'Deze speler is niet toegevoegd aan het toernooi.',
         });
       }
-
-      // Check for duplicate player in same match
-      if (m.nummer_A === m.nummer_B) {
+      if (sp1 === sp2 && sp1 != null) {
         issues.push({
           type: 'error',
-          category: 'Wedstrijden',
-          message: `Wedstrijd ${m.uitslag_code} heeft dezelfde speler aan beide kanten`,
-          details: `Speler ${m.nummer_A} kan niet tegen zichzelf spelen.`,
+          category: 'Partijen',
+          message: `Partij ${code} heeft dezelfde speler aan beide kanten`,
+          details: `Speler ${sp1} kan niet tegen zichzelf spelen.`,
         });
       }
     }
 
-    // 6. Get all results for this competition
-    const resultsSnapshot = await db
-      .collection('results')
-      .where('org_nummer', '==', org_nummer)
-      .where('comp_nr', '==', comp_nr)
-      .get();
+    // 5. Validate gespeelde uitslagen: caramboles, beurten, punten
+    for (const r of gespeeldUitslagen) {
+      const ru = r as {
+        sp1_car_gem?: number;
+        sp2_car_gem?: number;
+        brt?: number;
+        sp1_punt?: number;
+        sp2_punt?: number;
+        sp_partcode?: string;
+      };
+      const car1 = ru.sp1_car_gem ?? 0;
+      const car2 = ru.sp2_car_gem ?? 0;
+      const brt = ru.brt ?? 0;
+      const code = ru.sp_partcode ?? 'onbekend';
 
-    const results = resultsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    const matchCodes = matches.map((m: any) => m.uitslag_code);
-
-    // 7. Count results with and without corresponding matches
-    // Note: Results without matches are NORMAL - matches are a temporary queue
-    // that gets removed after a game is played. Only the result remains.
-    const resultsWithoutMatch = results.filter(
-      (r: any) => !matchCodes.includes(r.uitslag_code)
-    );
-
-    if (resultsWithoutMatch.length > 0) {
-      issues.push({
-        type: 'info',
-        category: 'Uitslagen',
-        message: `${resultsWithoutMatch.length} uitslag(en) correct verwerkt (wedstrijden gespeeld)`,
-        details: 'Deze uitslagen hebben geen openstaande wedstrijd meer, wat normaal is na het spelen.',
-      });
-    }
-
-    for (const result of results) {
-      const r = result as any;
-
-      // Validate result data consistency
-      if (r.sp_1_cargem < 0 || r.sp_2_cargem < 0) {
+      if (car1 < 0 || car2 < 0) {
         issues.push({
           type: 'error',
           category: 'Uitslagen',
-          message: `Uitslag ${r.uitslag_code} heeft negatieve caramboles`,
+          message: `Uitslag ${code} heeft negatieve caramboles`,
           details: 'Caramboles kunnen niet negatief zijn.',
         });
       }
-
-      if (r.brt <= 0) {
+      if (brt <= 0) {
         issues.push({
           type: 'error',
           category: 'Uitslagen',
-          message: `Uitslag ${r.uitslag_code} heeft ongeldige beurten (${r.brt})`,
+          message: `Uitslag ${code} heeft ongeldige beurten (${brt})`,
           details: 'Het aantal beurten moet groter dan 0 zijn.',
         });
       }
 
-      // Check for negative points (only valid in some point systems)
-      if ((r.sp_1_punt < 0 || r.sp_2_punt < 0) && competition.punten_sys !== 2) {
+      const puntenSys = (competition.t_punten_sys ?? competition.punten_sys ?? 1) as number;
+      const p1 = ru.sp1_punt ?? 0;
+      const p2 = ru.sp2_punt ?? 0;
+      if ((p1 < 0 || p2 < 0) && puntenSys !== 2) {
         issues.push({
           type: 'warning',
           category: 'Uitslagen',
-          message: `Uitslag ${r.uitslag_code} heeft negatieve punten`,
+          message: `Uitslag ${code} heeft negatieve punten`,
           details: 'Controleer of de puntentelling correct is.',
         });
       }
     }
 
-    // 8. Check for matches without results (upcoming/unplayed matches)
-    const resultMatchCodes = results.map((r: any) => r.uitslag_code);
-    const matchesWithoutResults = matches.filter(
-      (m: any) => !resultMatchCodes.includes(m.uitslag_code)
-    );
-
-    if (matchesWithoutResults.length > 0) {
+    // 6. Dubbele uitslagen:zelfde (t_ronde + sp_poule + sp_partcode) in meerdere docs.
+    // NB: sp_partcode is uniek per poule per ronde – ronde 2 poule 1 "1_1" is een andere partij dan ronde 1 poule 1 "1_1".
+    const codesSeen = new Set<string>();
+    const duplicates: string[] = [];
+    for (const u of uitslagen) {
+      const tRonde = (u as { t_ronde?: number }).t_ronde ?? 1;
+      const poule = (u as { sp_poule?: number }).sp_poule ?? 0;
+      const code = (u as { sp_partcode?: string }).sp_partcode ?? '';
+      const uniqueKey = `${tRonde}_${poule}_${code}`;
+      if (code) {
+        if (codesSeen.has(uniqueKey)) duplicates.push(uniqueKey);
+        else codesSeen.add(uniqueKey);
+      }
+    }
+    for (const key of duplicates) {
       issues.push({
-        type: 'info',
+        type: 'error',
         category: 'Uitslagen',
-        message: `${matchesWithoutResults.length} wedstrijd(en) nog niet gespeeld`,
-        details: 'Deze wedstrijden hebben nog geen uitslag.',
+        message: `Dubbele uitslag gevonden voor partij (poule + code: ${key})`,
+        details: 'Er zijn meerdere uitslagen voor dezelfde wedstrijd in dezelfde poule.',
       });
     }
 
-    // 9. Check for duplicate results
-    const resultCodesSet = new Set();
-    const duplicateResults: string[] = [];
-
-    for (const result of results) {
-      const r = result as any;
-      if (resultCodesSet.has(r.uitslag_code)) {
-        duplicateResults.push(r.uitslag_code);
-      }
-      resultCodesSet.add(r.uitslag_code);
+    // 7. Info: nog niet gespeelde partijen
+    const nietGespeeld = uitslagen.filter((u: { gespeeld?: number }) => (u.gespeeld ?? 0) !== 1);
+    if (nietGespeeld.length > 0) {
+      issues.push({
+        type: 'info',
+        category: 'Uitslagen',
+        message: `${nietGespeeld.length} partij(en) nog niet gespeeld`,
+        details: 'Deze partijen hebben nog geen uitslag.',
+      });
     }
 
-    if (duplicateResults.length > 0) {
-      for (const code of duplicateResults) {
-        issues.push({
-          type: 'error',
-          category: 'Uitslagen',
-          message: `Dubbele uitslag gevonden voor wedstrijd ${code}`,
-          details: 'Er zijn meerdere uitslagen voor dezelfde wedstrijd.',
-        });
-      }
-    }
-
-    // 10. Check for players with missing moyenne data
-    for (const player of players) {
-      const p = player as any;
-      const discipline = competition.discipline;
-
-      // Map discipline to moyenne field (using period 1 moyenne for simplicity)
-      const moyenneField = `spc_moyenne_${competition.periode || 1}`;
-
-      if (!p[moyenneField] || p[moyenneField] <= 0) {
-        // Construct player name from competition_players data
-        const playerName = [p.spa_vnaam, p.spa_tv, p.spa_anaam].filter(Boolean).join(' ') || `Speler ${p.spc_nummer}`;
-
+    // 8. Spelers zonder naam
+    for (const p of players) {
+      const sp = p as { sp_naam?: string; sp_nummer?: number };
+      if (!sp.sp_naam || String(sp.sp_naam).trim() === '') {
         issues.push({
           type: 'warning',
           category: 'Spelers',
-          message: `${playerName} heeft geen moyenne voor deze discipline`,
-          details: 'De speler heeft moyenne 0 of geen moyenne ingesteld. Dit kan leiden tot onjuiste carambolesdoelen.',
+          message: `Speler ${sp.sp_nummer ?? 'onbekend'} heeft geen naam`,
+          details: 'Vul de spelernaam in.',
         });
       }
     }
 
-    // Count issue types
     const errors = issues.filter((i) => i.type === 'error').length;
     const warnings = issues.filter((i) => i.type === 'warning').length;
     const info = issues.filter((i) => i.type === 'info').length;
 
     const report = {
       tournament: {
-        comp_nr: competition.comp_nr,
-        comp_naam: competition.comp_naam,
-        periode: competition.periode || 1,
+        comp_nr,
+        comp_naam: compNaam,
+        periode,
       },
       timestamp: new Date().toISOString(),
       totalIssues: issues.length,
@@ -278,17 +236,17 @@ export async function GET(
       issues,
       summary: {
         totalPlayers: players.length,
-        totalMatches: matches.length,
-        totalResults: results.length,
+        totalMatches: uitslagen.length,
+        totalResults: gespeeldUitslagen.length,
         checkedPlayers: players.length,
-        checkedMatches: matches.length,
-        checkedResults: results.length,
+        checkedMatches: uitslagen.length,
+        checkedResults: gespeeldUitslagen.length,
       },
     };
 
     return cachedJsonResponse(report, 'short', 200);
   } catch (error) {
-    console.error('Error validating tournament:', error);
+    console.error('[VALIDATE] Error:', error);
     return NextResponse.json(
       { error: 'Er is een fout opgetreden bij het valideren van het toernooi.' },
       { status: 500 }
