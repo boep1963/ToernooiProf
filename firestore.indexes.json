@@ -1,209 +1,205 @@
 {
   "indexes": [
     {
+      "collectionGroup": "spelers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "sp_nummer", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "poules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "ronde_nr", "order": "ASCENDING" },
+        { "fieldPath": "poule_nr", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "poules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "sp_nummer", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "toernooien",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "toernooien",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uitslagen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "gespeeld", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uitslagen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "gespeeld", "order": "ASCENDING" },
+        { "fieldPath": "t_ronde", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uitslagen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "gespeeld", "order": "ASCENDING" },
+        { "fieldPath": "t_ronde", "order": "ASCENDING" },
+        { "fieldPath": "sp_poule", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uitslagen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "sp_nummer_1", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uitslagen",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gebruiker_nr", "order": "ASCENDING" },
+        { "fieldPath": "t_nummer", "order": "ASCENDING" },
+        { "fieldPath": "sp_nummer_2", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "competitions",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "competition_players",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "spc_org",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "spc_competitie",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "spc_org", "order": "ASCENDING" },
+        { "fieldPath": "spc_competitie", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "competition_players",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "spc_org",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "spc_competitie",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "spc_nummer",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "spc_org", "order": "ASCENDING" },
+        { "fieldPath": "spc_competitie", "order": "ASCENDING" },
+        { "fieldPath": "spc_nummer", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "results",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "results",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "periode",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "results",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "uitslag_code",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" },
+        { "fieldPath": "uitslag_code", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "members",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "spa_org",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "spa_nummer",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "spa_org", "order": "ASCENDING" },
+        { "fieldPath": "spa_nummer", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "matches",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "matches",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "periode",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" },
+        { "fieldPath": "periode", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "matches",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "uitslag_code",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" },
+        { "fieldPath": "uitslag_code", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "tables",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "tafel_nr",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "tafel_nr", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "score_helpers",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "comp_nr",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "uitslag_code",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "comp_nr", "order": "ASCENDING" },
+        { "fieldPath": "uitslag_code", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "device_config",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "org_nummer",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "tafel_nr",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "org_nummer", "order": "ASCENDING" },
+        { "fieldPath": "tafel_nr", "order": "ASCENDING" }
       ]
     }
   ],

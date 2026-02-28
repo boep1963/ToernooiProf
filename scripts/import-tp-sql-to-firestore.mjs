@@ -6,6 +6,7 @@
  *
  * Collections written:
  *   ToernooiProf/data/gebruikers     ← tp_gebruikers
+ *   ToernooiProf/data/organizations  ← tp_gebruikers (voor inlogcode-login)
  *   ToernooiProf/data/toernooien     ← tp_data
  *   ToernooiProf/data/spelers        ← tp_spelers
  *   ToernooiProf/data/poules         ← tp_poules
@@ -235,6 +236,32 @@ function importGebruikers(sql, db) {
   return batchWrite(db, 'gebruikers', records, r => String(r.gebruiker_nr));
 }
 
+/**
+ * Import organizations from tp_gebruikers.
+ * Organizations zijn nodig voor inlogcode-login; zonder deze collectie
+ * vindt de login geen match op org_code.
+ */
+function importOrganizations(sql, db) {
+  const records = parseInserts(sql, 'tp_gebruikers').map(r => ({
+    org_nummer: r.gebruiker_nr,
+    org_code: r.gebruiker_code || '',
+    org_naam: r.gebruiker_naam || '',
+    org_wl_naam: r.tp_wl_naam || '',
+    org_wl_email: r.tp_wl_email || '',
+    org_logo: r.gebruiker_logo || '',
+    aantal_tafels: r.aantal_tafels ?? 4,
+    date_aangemaakt: toIsoDate(r.date_start) || new Date().toISOString(),
+    date_inlog: toIsoDate(r.date_inlog) || '',
+    nieuwsbrief: r.nieuwsbrief ?? 0,
+    muis_tablet: 1,
+    reclame_pagina: 0,
+    aantal_reclames: 0,
+    slideshow_interval: 10,
+    sorteren: 1,
+  }));
+  return batchWrite(db, 'organizations', records, r => String(r.org_nummer));
+}
+
 function importToernooien(sql, db) {
   const records = parseInserts(sql, 'tp_data').map(r => ({
     ...r,
@@ -300,6 +327,7 @@ async function main() {
 
   const tables = [
     { name: 'tp_gebruikers', fn: importGebruikers, label: 'gebruikers' },
+    { name: 'tp_gebruikers', fn: importOrganizations, label: 'organizations' },
     { name: 'tp_data',       fn: importToernooien, label: 'toernooien' },
     { name: 'tp_spelers',    fn: importSpelers,    label: 'spelers' },
     { name: 'tp_poules',     fn: importPoules,     label: 'poules' },

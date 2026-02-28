@@ -12,8 +12,9 @@ import { logAuthEvent } from '@/lib/authLog';
 export async function POST(request: NextRequest) {
   try {
     const { code, turnstileToken } = await request.json();
+    const trimmedCode = typeof code === 'string' ? code.trim() : '';
 
-    if (!code || typeof code !== 'string') {
+    if (!trimmedCode) {
       return NextResponse.json(
         { error: 'Inlogcode is verplicht.' },
         { status: 400 }
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: per IP and per code prefix (first 4 chars)
-    const codePrefix = code.slice(0, 4);
+    const codePrefix = trimmedCode.slice(0, 4);
     const limitResult = await checkLoginCodeLimit(request, codePrefix);
     if (!limitResult.allowed) {
       return rateLimit429(limitResult);
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Query database for organization with this login code
     console.log('[AUTH] Querying database for login code...');
     const orgSnapshot = await db.collection('organizations')
-      .where('org_code', '==', code)
+      .where('org_code', '==', trimmedCode)
       .limit(1)
       .get();
 
