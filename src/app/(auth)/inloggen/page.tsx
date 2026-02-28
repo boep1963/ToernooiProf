@@ -118,7 +118,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-center mb-4">
             <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg flex-shrink-0 bg-white dark:bg-slate-800">
               <Image
-                src="/clubmatch_logo.jpg"
+                src="/clubmatchlogo.png"
                 alt="ClubMatch"
                 width={56}
                 height={56}
