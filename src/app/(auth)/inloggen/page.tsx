@@ -116,16 +116,14 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg flex-shrink-0 bg-white dark:bg-slate-800">
-              <Image
-                src="/clubmatchlogo.png"
-                alt="ClubMatch"
-                width={56}
-                height={56}
-                className="w-full h-full object-contain"
-                priority
-              />
-            </div>
+            <Image
+              src="/clubmatchlogo.png"
+              alt="ClubMatch"
+              width={140}
+              height={140}
+              className="w-[120px] h-auto object-contain"
+              priority
+            />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             ClubMatch
