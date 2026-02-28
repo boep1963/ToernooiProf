@@ -539,9 +539,8 @@ export default function AccountPage() {
                 Vereisten voor het logo:
               </p>
               <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
-                <li>Alleen JPG-formaat toegestaan</li>
-                <li>Maximale bestandsgrootte: 1 MB</li>
-                <li>Bij voorkeur verhouding 2:1 (breedte:hoogte)</li>
+                <li>Ondersteunde bestandsformaten: JPG, PNG, WebP, GIF</li>
+                <li>Het logo wordt automatisch teruggeschaled naar maximaal 200 KB</li>
                 <li>Een nieuw logo overschrijft het oude logo</li>
               </ul>
             </div>
@@ -552,7 +551,7 @@ export default function AccountPage() {
                 <input
                   id="logo-file"
                   type="file"
-                  accept="image/jpeg,image/jpg,.jpg,.jpeg"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
                   onChange={handleLogoSelect}
                   className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 dark:file:bg-green-900/30 file:text-green-700 dark:file:text-green-400 hover:file:bg-green-100 dark:hover:file:bg-green-900/50 file:cursor-pointer file:transition-colors"
                 />

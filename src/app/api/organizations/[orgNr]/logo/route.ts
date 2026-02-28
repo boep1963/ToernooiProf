@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 
@@ -6,15 +7,44 @@ interface RouteParams {
   params: Promise<{ orgNr: string }>;
 }
 
+const MAX_LOGO_BYTES = 200 * 1024; // 200 KB
+const ALLOWED_TYPES = /^image\/(jpeg|jpg|png|webp|gif)$/i;
+const SUPPORTED_FORMATS = 'JPG, PNG, WebP, GIF';
+
+/**
+ * Resize and compress image to max 200 KB. Returns JPEG data URL.
+ */
+async function processLogoToMaxSize(inputBuffer: Buffer): Promise<string> {
+  const maxLongEdge = 1200;
+
+  for (const quality of [85, 70, 55, 40]) {
+    const out = await sharp(inputBuffer)
+      .rotate()
+      .resize(maxLongEdge, maxLongEdge, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+    if (out.length <= MAX_LOGO_BYTES) {
+      return `data:image/jpeg;base64,${out.toString('base64')}`;
+    }
+  }
+
+  const smaller = 800;
+  const out = await sharp(inputBuffer)
+    .rotate()
+    .resize(smaller, smaller, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 75, mozjpeg: true })
+    .toBuffer();
+  return `data:image/jpeg;base64,${out.toString('base64')}`;
+}
+
 /**
  * POST /api/organizations/:orgNr/logo
- * Upload organization logo
+ * Upload organization logo. Accepts JPG, PNG, WebP, GIF. Scales down to max 200 KB.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { orgNr } = await params;
 
-    // Validate session and org access
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
     const orgNummer = authResult.orgNummer;
@@ -29,27 +59,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Validate file type - only JPG/JPEG
-    if (!file.type.match(/^image\/(jpeg|jpg)$/i)) {
+    if (!file.type.match(ALLOWED_TYPES)) {
       return NextResponse.json(
-        { error: 'Alleen JPG-formaat is toegestaan.' },
+        { error: `Alleen ${SUPPORTED_FORMATS} zijn toegestaan.` },
         { status: 400 }
       );
     }
 
-    // Validate file size - max 1MB
-    if (file.size > 1000000) {
-      return NextResponse.json(
-        { error: 'Bestand is te groot. Maximaal 1MB toegestaan.' },
-        { status: 400 }
-      );
-    }
-
-    // Convert file to base64 data URL for storage
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const base64 = buffer.toString('base64');
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    const inputBuffer = Buffer.from(arrayBuffer);
+    const dataUrl = await processLogoToMaxSize(inputBuffer);
 
     console.log('[LOGO] Uploading logo for organization:', orgNummer);
 
