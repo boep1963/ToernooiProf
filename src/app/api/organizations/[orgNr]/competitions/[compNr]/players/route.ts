@@ -272,7 +272,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       updated_at: new Date().toISOString(),
     });
 
-    // Sync ronde-1 poulegegevens voor deze speler.
+    // Sync (upsert) ronde-1 poulegegevens voor deze speler.
     const ronde1PouleSnap = await db.collection('poules')
       .where('gebruiker_nr', '==', orgNummer)
       .where('t_nummer', '==', compNumber)
@@ -280,24 +280,37 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .where('sp_nummer', '==', spNummer)
       .get();
 
-    if (!ronde1PouleSnap.empty) {
-      const pouleSnap = await db.collection('poules')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('ronde_nr', '==', 1)
-        .where('poule_nr', '==', pouleNr)
-        .get();
+    const pouleSnap = await db.collection('poules')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('ronde_nr', '==', 1)
+      .where('poule_nr', '==', pouleNr)
+      .get();
 
-      const existingInTarget = pouleSnap.docs.filter((doc) => Number(doc.data()?.sp_nummer) !== spNummer);
-      const nextVolgNr = existingInTarget.length + 1;
+    const existingInTarget = pouleSnap.docs.filter((doc) => Number(doc.data()?.sp_nummer) !== spNummer);
+    const nextVolgNr = existingInTarget.length + 1;
 
-      for (const doc of ronde1PouleSnap.docs) {
-        await doc.ref.update({
-          poule_nr: pouleNr,
-          sp_moy: spStartmoy,
-          sp_car: spStartcar,
-          sp_volgnr: nextVolgNr,
-        });
+    if (ronde1PouleSnap.empty) {
+      await db.collection('poules').add({
+        gebruiker_nr: orgNummer,
+        t_nummer: compNumber,
+        sp_nummer: spNummer,
+        sp_moy: spStartmoy,
+        sp_car: spStartcar,
+        sp_volgnr: nextVolgNr,
+        poule_nr: pouleNr,
+        ronde_nr: 1,
+      });
+    } else {
+      const [primaryDoc, ...duplicates] = ronde1PouleSnap.docs;
+      await primaryDoc.ref.update({
+        poule_nr: pouleNr,
+        sp_moy: spStartmoy,
+        sp_car: spStartcar,
+        sp_volgnr: nextVolgNr,
+      });
+      for (const duplicate of duplicates) {
+        await duplicate.ref.delete();
       }
     }
 

@@ -244,16 +244,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Delete existing matches if regenerating
+    // Delete only scoped existing matches if regenerating
     if (!existingMatches.empty && forceRegenerate) {
       console.log('[MATCHES] Deleting existing matches...');
-      const allExisting = await queryWithOrgComp(
-        db.collection('matches') as any,
-        orgNummer,
-        compNumber
-      );
-
-      for (const doc of allExisting.docs) {
+      for (const doc of existingMatches.docs) {
         await doc.ref.delete();
       }
       console.log('[MATCHES] Deleted existing matches.');
@@ -278,11 +272,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const playerLookup = new Map(players.map((p) => [p.nummer, p]));
 
     // Fetch all existing matches for this competition and period ONCE (performance optimization)
-    const existingMatchesSnapshot = await db.collection('matches')
+    let existingMatchesSnapshotQuery = db.collection('matches')
       .where('org_nummer', '==', orgNummer)
       .where('comp_nr', '==', compNumber)
-      .where('periode', '==', effectivePeriode)
-      .get();
+      .where('periode', '==', effectivePeriode);
+    if (pouleId) {
+      existingMatchesSnapshotQuery = existingMatchesSnapshotQuery.where('poule_id', '==', pouleId);
+    }
+    const existingMatchesSnapshot = await existingMatchesSnapshotQuery.get();
 
     // Build Set of existing pairings for O(1) duplicate detection
     const existingPairings = new Set<string>();

@@ -30,6 +30,24 @@ function validatePouleAssignments(
   return null;
 }
 
+function buildPouleMapFromDocs(
+  docs: Array<{ data: () => Record<string, unknown> | undefined }>
+): Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]> {
+  const pouleMap = new Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]>();
+  docs.forEach((d) => {
+    const data = d.data() ?? {};
+    const pouleNr = Number(data.poule_nr) || 1;
+    if (!pouleMap.has(pouleNr)) pouleMap.set(pouleNr, []);
+    pouleMap.get(pouleNr)!.push({
+      sp_nummer: Number(data.sp_nummer) || 0,
+      sp_car: Number(data.sp_car) || 0,
+      sp_moy: Number(data.sp_moy) || 0,
+      sp_volgnr: Number(data.sp_volgnr) || 0,
+    });
+  });
+  return pouleMap;
+}
+
 /**
  * POST /api/organizations/:orgNr/competitions/:compNr/start
  * Start a tournament:
@@ -91,7 +109,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const tMinCar = (compData?.t_min_car as number) ?? 0;
     const tRonde = 1;
 
-    // Check if poules are already defined
+    // Check if ronde-1 poules are already defined
     const poulesSnap = await db.collection('poules')
       .where('gebruiker_nr', '==', orgNummer)
       .where('t_nummer', '==', compNumber)
@@ -100,56 +118,79 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     let pouleAssignments: Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]>;
 
-    if (poulesSnap.empty) {
-      // No poules defined yet – put all spelers in poule 1
-      const pouleMap = new Map<number, typeof pouleAssignments extends Map<number, infer V> ? V : never>();
-      const spList: { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[] = [];
-
-      for (let i = 0; i < spelers.length; i++) {
-        const sp = spelers[i];
+    if (!poulesSnap.empty) {
+      pouleAssignments = buildPouleMapFromDocs(poulesSnap.docs);
+    } else {
+      // Fallback: reconstruct ronde-1 from spelers.poule_nr when available.
+      const spListByPoule = new Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]>();
+      for (const sp of spelers) {
+        const storedPoule = Number((sp as Record<string, unknown>).poule_nr) || 0;
+        const assignedPoule = storedPoule > 0 ? storedPoule : 1;
         const sp_car = tCarSys === 1
           ? calculateCaramboles(sp.sp_startmoy, tMoyForm, tMinCar)
-          : sp.sp_startcar;
-
-        spList.push({
+          : Math.max(Number(sp.sp_startcar) || 0, 3);
+        if (!spListByPoule.has(assignedPoule)) spListByPoule.set(assignedPoule, []);
+        spListByPoule.get(assignedPoule)!.push({
           sp_nummer: sp.sp_nummer,
           sp_car,
           sp_moy: sp.sp_startmoy,
-          sp_volgnr: i + 1,
-        });
-
-        // Create poule document
-        await db.collection('poules').add({
-          gebruiker_nr: orgNummer,
-          t_nummer: compNumber,
-          sp_nummer: sp.sp_nummer,
-          sp_moy: sp.sp_startmoy,
-          sp_car,
-          sp_volgnr: i + 1,
-          poule_nr: 1,
-          ronde_nr: tRonde,
+          sp_volgnr: 0,
         });
       }
 
-      pouleMap.set(1, spList);
-      pouleAssignments = pouleMap;
-    } else {
-      // Use existing poule assignments
-      const pouleMap = new Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]>();
+      const hasAnyExplicitPoule = spelers.some((sp) => (Number((sp as Record<string, unknown>).poule_nr) || 0) > 0);
+      if (!hasAnyExplicitPoule) {
+        return NextResponse.json(
+          { error: 'Geen start-poule indeling gevonden. Wijs eerst spelers toe aan poules.' },
+          { status: 409 }
+        );
+      }
 
-      poulesSnap.docs.forEach(d => {
-        const data = d.data() ?? {};
-        const pouleNr = (data.poule_nr as number) || 1;
-        if (!pouleMap.has(pouleNr)) pouleMap.set(pouleNr, []);
-        pouleMap.get(pouleNr)!.push({
-          sp_nummer: (data.sp_nummer as number) || 0,
-          sp_car: (data.sp_car as number) || 0,
-          sp_moy: (data.sp_moy as number) || 0,
-          sp_volgnr: (data.sp_volgnr as number) || 0,
-        });
-      });
+      // Persist reconstructed ronde-1 poules to keep state stable for retries/undo.
+      for (const [pouleNr, list] of spListByPoule.entries()) {
+        list.sort((a, b) => a.sp_nummer - b.sp_nummer);
+        for (let i = 0; i < list.length; i++) {
+          const speler = list[i];
+          speler.sp_volgnr = i + 1;
+          await db.collection('poules').add({
+            gebruiker_nr: orgNummer,
+            t_nummer: compNumber,
+            sp_nummer: speler.sp_nummer,
+            sp_moy: speler.sp_moy,
+            sp_car: speler.sp_car,
+            sp_volgnr: speler.sp_volgnr,
+            poule_nr: pouleNr,
+            ronde_nr: tRonde,
+          });
+        }
+      }
+      const rebuiltSnap = await db.collection('poules')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('ronde_nr', '==', tRonde)
+        .get();
+      pouleAssignments = buildPouleMapFromDocs(rebuiltSnap.docs);
+    }
 
-      pouleAssignments = pouleMap;
+    // Harden: every speler must appear exactly once in ronde-1 poules.
+    const spelerNumbers = new Set(spelers.map((s) => Number(s.sp_nummer) || 0).filter((nr) => nr > 0));
+    const assignmentCount = new Map<number, number>();
+    for (const list of pouleAssignments.values()) {
+      for (const sp of list) {
+        if (!sp.sp_nummer) continue;
+        assignmentCount.set(sp.sp_nummer, (assignmentCount.get(sp.sp_nummer) || 0) + 1);
+      }
+    }
+    const missing = Array.from(spelerNumbers).filter((nr) => !assignmentCount.has(nr));
+    const duplicates = Array.from(assignmentCount.entries()).filter(([, cnt]) => cnt > 1).map(([nr]) => nr);
+    if (missing.length > 0 || duplicates.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Poule-indeling ronde 1 is inconsistent. Herstel de indeling en probeer opnieuw.',
+          details: { missing_spelers: missing, duplicate_spelers: duplicates },
+        },
+        { status: 409 }
+      );
     }
 
     const validationError = validatePouleAssignments(pouleAssignments);
@@ -302,23 +343,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Start terugdraaien kan alleen zolang alleen ronde 1 bestaat.' }, { status: 409 });
     }
 
-    const [uitslagenSnap, poulesSnap] = await Promise.all([
-      db.collection('uitslagen')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('t_ronde', '==', 1)
-        .get(),
-      db.collection('poules')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('ronde_nr', '==', 1)
-        .get(),
-    ]);
+    const uitslagenSnap = await db.collection('uitslagen')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('t_ronde', '==', 1)
+      .get();
 
     for (const doc of uitslagenSnap.docs) {
-      await doc.ref.delete();
-    }
-    for (const doc of poulesSnap.docs) {
       await doc.ref.delete();
     }
 
@@ -332,7 +363,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       message: 'Start van het toernooi is teruggedraaid.',
       deleted_uitslagen: uitslagenSnap.size,
-      deleted_poules: poulesSnap.size,
+      deleted_poules: 0,
+      poules_preserved: true,
     });
   } catch (error) {
     console.error('[UNDO START] Error:', error);
