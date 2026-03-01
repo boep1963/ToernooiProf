@@ -20,7 +20,7 @@ interface CompetitionItem {
 
 export default function ToernooienPage() {
   const { orgNummer } = useAuth();
-  const { activeTournament } = useTournament();
+  const { activeTournament, setActiveTournament } = useTournament();
   const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -93,6 +93,9 @@ export default function ToernooienPage() {
       if (res.ok) {
         const naam = deletedComp?.comp_naam || `#${compNr}`;
         setCompetitions(prev => prev.filter(c => c.comp_nr !== compNr));
+        if (activeTournament?.compNr === compNr) {
+          setActiveTournament(null);
+        }
         setDeleteConfirm(null);
         setDeleteStats(null);
         setSuccess(`Competitie "${naam}" is succesvol verwijderd.`);
@@ -106,6 +109,9 @@ export default function ToernooienPage() {
       setDeleteLoading(false);
     }
   };
+
+  const hasValidActiveTournament = !!activeTournament &&
+    competitions.some(comp => comp.comp_nr === activeTournament.compNr);
 
   return (
     <div>
@@ -153,7 +159,7 @@ export default function ToernooienPage() {
       )}
 
       {/* Active Tournament banner */}
-      {activeTournament && !isLoading && competitions.length > 0 && (
+      {hasValidActiveTournament && !isLoading && competitions.length > 0 && (
         <div className="mb-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
@@ -167,7 +173,7 @@ export default function ToernooienPage() {
             </div>
           </div>
           <Link
-            href={`/toernooien/${activeTournament.compNr}`}
+            href={`/toernooien/${activeTournament!.compNr}`}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             Doorgaan

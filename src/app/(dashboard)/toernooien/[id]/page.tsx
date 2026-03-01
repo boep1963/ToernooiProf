@@ -68,15 +68,52 @@ export default function ToernooiDetailPage({
   const [startError, setStartError] = useState('');
   const [startSuccess, setStartSuccess] = useState('');
   const [isStarting, setIsStarting] = useState(false);
+  const [isUndoingStart, setIsUndoingStart] = useState(false);
   const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [startBlockedReasons, setStartBlockedReasons] = useState<string[]>([]);
 
   const fetchTournament = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`);
+      const [res, playersRes, poulesRes] = await Promise.all([
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=1`),
+      ]);
       if (res.ok) {
         setTournament(await res.json());
+        const reasons: string[] = [];
+        const playersData = playersRes.ok ? await playersRes.json() : { count: 0, players: [] };
+        const playerCount = Number(playersData.count ?? playersData.players?.length ?? 0);
+        if (playerCount < 2) {
+          reasons.push('Er zijn minimaal 2 spelers nodig.');
+        }
+
+        const poulesData = poulesRes.ok ? await poulesRes.json() : { poules: [] };
+        const ronde1Poules = poulesData.poules || [];
+        if (ronde1Poules.length > 0) {
+          const pouleNrs = ronde1Poules.map((p: any) => Number(p.poule_nr)).filter((n: number) => !isNaN(n)).sort((a: number, b: number) => a - b);
+          const maxPoule = pouleNrs[pouleNrs.length - 1] || 0;
+          for (let nr = 1; nr <= maxPoule; nr++) {
+            if (!pouleNrs.includes(nr)) {
+              reasons.push(`Poule ${nr} ontbreekt. Gebruik aansluitende poulenummers.`);
+              break;
+            }
+          }
+
+          const playerCounts = await Promise.all(
+            ronde1Poules.map(async (p: any) => {
+              const r = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules/${p.id}/players`);
+              const d = r.ok ? await r.json() : { players: [] };
+              return { pouleNr: Number(p.poule_nr), count: (d.players || []).length };
+            })
+          );
+          playerCounts.forEach(({ pouleNr, count }) => {
+            if (count < 2) reasons.push(`Poule ${pouleNr} heeft minder dan 2 spelers.`);
+          });
+        }
+        setStartBlockedReasons(reasons);
       } else {
         setError('Toernooi niet gevonden.');
       }
@@ -117,6 +154,34 @@ export default function ToernooiDetailPage({
     }
   };
 
+  const handleUndoStartToernooi = async () => {
+    if (!orgNummer || !tournament) return;
+    if (!confirm('Weet u zeker dat u de start van dit toernooi wilt terugdraaien? Ronde 1 en bijbehorende wedstrijden worden verwijderd.')) {
+      return;
+    }
+    setIsUndoingStart(true);
+    setStartError('');
+    setStartSuccess('');
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/start`,
+        { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+      );
+      if (res.ok) {
+        setStartSuccess('Start van het toernooi is teruggedraaid.');
+        await fetchTournament();
+        setTimeout(() => setStartSuccess(''), 5000);
+      } else {
+        const data = await res.json();
+        setStartError(data.error || 'Fout bij terugdraaien start.');
+      }
+    } catch {
+      setStartError('Er is een fout opgetreden.');
+    } finally {
+      setIsUndoingStart(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
@@ -145,6 +210,7 @@ export default function ToernooiDetailPage({
   const tCarSys = tournament.t_car_sys ?? 1;
   const multiplier = MOYENNE_MULTIPLIERS[tMoyForm] || 25;
   const isGestart = (tournament.t_gestart ?? 0) === 1;
+  const canStartTournament = !isGestart && startBlockedReasons.length === 0;
 
   const navItems = [
     { label: 'Spelers', href: `/toernooien/${compNr}/spelers`, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', desc: 'Beheer spelers in dit toernooi' },
@@ -177,7 +243,8 @@ export default function ToernooiDetailPage({
           {!isGestart && (
             <button
               onClick={() => setShowStartConfirm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+              disabled={!canStartTournament}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -187,12 +254,21 @@ export default function ToernooiDetailPage({
             </button>
           )}
           {isGestart && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-lg border border-green-200 dark:border-green-800">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Gestart – Ronde {periode}
-            </span>
+            <>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-lg border border-green-200 dark:border-green-800">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Gestart – Ronde {periode}
+              </span>
+              <button
+                onClick={handleUndoStartToernooi}
+                disabled={isUndoingStart}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {isUndoingStart ? 'Bezig...' : 'Start terugdraaien'}
+              </button>
+            </>
           )}
           <Link
             href={`/toernooien/${compNr}/bewerken`}
@@ -214,6 +290,16 @@ export default function ToernooiDetailPage({
       {startSuccess && (
         <div role="status" className="mb-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
           {startSuccess}
+        </div>
+      )}
+      {!isGestart && startBlockedReasons.length > 0 && (
+        <div className="mb-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm border border-amber-200 dark:border-amber-800">
+          <p className="font-medium mb-2">Toernooi kan nog niet gestart worden:</p>
+          <ul className="list-disc list-inside space-y-1">
+            {startBlockedReasons.map((reason, idx) => (
+              <li key={idx}>{reason}</li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -301,7 +387,7 @@ export default function ToernooiDetailPage({
               <li>Het toernooi gemarkeerd als gestart</li>
             </ul>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-              Zorg ervoor dat alle spelers en poule-indeeling klaar zijn. Dit kan daarna niet ongedaan worden gemaakt.
+              Zorg ervoor dat alle spelers en poule-indeling klaar zijn.
             </p>
             <div className="flex items-center gap-3 justify-end">
               <button

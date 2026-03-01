@@ -23,6 +23,7 @@ interface TournamentData {
   t_min_car: number;
   min_car?: number;
   t_ronde: number;
+  t_gestart?: number;
   periode?: number;
   openbaar: number;
 }
@@ -95,6 +96,7 @@ export default function ToernooiSpelersPage({
   const tCarSys = tournament?.t_car_sys ?? tournament?.t_moy_form !== undefined ? 1 : 1;
   const tMoyForm = tournament?.t_moy_form ?? tournament?.moy_form ?? 3;
   const tMinCar = tournament?.t_min_car ?? tournament?.min_car ?? 0;
+  const isStarted = (tournament?.t_gestart ?? 0) === 1;
   const multiplier = MOYENNE_MULTIPLIERS[tMoyForm] || 25;
   const compNaam = tournament?.t_naam ?? tournament?.comp_naam ?? '';
   const periode = tournament?.t_ronde ?? tournament?.periode ?? 0;
@@ -239,7 +241,7 @@ export default function ToernooiSpelersPage({
       )}
 
       {/* Add player form */}
-      {showAddForm && (
+      {showAddForm && !isStarted && (
         <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Speler toevoegen</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -293,8 +295,8 @@ export default function ToernooiSpelersPage({
                 onChange={e => setNewPouleNr(parseInt(e.target.value, 10))}
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(nr => (
-                  <option key={nr} value={nr}>Poule {String.fromCharCode(64 + nr)}</option>
+                {Array.from({ length: 25 }, (_, i) => i + 1).map(nr => (
+                  <option key={nr} value={nr}>Poule {nr}</option>
                 ))}
               </select>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Wordt gebruikt bij start toernooi (ronde 1)</p>
@@ -334,6 +336,7 @@ export default function ToernooiSpelersPage({
         <div className="mb-4">
           <button
             onClick={() => setShowAddForm(true)}
+            disabled={isStarted}
             className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,6 +344,11 @@ export default function ToernooiSpelersPage({
             </svg>
             Speler toevoegen
           </button>
+          {isStarted && (
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Toernooi is gestart. Spelers toevoegen is niet meer toegestaan.
+            </p>
+          )}
         </div>
       )}
 

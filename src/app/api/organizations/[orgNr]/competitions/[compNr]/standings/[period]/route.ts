@@ -29,9 +29,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const { searchParams } = new URL(request.url);
-    // Accept both poule_nr (integer) and poule_id (for backward compat)
-    const pouleNrRaw = searchParams.get('poule_nr') ?? searchParams.get('poule_id');
-    const pouleNr = pouleNrRaw ? parseInt(pouleNrRaw, 10) : null;
+    const pouleNrRaw = searchParams.get('poule_nr');
+    let pouleNr: number | null = null;
+    if (pouleNrRaw !== null && pouleNrRaw !== '') {
+      pouleNr = parseInt(pouleNrRaw, 10);
+      if (isNaN(pouleNr)) {
+        return NextResponse.json({ error: 'Ongeldige poulefilter. Gebruik een numerieke poule_nr.' }, { status: 400 });
+      }
+    }
 
     console.log(`[STANDINGS] org=${orgNummer} comp=${compNumber} ronde=${rondeNr} poule=${pouleNr ?? 'alle'}`);
 
@@ -64,12 +69,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // If filtering by poule, get only sp_nummers in that poule
     let pouleSpelers: Set<number> | null = null;
-    if (pouleNr !== null && !isNaN(pouleNr)) {
-      const poulesSnap = await db.collection('poules')
+    if (pouleNr !== null) {
+      let pouleQuery = db.collection('poules')
         .where('gebruiker_nr', '==', orgNummer)
         .where('t_nummer', '==', compNumber)
-        .where('poule_nr', '==', pouleNr)
-        .get();
+        .where('poule_nr', '==', pouleNr);
+      if (rondeNr !== 0) {
+        pouleQuery = pouleQuery.where('ronde_nr', '==', rondeNr);
+      }
+      const poulesSnap = await pouleQuery.get();
 
       pouleSpelers = new Set<number>();
       poulesSnap.docs.forEach(d => {
@@ -88,7 +96,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       uitslagenQuery = uitslagenQuery.where('t_ronde', '==', rondeNr);
     }
 
-    if (pouleNr !== null && !isNaN(pouleNr)) {
+    if (pouleNr !== null) {
       uitslagenQuery = uitslagenQuery.where('sp_poule', '==', pouleNr);
     }
 

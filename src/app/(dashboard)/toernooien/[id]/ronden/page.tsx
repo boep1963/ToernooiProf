@@ -94,37 +94,26 @@ export default function ToernooirondenPage({
 
   const handleUndoRound = async (roundNr: number) => {
     if (!orgNummer || isNaN(compNr)) return;
-    if (!confirm(`Weet je zeker dat je ronde ${roundNr} wilt verwijderen? Alle poules, spelers en WEDSTRIJDEN in deze ronde worden permanent verwijderd!`)) {
+    if (!confirm(`Weet je zeker dat je ronde ${roundNr} wilt verwijderen? Alle poules en wedstrijden in deze ronde worden permanent verwijderd.`)) {
       return;
     }
 
     setIsUndoing(true);
     try {
-      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=${roundNr}`);
-      const data = await res.json();
-      const roundPoules = data.poules || [];
-
-      for (const poule of roundPoules) {
-        // 1. Delete matches for this poule
-        const matchesRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches?poule_id=${poule.id}`);
-        const matchesData = await matchesRes.json();
-        for (const match of matchesData.matches || []) {
-           // We need a delete endpoint for matches, or just delete by ID if API supports it
-           // For now, let's assume we need to implement a DELETE /matches?poule_id=...
-        }
-        
-        // Actually, let's just call the poule delete endpoint which should ideally clean up everything
-        await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules/${poule.id}`, {
-          method: 'DELETE'
-        });
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/rounds/undo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundNr }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Terugdraaien mislukt');
       }
-
-      // Refresh data
       setSelectedRound(null);
       await fetchData();
     } catch (err) {
       console.error('Error undoing round:', err);
-      setError('Fout bij ongedaan maken ronde');
+      setError(err instanceof Error ? err.message : 'Fout bij ongedaan maken ronde');
     } finally {
       setIsUndoing(false);
     }
@@ -272,7 +261,7 @@ export default function ToernooirondenPage({
                       Wedstrijden Genereren
                     </button>
                     <Link
-                      href={`/toernooien/${id}/stand?poule_id=${poule.id}`}
+                      href={`/toernooien/${id}/stand?poule_nr=${poule.poule_nr}`}
                       className="px-4 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-sm font-semibold rounded-lg border border-orange-200 dark:border-orange-800 transition-colors"
                     >
                       Bekijk Stand

@@ -8,6 +8,28 @@ interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
 }
 
+function validatePouleAssignments(
+  pouleAssignments: Map<number, { sp_nummer: number; sp_car: number; sp_moy: number; sp_volgnr: number }[]>
+): string | null {
+  const pouleNrs = Array.from(pouleAssignments.keys()).sort((a, b) => a - b);
+  if (pouleNrs.length === 0) return 'Er zijn geen poules beschikbaar.';
+
+  const maxPoule = pouleNrs[pouleNrs.length - 1];
+  for (let nr = 1; nr <= maxPoule; nr++) {
+    if (!pouleAssignments.has(nr)) {
+      return `Poule ${nr} ontbreekt. Gebruik aansluitende poulenummers zonder gaten.`;
+    }
+  }
+
+  for (const [pouleNr, spelersInPoule] of pouleAssignments.entries()) {
+    if (spelersInPoule.length < 2) {
+      return `Poule ${pouleNr} heeft minder dan 2 spelers.`;
+    }
+  }
+
+  return null;
+}
+
 /**
  * POST /api/organizations/:orgNr/competitions/:compNr/start
  * Start a tournament:
@@ -130,6 +152,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       pouleAssignments = pouleMap;
     }
 
+    const validationError = validatePouleAssignments(pouleAssignments);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
     // Generate Round Robin matches per poule
     let uitslagId = 1;
     const existingUitslagen = await db.collection('uitslagen')
@@ -231,6 +258,86 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.error('[START TOERNOOI] Error:', error);
     return NextResponse.json(
       { error: 'Fout bij starten toernooi', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/organizations/:orgNr/competitions/:compNr/start
+ * Undo start of a tournament (round 1 only).
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { orgNr, compNr } = await params;
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
+    }
+
+    const compSnap = await db.collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .limit(1)
+      .get();
+
+    if (compSnap.empty) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+    }
+
+    const compDoc = compSnap.docs[0];
+    const compData = compDoc.data() ?? {};
+    const isStarted = ((compData.t_gestart as number) ?? 0) === 1;
+    const currentRound = Number(compData.t_ronde ?? 0) || 0;
+
+    if (!isStarted) {
+      return NextResponse.json({ error: 'Toernooi is nog niet gestart.' }, { status: 400 });
+    }
+
+    if (currentRound > 1) {
+      return NextResponse.json({ error: 'Start terugdraaien kan alleen zolang alleen ronde 1 bestaat.' }, { status: 409 });
+    }
+
+    const [uitslagenSnap, poulesSnap] = await Promise.all([
+      db.collection('uitslagen')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('t_ronde', '==', 1)
+        .get(),
+      db.collection('poules')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('ronde_nr', '==', 1)
+        .get(),
+    ]);
+
+    for (const doc of uitslagenSnap.docs) {
+      await doc.ref.delete();
+    }
+    for (const doc of poulesSnap.docs) {
+      await doc.ref.delete();
+    }
+
+    await compDoc.ref.update({
+      t_gestart: 0,
+      t_ronde: 0,
+      periode: 0,
+      updated_at: new Date().toISOString(),
+    });
+
+    return NextResponse.json({
+      message: 'Start van het toernooi is teruggedraaid.',
+      deleted_uitslagen: uitslagenSnap.size,
+      deleted_poules: poulesSnap.size,
+    });
+  } catch (error) {
+    console.error('[UNDO START] Error:', error);
+    return NextResponse.json(
+      { error: 'Fout bij terugdraaien start', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }
     );
   }

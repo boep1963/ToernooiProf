@@ -83,6 +83,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnap.docs[0].data();
+    if (((compData?.t_gestart as number) ?? 0) === 1) {
+      return NextResponse.json({ error: 'Toernooi is al gestart. Spelers toevoegen is niet toegestaan.' }, { status: 409 });
+    }
     const tCarSys = (compData?.t_car_sys as number) ?? 1;
     const tMoyForm = (compData?.t_moy_form as number) ?? 3;
     const tMinCar = (compData?.t_min_car as number) ?? 0;
@@ -120,7 +123,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const docRef = await db.collection('spelers').add(playerData);
 
     // Optioneel: direct toewijzen aan start-poule (ronde 1)
+    const hasPouleNr = body.poule_nr !== undefined && body.poule_nr !== null && String(body.poule_nr).trim() !== '';
     const pouleNr = parseInt(String(body.poule_nr || 0), 10);
+    if (hasPouleNr && (isNaN(pouleNr) || pouleNr < 1 || pouleNr > 25)) {
+      return NextResponse.json({ error: 'Ongeldige poule. Kies een poule tussen 1 en 25.' }, { status: 400 });
+    }
     if (pouleNr >= 1 && pouleNr <= 25) {
       const poulesInPoule = await db.collection('poules')
         .where('gebruiker_nr', '==', orgNummer)

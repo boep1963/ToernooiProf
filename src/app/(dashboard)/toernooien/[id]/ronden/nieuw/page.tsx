@@ -161,6 +161,28 @@ export default function NieuweRondePage({
         playersByPoule[p.poule_nr].push(p);
       });
 
+      const pouleNumbers = Object.keys(playersByPoule).map(Number).sort((a, b) => a - b);
+      if (pouleNumbers.length === 0) {
+        setError('Geen poules geselecteerd.');
+        setIsSubmitting(false);
+        return;
+      }
+      const maxPoule = pouleNumbers[pouleNumbers.length - 1];
+      for (let nr = 1; nr <= maxPoule; nr++) {
+        if (!playersByPoule[nr]) {
+          setError(`Poule ${nr} ontbreekt. Gebruik aansluitende poulenummers zonder gaten.`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      for (const [pouleNr, pList] of Object.entries(playersByPoule)) {
+        if (pList.length < 2) {
+          setError(`Poule ${pouleNr} heeft minder dan 2 spelers.`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // 2. Create Poules and add Players
       for (const [pouleNrStr, pList] of Object.entries(playersByPoule)) {
         const pouleNr = parseInt(pouleNrStr, 10);
@@ -172,7 +194,7 @@ export default function NieuweRondePage({
           body: JSON.stringify({
             ronde_nr: nextRondeNr,
             poule_nr: pouleNr,
-            poule_naam: `Poule ${String.fromCharCode(64 + pouleNr)}`
+            poule_naam: `Poule ${pouleNr}`
           })
         });
         
@@ -327,10 +349,9 @@ export default function NieuweRondePage({
                       onChange={(e) => updatePlayerPoule(player.spc_nummer, parseInt(e.target.value, 10))}
                       className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1 text-sm font-bold"
                     >
-                      <option value={1}>Poule A</option>
-                      <option value={2}>Poule B</option>
-                      <option value={3}>Poule C</option>
-                      <option value={4}>Poule D</option>
+                      {Array.from({ length: 25 }, (_, i) => i + 1).map((nr) => (
+                        <option key={nr} value={nr}>Poule {nr}</option>
+                      ))}
                     </select>
                   </div>
                </div>

@@ -79,7 +79,7 @@ export default function ToernooiStandPage({
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
   const [poules, setPoules] = useState<any[]>([]);
-  const [selectedPouleId, setSelectedPouleId] = useState<string>('');
+  const [selectedPouleNr, setSelectedPouleNr] = useState<string>('');
   const [sortByPercentage, setSortByPercentage] = useState(false); // false = absolute points, true = percentage points
 
   // Add print styles on mount
@@ -142,11 +142,11 @@ export default function ToernooiStandPage({
         const data = await res.json();
         setCompetition(data);
         
-        // Handle initial poule_id from URL
+        // Handle initial poule_nr from URL
         const { searchParams } = new URL(window.location.href);
-        const pouleIdParam = searchParams.get('poule_id');
-        if (pouleIdParam) {
-           setSelectedPouleId(pouleIdParam);
+        const pouleNrParam = searchParams.get('poule_nr');
+        if (pouleNrParam) {
+           setSelectedPouleNr(pouleNrParam);
         }
 
         setSelectedPeriod(data.t_ronde ?? data.periode ?? 1);
@@ -168,28 +168,20 @@ export default function ToernooiStandPage({
         const data = await res.json();
         setPoules(data.poules || []);
         
-        // If we have poules but none selected, select the first one if pouleIdParam wasn't set
-        if (data.poules.length > 0 && !selectedPouleId) {
-          // Check URL again in case it was set during init
-          const { searchParams } = new URL(window.location.href);
-          if (!searchParams.get('poule_id')) {
-            setSelectedPouleId(data.poules[0].id);
-          }
-        }
       }
     } catch (err) {
       console.error('Error fetching poules:', err);
     }
-  }, [orgNummer, compNr, selectedPouleId]);
+  }, [orgNummer, compNr]);
 
-  const fetchStandings = useCallback(async (period: number, pouleId?: string) => {
+  const fetchStandings = useCallback(async (period: number, pouleNr?: string) => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
     setError('');
     try {
       const url = new URL(`/api/organizations/${orgNummer}/competitions/${compNr}/standings/${period}`, window.location.origin);
-      if (pouleId) {
-        url.searchParams.set('poule_nr', pouleId);
+      if (pouleNr) {
+        url.searchParams.set('poule_nr', pouleNr);
       }
       const res = await fetch(url.toString());
       if (res.ok) {
@@ -237,13 +229,18 @@ export default function ToernooiStandPage({
 
   useEffect(() => {
     if (competition) {
-      fetchStandings(selectedPeriod, selectedPouleId);
+      if (selectedPouleNr) {
+        fetchStandings(selectedPeriod, selectedPouleNr);
+      } else {
+        setStandings([]);
+        setIsLoading(false);
+      }
     }
-  }, [selectedPeriod, selectedPouleId, competition, fetchStandings]);
+  }, [selectedPeriod, selectedPouleNr, competition, fetchStandings]);
 
   const handlePeriodChange = async (period: number) => {
     setSelectedPeriod(period);
-    setSelectedPouleId(''); // Reset poule selection when period changes
+    setSelectedPouleNr(''); // Reset poule selection when period changes
     await fetchPoules(period);
   };
 
@@ -328,9 +325,9 @@ export default function ToernooiStandPage({
       <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Stand – {competition.t_naam ?? competition.comp_naam}
-          {selectedPouleId && (
+          {selectedPouleNr && (
             <span className="ml-2 text-orange-600 dark:text-orange-400">
-              (Poule {selectedPouleId})
+              (Poule {selectedPouleNr})
             </span>
           )}
         </h1>
@@ -343,7 +340,7 @@ export default function ToernooiStandPage({
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
           <div className="flex items-center gap-2 ml-3">
-            <button onClick={() => fetchStandings(selectedPeriod)} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium flex-shrink-0">
+            <button onClick={() => selectedPouleNr && fetchStandings(selectedPeriod, selectedPouleNr)} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium flex-shrink-0">
               Opnieuw proberen
             </button>
             <button onClick={() => setError('')} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
@@ -390,6 +387,23 @@ export default function ToernooiStandPage({
 
         {/* Sort mode toggle */}
         <div className="flex items-center gap-2">
+          <label htmlFor="poule-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Poule:
+          </label>
+          <select
+            id="poule-select"
+            value={selectedPouleNr}
+            onChange={(e) => setSelectedPouleNr(e.target.value)}
+            className="h-8 rounded-md text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 px-2"
+          >
+            <option value="">Kies poule</option>
+            {poules.map((p) => (
+              <option key={p.id} value={String(p.poule_nr)}>Poule {p.poule_nr}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Sortering:
           </label>
@@ -419,8 +433,8 @@ export default function ToernooiStandPage({
 
         <div className="ml-auto flex gap-2">
           <button
-            onClick={() => fetchStandings(selectedPeriod)}
-            disabled={isLoading}
+            onClick={() => selectedPouleNr && fetchStandings(selectedPeriod, selectedPouleNr)}
+            disabled={isLoading || !selectedPouleNr}
             className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
           >
             <svg className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -453,7 +467,15 @@ export default function ToernooiStandPage({
       )}
 
       {/* Standings Table */}
-      {!isLoading && standings.length === 0 && (
+      {!isLoading && !selectedPouleNr && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <p className="text-slate-600 dark:text-slate-400">
+            Kies eerst een poule om de stand te tonen.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && selectedPouleNr && standings.length === 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
