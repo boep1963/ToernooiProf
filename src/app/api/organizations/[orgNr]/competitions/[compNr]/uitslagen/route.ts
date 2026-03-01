@@ -1,9 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
+import { calculate10PointScore, calculateBelgianScore, calculateWRVPoints } from '@/lib/billiards';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
+}
+
+type ValidationInput = {
+  sp1CarGem: number;
+  sp2CarGem: number;
+  sp1CarTem: number;
+  sp2CarTem: number;
+  brt: number;
+  sp1Hs: number;
+  sp2Hs: number;
+  maxBeurten: number;
+};
+
+function validateInvoer(input: ValidationInput): string | null {
+  if (!Number.isFinite(input.brt) || input.brt <= 0) {
+    return 'Beurten moet groter zijn dan 0.';
+  }
+
+  if (input.maxBeurten > 0 && input.brt > input.maxBeurten) {
+    return `Beurten mag niet groter zijn dan ${input.maxBeurten}.`;
+  }
+
+  if (input.sp1CarGem < 0 || input.sp2CarGem < 0) {
+    return 'Caramboles gemaakt mag niet negatief zijn.';
+  }
+
+  if (input.sp1CarGem > input.sp1CarTem || input.sp2CarGem > input.sp2CarTem) {
+    return 'Caramboles gemaakt mag niet groter zijn dan caramboles te maken.';
+  }
+
+  if (input.sp1Hs < 0 || input.sp2Hs < 0) {
+    return 'Hoogste serie mag niet negatief zijn.';
+  }
+
+  if (input.sp1Hs > input.sp1CarGem || input.sp2Hs > input.sp2CarGem) {
+    return 'Hoogste serie mag niet groter zijn dan caramboles gemaakt.';
+  }
+
+  if ((input.sp1Hs * input.brt) < input.sp1CarGem || (input.sp2Hs * input.brt) < input.sp2CarGem) {
+    return 'Combinatie van hoogste serie en beurten is ongeldig voor het aantal gemaakte caramboles.';
+  }
+
+  return null;
+}
+
+function resolveBasePuntenSystem(puntenSys: number): number {
+  if (puntenSys >= 10000) {
+    return Math.floor(puntenSys / 10000);
+  }
+  if (puntenSys % 10 === 0) {
+    return Math.floor(puntenSys / 10);
+  }
+  return puntenSys;
 }
 
 /**
@@ -96,7 +150,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const orgNummer = authResult.orgNummer;
     const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
+    }
     const body = await request.json();
+    const action = body.action === 'preview' ? 'preview' : 'save';
 
     const { ronde_nr, poule_nr, sp_partcode } = body;
     if (ronde_nr == null || poule_nr == null || !sp_partcode) {
@@ -109,6 +167,25 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const [pRonde, koppel] = String(sp_partcode).split('_').map(Number);
     if (isNaN(pRonde) || isNaN(koppel)) {
       return NextResponse.json({ error: 'Ongeldige sp_partcode' }, { status: 400 });
+    }
+
+    const compSnap = await db
+      .collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .limit(1)
+      .get();
+
+    if (compSnap.empty) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+    }
+
+    const compData = compSnap.docs[0].data() ?? {};
+    if (Number(compData.t_gestart ?? 0) !== 1) {
+      return NextResponse.json(
+        { error: 'Toernooi is nog niet gestart; uitslagen invoeren is niet toegestaan.' },
+        { status: 409 }
+      );
     }
 
     const snapshot = await db
@@ -126,19 +203,115 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Uitslag niet gevonden' }, { status: 404 });
     }
 
-    const docRef = snapshot.docs[0].ref;
-    const updateData: Record<string, unknown> = {};
-    if (body.sp1_car_gem !== undefined) updateData.sp1_car_gem = Number(body.sp1_car_gem);
-    if (body.sp2_car_gem !== undefined) updateData.sp2_car_gem = Number(body.sp2_car_gem);
-    if (body.brt !== undefined) updateData.brt = Number(body.brt);
-    if (body.sp1_hs !== undefined) updateData.sp1_hs = Number(body.sp1_hs);
-    if (body.sp2_hs !== undefined) updateData.sp2_hs = Number(body.sp2_hs);
-    if (body.sp1_punt !== undefined) updateData.sp1_punt = Number(body.sp1_punt);
-    if (body.sp2_punt !== undefined) updateData.sp2_punt = Number(body.sp2_punt);
-    updateData.gespeeld = 1;
+    const uitslagDoc = snapshot.docs[0];
+    const uitslagData = uitslagDoc.data() ?? {};
 
-    await docRef.update(updateData);
-    return NextResponse.json({ ok: true });
+    const sp1CarTem = Number(uitslagData.sp1_car_tem) || 0;
+    const sp2CarTem = Number(uitslagData.sp2_car_tem) || 0;
+    const sp1CarGem = Math.max(Number(body.sp1_car_gem) || 0, 0);
+    const sp2CarGem = Math.max(Number(body.sp2_car_gem) || 0, 0);
+    const brt = Math.max(Number(body.brt) || 0, 0);
+    const sp1Hs = Math.max(Number(body.sp1_hs) || 0, 0);
+    const sp2Hs = Math.max(Number(body.sp2_hs) || 0, 0);
+
+    const maxBeurten = Math.max(Number(compData.t_max_beurten ?? 0) || 0, 0);
+    const validationError = validateInvoer({
+      sp1CarGem,
+      sp2CarGem,
+      sp1CarTem,
+      sp2CarTem,
+      brt,
+      sp1Hs,
+      sp2Hs,
+      maxBeurten,
+    });
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    const spNummer1 = Number(uitslagData.sp_nummer_1) || 0;
+    const spNummer2 = Number(uitslagData.sp_nummer_2) || 0;
+    const [speler1Snap, speler2Snap] = await Promise.all([
+      db.collection('spelers')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('sp_nummer', '==', spNummer1)
+        .limit(1)
+        .get(),
+      db.collection('spelers')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('sp_nummer', '==', spNummer2)
+        .limit(1)
+        .get(),
+    ]);
+
+    const sp1StartMoy = speler1Snap.empty ? 0 : Number(speler1Snap.docs[0].data()?.sp_startmoy) || 0;
+    const sp2StartMoy = speler2Snap.empty ? 0 : Number(speler2Snap.docs[0].data()?.sp_startmoy) || 0;
+
+    const puntenSys = Number(compData.t_punten_sys ?? compData.punten_sys ?? 1) || 1;
+    const basePuntenSys = resolveBasePuntenSystem(puntenSys);
+    let points1 = 0;
+    let points2 = 0;
+
+    if (basePuntenSys === 2) {
+      points1 = calculate10PointScore(sp1CarGem, sp1CarTem);
+      points2 = calculate10PointScore(sp2CarGem, sp2CarTem);
+    } else if (basePuntenSys === 3) {
+      const p = calculateBelgianScore(sp1CarGem, sp1CarTem, sp2CarGem, sp2CarTem);
+      points1 = p.points1;
+      points2 = p.points2;
+    } else {
+      const p = calculateWRVPoints(
+        sp1CarGem,
+        sp1CarTem,
+        sp2CarGem,
+        sp2CarTem,
+        maxBeurten,
+        brt,
+        maxBeurten > 0,
+        puntenSys,
+        sp1StartMoy,
+        sp2StartMoy
+      );
+      points1 = p.points1;
+      points2 = p.points2;
+    }
+
+    const moy1 = brt > 0 ? Math.round((sp1CarGem / brt) * 1000) / 1000 : 0;
+    const moy2 = brt > 0 ? Math.round((sp2CarGem / brt) * 1000) / 1000 : 0;
+
+    const preview = {
+      sp1_car_tem: sp1CarTem,
+      sp2_car_tem: sp2CarTem,
+      sp1_car_gem: sp1CarGem,
+      sp2_car_gem: sp2CarGem,
+      brt,
+      sp1_hs: sp1Hs,
+      sp2_hs: sp2Hs,
+      sp1_moy: moy1,
+      sp2_moy: moy2,
+      sp1_punt: points1,
+      sp2_punt: points2,
+    };
+
+    if (action === 'preview') {
+      return NextResponse.json({ ok: true, preview });
+    }
+
+    await uitslagDoc.ref.update({
+      sp1_car_gem: sp1CarGem,
+      sp2_car_gem: sp2CarGem,
+      brt,
+      sp1_hs: sp1Hs,
+      sp2_hs: sp2Hs,
+      sp1_punt: points1,
+      sp2_punt: points2,
+      gespeeld: 1,
+      updated_at: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ ok: true, saved: preview });
   } catch (error) {
     console.error('[UITSLAGEN PATCH] Error:', error);
     return NextResponse.json(

@@ -77,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return {
         id: doc.id,
         ...data,
-        poule_nr: pouleBySpeler.get(spNummer) ?? null,
+        poule_nr: pouleBySpeler.get(spNummer) ?? (Number(data.poule_nr) || null),
       };
     });
 
@@ -164,6 +164,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       sp_naam: body.sp_naam.trim(),
       sp_startmoy,
       sp_startcar,
+      poule_nr: pouleNr >= 1 && pouleNr <= 25 ? pouleNr : null,
       created_at: new Date().toISOString(),
     };
 
@@ -221,7 +222,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const spNummer = Number(body.sp_nummer);
     const spNaam = typeof body.sp_naam === 'string' ? body.sp_naam.trim() : '';
     const spStartmoy = Math.max(Number(body.sp_startmoy) || 0, 0.1);
-    const spStartcar = Math.max(parseInt(String(body.sp_startcar || 0), 10) || 0, 3);
     const pouleNr = parseInt(String(body.poule_nr || 0), 10);
 
     if (!spNummer) {
@@ -255,10 +255,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const playerDoc = playerSnap.docs[0];
+    const tCarSys = Number(tournament.compData?.t_car_sys ?? 1);
+    const tMoyForm = Number(tournament.compData?.t_moy_form ?? 3);
+    const tMinCar = Number(tournament.compData?.t_min_car ?? 0);
+    let spStartcar = Math.max(parseInt(String(body.sp_startcar || 0), 10) || 0, 3);
+    if (tCarSys === 1) {
+      spStartcar = Math.max(calculateCaramboles(spStartmoy, tMoyForm, tMinCar), 3);
+    }
+
     await playerDoc.ref.update({
       sp_naam: spNaam,
       sp_startmoy: spStartmoy,
       sp_startcar: spStartcar,
+      poule_nr: pouleNr,
       updated_at: new Date().toISOString(),
     });
 

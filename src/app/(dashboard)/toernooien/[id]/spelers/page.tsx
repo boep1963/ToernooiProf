@@ -114,6 +114,13 @@ export default function ToernooiSpelersPage({
     return calculateCaramboles(parseFloat(newMoy) || 0, tMoyForm, tMinCar);
   };
 
+  const previewEditCar = (): number => {
+    if (!tournament) return 0;
+    const carSys = tournament.t_car_sys ?? 1;
+    if (carSys === 2) return Math.max(parseInt(editCar, 10) || 0, 3);
+    return Math.max(calculateCaramboles(parseFloat(editMoy) || 0, tMoyForm, tMinCar), 3);
+  };
+
   const handleAddSpeler = async () => {
     if (!orgNummer || !newNaam.trim()) return;
     setIsSubmitting(true);
@@ -217,7 +224,7 @@ export default function ToernooiSpelersPage({
             sp_nummer: editingSpelerNummer,
             sp_naam: editNaam.trim(),
             sp_startmoy: Math.max(parseFloat(editMoy) || 0, 0.1),
-            sp_startcar: Math.max(parseInt(editCar, 10) || 0, 3),
+            sp_startcar: tCarSys === 1 ? previewEditCar() : Math.max(parseInt(editCar, 10) || 0, 3),
             poule_nr: editPouleNr,
           }),
         }
@@ -478,13 +485,25 @@ export default function ToernooiSpelersPage({
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 text-right tabular-nums">
                       {editingSpelerNummer === speler.sp_nummer ? (
-                        <input
-                          type="number"
-                          min="3"
-                          value={editCar}
-                          onChange={(e) => setEditCar(e.target.value)}
-                          className="w-20 ml-auto px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-right"
-                        />
+                        tCarSys === 1 ? (
+                          <div className="inline-flex flex-col items-end">
+                            <input
+                              type="number"
+                              value={previewEditCar()}
+                              readOnly
+                              className="w-20 ml-auto px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-right cursor-not-allowed"
+                            />
+                            <span className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Afgeleid uit moyenne</span>
+                          </div>
+                        ) : (
+                          <input
+                            type="number"
+                            min="3"
+                            value={editCar}
+                            onChange={(e) => setEditCar(e.target.value)}
+                            className="w-20 ml-auto px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-right"
+                          />
+                        )
                       ) : (
                         speler.sp_startcar
                       )}
@@ -501,7 +520,7 @@ export default function ToernooiSpelersPage({
                           ))}
                         </select>
                       ) : (
-                        `Poule ${Number(speler.poule_nr) || 1}`
+                        Number(speler.poule_nr) > 0 ? `Poule ${Number(speler.poule_nr)}` : '-'
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -511,7 +530,7 @@ export default function ToernooiSpelersPage({
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={handleSaveEditSpeler}
-                            disabled={isSubmitting || !editNaam.trim() || (parseFloat(editMoy) || 0) < 0.1 || (parseInt(editCar, 10) || 0) < 3}
+                            disabled={isSubmitting || !editNaam.trim() || (parseFloat(editMoy) || 0) < 0.1 || (tCarSys === 2 && (parseInt(editCar, 10) || 0) < 3)}
                             className="text-xs px-2.5 py-1.5 text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 rounded-md transition-colors font-medium"
                           >
                             {isSubmitting ? 'Bezig...' : 'Opslaan'}
