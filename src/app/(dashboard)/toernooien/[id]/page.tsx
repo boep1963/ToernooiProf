@@ -161,11 +161,17 @@ export default function ToernooiDetailPage({
       <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{compNaam}</h1>
-          {(tournament.t_datum || tournament.comp_datum) && (
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
-              {tournament.t_datum || tournament.comp_datum}
-            </p>
-          )}
+          {(() => {
+            const subtitle = tournament.t_datum || tournament.comp_datum || '';
+            // Toon alleen vrije tekst als subtitel, niet datum-placeholders zoals 00-00-0000
+            const isPlaceholderDate = subtitle && /^\d{1,2}-\d{1,2}-\d{4}$/.test(subtitle.trim());
+            const hasFreeText = subtitle && /\D/.test(subtitle);
+            return hasFreeText && !isPlaceholderDate ? (
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                {subtitle}
+              </p>
+            ) : null;
+          })()}
         </div>
         <div className="flex items-center gap-2">
           {!isGestart && (

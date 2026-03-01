@@ -87,13 +87,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const tMoyForm = (compData?.t_moy_form as number) ?? 3;
     const tMinCar = (compData?.t_min_car as number) ?? 0;
 
-    const sp_startmoy = parseFloat(String(body.sp_startmoy || 0)) || 0;
+    let sp_startmoy = parseFloat(String(body.sp_startmoy || 0)) || 0;
     let sp_startcar = parseInt(String(body.sp_startcar || 0)) || 0;
+
+    sp_startmoy = Math.max(sp_startmoy, 0.1);
 
     if (tCarSys === 1) {
       // Moyenne-formule: calculate caramboles from moyenne
       sp_startcar = calculateCaramboles(sp_startmoy, tMoyForm, tMinCar);
     }
+    sp_startcar = Math.max(sp_startcar, 3);
 
     // Generate next sp_nummer for this tournament
     const existingSnap = await getSpelersForToernooi(orgNummer, compNumber);
@@ -115,6 +118,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     };
 
     const docRef = await db.collection('spelers').add(playerData);
+
+    // Optioneel: direct toewijzen aan start-poule (ronde 1)
+    const pouleNr = parseInt(String(body.poule_nr || 0), 10);
+    if (pouleNr >= 1 && pouleNr <= 25) {
+      const poulesInPoule = await db.collection('poules')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .where('ronde_nr', '==', 1)
+        .where('poule_nr', '==', pouleNr)
+        .get();
+      const spVolgnr = poulesInPoule.size + 1;
+      await db.collection('poules').add({
+        gebruiker_nr: orgNummer,
+        t_nummer: compNumber,
+        sp_nummer,
+        sp_moy: sp_startmoy,
+        sp_car: sp_startcar,
+        sp_volgnr: spVolgnr,
+        poule_nr: pouleNr,
+        ronde_nr: 1,
+      });
+    }
 
     return NextResponse.json({ id: docRef.id, ...playerData, message: 'Speler succesvol toegevoegd.' }, { status: 201 });
   } catch (error) {

@@ -75,7 +75,29 @@ export default function NieuweRondePage({
       const poulesData = await poulesRes.json();
 
       setCompetition(compData);
-      setAllPlayers(playersData.players || []);
+      // Map ToernooiProf format (sp_nummer, sp_naam, sp_startmoy, sp_startcar) naar ClubMatch/UI format
+      const rawPlayers = playersData.players || [];
+      const mapped = rawPlayers.map((p: any) => {
+        const parts = (p.sp_naam || '').trim().split(/\s+/);
+        return {
+          id: p.id,
+          spc_nummer: p.sp_nummer ?? p.spc_nummer,
+          spa_vnaam: p.spa_vnaam ?? (parts[0] || ''),
+          spa_tv: p.spa_tv ?? '',
+          spa_anaam: p.spa_anaam ?? (parts.slice(1).join(' ') || ''),
+          spc_moyenne_1: p.sp_startmoy ?? p.spc_moyenne_1 ?? 0,
+          spc_moyenne_2: p.spc_moyenne_2 ?? 0,
+          spc_moyenne_3: p.spc_moyenne_3 ?? 0,
+          spc_moyenne_4: p.spc_moyenne_4 ?? 0,
+          spc_moyenne_5: p.spc_moyenne_5 ?? 0,
+          spc_car_1: p.sp_startcar ?? p.spc_car_1 ?? 0,
+          spc_car_2: p.spc_car_2 ?? 0,
+          spc_car_3: p.spc_car_3 ?? 0,
+          spc_car_4: p.spc_car_4 ?? 0,
+          spc_car_5: p.spc_car_5 ?? 0,
+        };
+      });
+      setAllPlayers(mapped);
       
       // Determine next round number
       const existingRounds = poulesData.poules.map((p: any) => p.ronde_nr);
@@ -232,6 +254,7 @@ export default function NieuweRondePage({
                       <th className="px-6 py-4 font-semibold">Select</th>
                       <th className="px-6 py-4 font-semibold">Naam</th>
                       <th className="px-6 py-4 font-semibold text-right">Moyenne</th>
+                      <th className="px-6 py-4 font-semibold text-right">Car</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -255,7 +278,10 @@ export default function NieuweRondePage({
                             {formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, competition?.sorteren)}
                           </td>
                           <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400 font-mono">
-                            {formatDecimal(player[`spc_moyenne_${competition?.periode || 1}` as keyof PlayerData] as number)}
+                            {formatDecimal(player.spc_moyenne_1)}
+                          </td>
+                          <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400 font-mono">
+                            {player.spc_car_1}
                           </td>
                         </tr>
                       );

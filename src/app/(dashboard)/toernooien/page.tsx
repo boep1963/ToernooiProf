@@ -13,6 +13,7 @@ interface CompetitionItem {
   comp_nr: number;
   comp_naam: string;
   comp_datum: string;
+  datum_start?: string;
   discipline: number;
 }
 
@@ -225,7 +226,7 @@ export default function ToernooienPage() {
                         {comp.comp_naam}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.comp_datum)}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.datum_start || comp.comp_datum)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <button

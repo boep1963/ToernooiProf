@@ -38,11 +38,13 @@ export default function NieuwToernooi() {
 
   useUnsavedChangesWarning(isDirty && !success);
 
+  const numericFields = ['discipline', 't_punten_sys', 't_car_sys', 't_moy_form', 't_min_car', 'openbaar'];
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    const isNumeric = type === 'number' || numericFields.includes(name);
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: isNumeric ? Number(value) : value,
     }));
     if (!isDirty) setIsDirty(true);
     if (fieldErrors[name]) {
@@ -246,7 +248,7 @@ export default function NieuwToernooi() {
             {/* Caramboles-systeem */}
             <div>
               <label htmlFor="t_car_sys" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Systeem caramboles
+                Aantal te maken caramboles
               </label>
               <select
                 id="t_car_sys" name="t_car_sys"

@@ -58,6 +58,7 @@ export default function ToernooiSpelersPage({
   const [newNaam, setNewNaam] = useState('');
   const [newMoy, setNewMoy] = useState('');
   const [newCar, setNewCar] = useState('');
+  const [newPouleNr, setNewPouleNr] = useState(1);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -118,8 +119,9 @@ export default function ToernooiSpelersPage({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sp_naam: newNaam.trim(),
-            sp_startmoy: parseFloat(newMoy) || 0,
-            sp_startcar: parseInt(newCar) || 0,
+            sp_startmoy: Math.max(parseFloat(newMoy) || 0, 0.1),
+            sp_startcar: Math.max(parseInt(newCar) || 0, 3),
+            poule_nr: newPouleNr,
           }),
         }
       );
@@ -130,6 +132,7 @@ export default function ToernooiSpelersPage({
         setNewNaam('');
         setNewMoy('');
         setNewCar('');
+        setNewPouleNr(1);
         setSuccess(`${data.sp_naam} is succesvol toegevoegd!`);
         setTimeout(() => setSuccess(''), 4000);
       } else {
@@ -259,10 +262,10 @@ export default function ToernooiSpelersPage({
               <input
                 type="number"
                 step="0.001"
-                min="0"
+                min="0.1"
                 value={newMoy}
                 onChange={e => setNewMoy(e.target.value)}
-                placeholder="Bijv. 0.450"
+                placeholder="Min. 0.100"
                 className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
               />
             </div>
@@ -273,14 +276,29 @@ export default function ToernooiSpelersPage({
                 </label>
                 <input
                   type="number"
-                  min="1"
+                  min="3"
                   value={newCar}
                   onChange={e => setNewCar(e.target.value)}
-                  placeholder="Bijv. 25"
+                  placeholder="Min. 3, bijv. 25"
                   className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                 />
               </div>
             )}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Start-poule
+              </label>
+              <select
+                value={newPouleNr}
+                onChange={e => setNewPouleNr(parseInt(e.target.value, 10))}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(nr => (
+                  <option key={nr} value={nr}>Poule {String.fromCharCode(64 + nr)}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Wordt gebruikt bij start toernooi (ronde 1)</p>
+            </div>
           </div>
 
           {tournament.t_car_sys === 1 && newMoy && (
@@ -296,13 +314,13 @@ export default function ToernooiSpelersPage({
           <div className="flex items-center gap-3">
             <button
               onClick={handleAddSpeler}
-              disabled={!newNaam.trim() || isSubmitting || (tournament.t_car_sys === 2 && !newCar)}
+              disabled={!newNaam.trim() || isSubmitting || (parseFloat(newMoy) || 0) < 0.1 || (tournament.t_car_sys === 2 && (parseInt(newCar) || 0) < 3)}
               className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium rounded-lg transition-colors shadow-sm"
             >
               {isSubmitting ? 'Bezig...' : 'Toevoegen'}
             </button>
             <button
-              onClick={() => { setShowAddForm(false); setNewNaam(''); setNewMoy(''); setNewCar(''); }}
+              onClick={() => { setShowAddForm(false); setNewNaam(''); setNewMoy(''); setNewCar(''); setNewPouleNr(1); }}
               className="px-4 py-2.5 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
             >
               Annuleren
