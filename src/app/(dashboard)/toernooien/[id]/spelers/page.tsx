@@ -34,6 +34,7 @@ interface SpelerData {
   sp_naam: string;
   sp_startmoy: number;
   sp_startcar: number;
+  poule_nr?: number | null;
 }
 
 export default function ToernooiSpelersPage({
@@ -54,6 +55,11 @@ export default function ToernooiSpelersPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [spelerToRemove, setSpelerToRemove] = useState<SpelerData | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [editingSpelerNummer, setEditingSpelerNummer] = useState<number | null>(null);
+  const [editNaam, setEditNaam] = useState('');
+  const [editMoy, setEditMoy] = useState('');
+  const [editCar, setEditCar] = useState('');
+  const [editPouleNr, setEditPouleNr] = useState(1);
 
   // Add form state
   const [newNaam, setNewNaam] = useState('');
@@ -93,7 +99,7 @@ export default function ToernooiSpelersPage({
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const tCarSys = tournament?.t_car_sys ?? tournament?.t_moy_form !== undefined ? 1 : 1;
+  const tCarSys = tournament?.t_car_sys ?? 1;
   const tMoyForm = tournament?.t_moy_form ?? tournament?.moy_form ?? 3;
   const tMinCar = tournament?.t_min_car ?? tournament?.min_car ?? 0;
   const isStarted = (tournament?.t_gestart ?? 0) === 1;
@@ -129,7 +135,7 @@ export default function ToernooiSpelersPage({
       );
       if (res.ok) {
         const data = await res.json();
-        setSpelers(prev => [...prev, data]);
+        await fetchData();
         setShowAddForm(false);
         setNewNaam('');
         setNewMoy('');
@@ -178,6 +184,62 @@ export default function ToernooiSpelersPage({
     }
   };
 
+  const startEditSpeler = (speler: SpelerData) => {
+    setEditingSpelerNummer(speler.sp_nummer);
+    setEditNaam(speler.sp_naam || '');
+    setEditMoy(String(speler.sp_startmoy ?? ''));
+    setEditCar(String(speler.sp_startcar ?? ''));
+    setEditPouleNr(Number(speler.poule_nr) || 1);
+    setError('');
+    setSuccess('');
+  };
+
+  const cancelEditSpeler = () => {
+    setEditingSpelerNummer(null);
+    setEditNaam('');
+    setEditMoy('');
+    setEditCar('');
+    setEditPouleNr(1);
+  };
+
+  const handleSaveEditSpeler = async () => {
+    if (!orgNummer || editingSpelerNummer === null) return;
+    setIsSubmitting(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/players`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sp_nummer: editingSpelerNummer,
+            sp_naam: editNaam.trim(),
+            sp_startmoy: Math.max(parseFloat(editMoy) || 0, 0.1),
+            sp_startcar: Math.max(parseInt(editCar, 10) || 0, 3),
+            poule_nr: editPouleNr,
+          }),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setSuccess(`${data.sp_naam} is bijgewerkt.`);
+        cancelEditSpeler();
+        await fetchData();
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Fout bij bijwerken speler.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const sortedSpelers = [...spelers].sort((a, b) =>
     (a.sp_naam || '').localeCompare(b.sp_naam || '', 'nl')
   );
@@ -203,7 +265,7 @@ export default function ToernooiSpelersPage({
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} />
+      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} tGestart={tournament.t_gestart} />
 
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -346,7 +408,7 @@ export default function ToernooiSpelersPage({
           </button>
           {isStarted && (
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Toernooi is gestart. Spelers toevoegen is niet meer toegestaan.
+              Toernooi is gestart. Spelerslijst is nu alleen-lezen; toevoegen, wijzigen en verwijderen zijn niet meer toegestaan.
             </p>
           )}
         </div>
@@ -374,6 +436,7 @@ export default function ToernooiSpelersPage({
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Moyenne</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Caramboles</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Poule</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
               </thead>
@@ -384,23 +447,97 @@ export default function ToernooiSpelersPage({
                       {speler.sp_nummer}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {speler.sp_naam}
-                      </span>
+                      {editingSpelerNummer === speler.sp_nummer ? (
+                        <input
+                          type="text"
+                          value={editNaam}
+                          onChange={(e) => setEditNaam(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {speler.sp_naam}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
-                      {formatDecimal(speler.sp_startmoy)}
+                      {editingSpelerNummer === speler.sp_nummer ? (
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0.1"
+                          value={editMoy}
+                          onChange={(e) => setEditMoy(e.target.value)}
+                          className="w-24 ml-auto px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-right"
+                        />
+                      ) : (
+                        formatDecimal(speler.sp_startmoy)
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 text-right tabular-nums">
-                      {speler.sp_startcar}
+                      {editingSpelerNummer === speler.sp_nummer ? (
+                        <input
+                          type="number"
+                          min="3"
+                          value={editCar}
+                          onChange={(e) => setEditCar(e.target.value)}
+                          className="w-20 ml-auto px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-right"
+                        />
+                      ) : (
+                        speler.sp_startcar
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
+                      {editingSpelerNummer === speler.sp_nummer ? (
+                        <select
+                          value={editPouleNr}
+                          onChange={(e) => setEditPouleNr(parseInt(e.target.value, 10))}
+                          className="w-24 ml-auto px-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                        >
+                          {Array.from({ length: 25 }, (_, i) => i + 1).map((nr) => (
+                            <option key={nr} value={nr}>Poule {nr}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        `Poule ${Number(speler.poule_nr) || 1}`
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => { setSpelerToRemove(speler); setShowRemoveDialog(true); }}
-                        className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
-                      >
-                        Verwijderen
-                      </button>
+                      {isStarted ? (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Alleen-lezen</span>
+                      ) : editingSpelerNummer === speler.sp_nummer ? (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={handleSaveEditSpeler}
+                            disabled={isSubmitting || !editNaam.trim() || (parseFloat(editMoy) || 0) < 0.1 || (parseInt(editCar, 10) || 0) < 3}
+                            className="text-xs px-2.5 py-1.5 text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 rounded-md transition-colors font-medium"
+                          >
+                            {isSubmitting ? 'Bezig...' : 'Opslaan'}
+                          </button>
+                          <button
+                            onClick={cancelEditSpeler}
+                            disabled={isSubmitting}
+                            className="text-xs px-2.5 py-1.5 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-md transition-colors font-medium"
+                          >
+                            Annuleren
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => startEditSpeler(speler)}
+                            className="text-xs px-2.5 py-1.5 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-md transition-colors font-medium"
+                          >
+                            Bewerken
+                          </button>
+                          <button
+                            onClick={() => { setSpelerToRemove(speler); setShowRemoveDialog(true); }}
+                            className="text-xs px-2.5 py-1.5 text-red-600 dark:text-red-200 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors font-medium"
+                          >
+                            Verwijderen
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

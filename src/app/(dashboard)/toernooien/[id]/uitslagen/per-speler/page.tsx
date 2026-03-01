@@ -19,6 +19,7 @@ interface CompetitionData {
   discipline: number;
   punten_sys: number;
   periode: number;
+  t_gestart?: number;
 }
 
 /** Spelers kunnen uit spelers-collectie komen (sp_nummer, sp_naam) of members (spc_nummer, spa_vnaam, spa_anaam) */
@@ -192,6 +193,11 @@ export default function PlayerResultsPage({
       }
       const compData = await compRes.json();
       setCompetition(compData);
+      const isStarted = (Number(compData.t_gestart) || 0) === 1;
+      if (!isStarted) {
+        setPlayers([]);
+        return;
+      }
 
       // Fetch players
       const playersRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`);
@@ -377,12 +383,13 @@ export default function PlayerResultsPage({
     );
   }
 
+  const isStarted = (Number(competition.t_gestart) || 0) === 1;
   const selectedPlayer = players.find(p => getPlayerNr(p) === selectedPlayerNr);
 
   return (
     <div>
       <div className="print:hidden">
-        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} />
+        <CompetitionSubNav compNr={compNr} compNaam={competition.comp_naam} periode={competition.periode || 1} tGestart={competition.t_gestart} />
       </div>
 
       {/* Print-only header */}
@@ -408,7 +415,16 @@ export default function PlayerResultsPage({
         </p>
       </div>
 
+      {!isStarted && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-amber-200 dark:border-amber-800 p-8 text-center mb-6">
+          <p className="text-amber-700 dark:text-amber-300 font-medium">
+            Uitslagen per speler zijn pas beschikbaar nadat het toernooi is gestart.
+          </p>
+        </div>
+      )}
+
       {/* Player Selection */}
+      {isStarted && (
       <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 print:hidden">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
@@ -442,6 +458,7 @@ export default function PlayerResultsPage({
           )}
         </div>
       </div>
+      )}
 
       {error && (
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between print:hidden">
@@ -453,14 +470,14 @@ export default function PlayerResultsPage({
       )}
 
       {/* Loading state for results */}
-      {isLoadingResults && (
+      {isStarted && isLoadingResults && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
           <LoadingSpinner size="lg" label="Resultaten laden..." />
         </div>
       )}
 
       {/* Statistics Card */}
-      {selectedPlayerNr && playerStats && !isLoadingResults && (
+      {isStarted && selectedPlayerNr && playerStats && !isLoadingResults && (
         <div className="mb-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 rounded-xl shadow-sm border border-green-200 dark:border-slate-600 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Statistieken: {selectedPlayer && formatPlayerName(selectedPlayer)}
@@ -499,7 +516,7 @@ export default function PlayerResultsPage({
       )}
 
       {/* Results Table */}
-      {selectedPlayerNr && playerResults.length > 0 && !isLoadingResults && (
+      {isStarted && selectedPlayerNr && playerResults.length > 0 && !isLoadingResults && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div id="per-speler-results-table-wrap" className="overflow-x-auto">
             <table className="w-full">
@@ -591,7 +608,7 @@ export default function PlayerResultsPage({
       )}
 
       {/* No results message */}
-      {selectedPlayerNr && playerResults.length === 0 && !isLoadingResults && (
+      {isStarted && selectedPlayerNr && playerResults.length === 0 && !isLoadingResults && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -605,7 +622,7 @@ export default function PlayerResultsPage({
       )}
 
       {/* No player selected message */}
-      {!selectedPlayerNr && !isLoadingResults && (
+      {isStarted && !selectedPlayerNr && !isLoadingResults && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-green-700 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

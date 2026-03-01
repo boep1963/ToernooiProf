@@ -39,6 +39,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const compDoc = compSnap.docs[0];
     const compData = compDoc.data() ?? {};
     const currentRound = Number(compData.t_ronde ?? 0) || 0;
+    const isStarted = (Number(compData.t_gestart) || 0) === 1;
+
+    if (!isStarted) {
+      return NextResponse.json(
+        { error: 'Rondebeheer is pas beschikbaar nadat het toernooi is gestart.' },
+        { status: 409 }
+      );
+    }
 
     if (currentRound < 1) {
       return NextResponse.json({ error: 'Er is geen ronde om terug te draaien.' }, { status: 400 });

@@ -106,6 +106,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const compSnap = await db.collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .limit(1)
+      .get();
+    if (compSnap.empty) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+    }
+    const compData = compSnap.docs[0].data() ?? {};
+    if ((Number(compData.t_gestart) || 0) === 0) {
+      return NextResponse.json(
+        { error: 'Rondebeheer is pas beschikbaar nadat het toernooi is gestart.' },
+        { status: 409 }
+      );
+    }
+
     const newPoule = await createPoule(
       orgNummer,
       compNumber,

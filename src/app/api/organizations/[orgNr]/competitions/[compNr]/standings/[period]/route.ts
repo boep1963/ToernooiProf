@@ -52,6 +52,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const compData = compSnap.docs[0].data();
+    if ((Number(compData?.t_gestart) || 0) === 0) {
+      return NextResponse.json(
+        { error: 'Stand is pas beschikbaar nadat het toernooi is gestart.' },
+        { status: 409 }
+      );
+    }
     const puntenSys = Number(compData?.t_punten_sys ?? compData?.punten_sys) || 1;
 
     // Fetch spelers for this tournament

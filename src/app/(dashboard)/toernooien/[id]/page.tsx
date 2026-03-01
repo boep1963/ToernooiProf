@@ -213,16 +213,17 @@ export default function ToernooiDetailPage({
   const canStartTournament = !isGestart && startBlockedReasons.length === 0;
 
   const navItems = [
-    { label: 'Spelers', href: `/toernooien/${compNr}/spelers`, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', desc: 'Beheer spelers in dit toernooi' },
-    { label: 'Uitslagbeheer', href: `/toernooien/${compNr}/planning`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', desc: 'Uitslagen invoeren en beheren per ronde' },
-    { label: 'Stand', href: `/toernooien/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Stand per poule' },
-    { label: 'Ronden', href: `/toernooien/${compNr}/ronden`, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'Ronde-overgangen beheren' },
-    ...(isSuperAdmin ? [{ label: 'Controle', href: `/toernooien/${compNr}/controle`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', desc: 'Data validatie en controle' }] : []),
+    { label: 'Spelers', href: `/toernooien/${compNr}/spelers`, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', desc: 'Beheer spelers in dit toernooi', requiresStarted: false },
+    { label: 'Uitslagbeheer', href: `/toernooien/${compNr}/planning`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', desc: 'Uitslagen invoeren en beheren per ronde', requiresStarted: false },
+    { label: 'Stand', href: `/toernooien/${compNr}/stand`, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', desc: 'Stand per poule', requiresStarted: true },
+    { label: 'Uitslagen per speler', href: `/toernooien/${compNr}/uitslagen/per-speler`, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', desc: 'Resultaten en statistieken per speler', requiresStarted: true },
+    { label: 'Ronden', href: `/toernooien/${compNr}/ronden`, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', desc: 'Ronde-overgangen beheren', requiresStarted: true },
+    ...(isSuperAdmin ? [{ label: 'Controle', href: `/toernooien/${compNr}/controle`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', desc: 'Data validatie en controle', requiresStarted: false }] : []),
   ];
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} />
+      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} tGestart={tournament.t_gestart} />
 
       <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -349,27 +350,54 @@ export default function ToernooiDetailPage({
 
       {/* Quick nav cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {navItems.map(item => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all group"
-          >
+        {navItems.map(item => {
+          const isBlocked = !isGestart && item.requiresStarted;
+          const cardClasses = `bg-white dark:bg-slate-800 rounded-xl shadow-sm border p-5 transition-all group ${
+            isBlocked
+              ? 'border-slate-200 dark:border-slate-700 opacity-70 cursor-not-allowed'
+              : 'border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md'
+          }`;
+
+          const content = (
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50 transition-colors">
-                <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                isBlocked
+                  ? 'bg-slate-100 dark:bg-slate-700'
+                  : 'bg-orange-50 dark:bg-orange-900/30 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50'
+              }`}>
+                <svg className={`w-5 h-5 ${isBlocked ? 'text-slate-400 dark:text-slate-500' : 'text-orange-600 dark:text-orange-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                <h3 className={`text-sm font-semibold transition-colors ${
+                  isBlocked
+                    ? 'text-slate-500 dark:text-slate-400'
+                    : 'text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400'
+                }`}>
                   {item.label}
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isBlocked ? 'Beschikbaar nadat het toernooi is gestart' : item.desc}
+                </p>
               </div>
             </div>
-          </Link>
-        ))}
+          );
+
+          if (isBlocked) {
+            return (
+              <div key={item.label} className={cardClasses}>
+                {content}
+              </div>
+            );
+          }
+
+          return (
+            <Link key={item.label} href={item.href} className={cardClasses}>
+              {content}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Start toernooi confirm dialog */}

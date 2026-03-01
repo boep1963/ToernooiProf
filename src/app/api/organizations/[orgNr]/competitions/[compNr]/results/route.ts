@@ -38,6 +38,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const tournamentSnap = await db.collection('toernooien')
+      .where('org_nummer', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .limit(1)
+      .get();
+    if (tournamentSnap.empty) {
+      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+    }
+    const tournamentData = tournamentSnap.docs[0].data() ?? {};
+    if ((Number(tournamentData.t_gestart) || 0) === 0) {
+      return NextResponse.json(
+        { error: 'Uitslagen per speler zijn pas beschikbaar nadat het toernooi is gestart.' },
+        { status: 409 }
+      );
+    }
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');

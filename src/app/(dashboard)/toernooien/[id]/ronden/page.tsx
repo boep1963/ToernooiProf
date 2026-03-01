@@ -16,6 +16,7 @@ interface CompetitionData {
   comp_naam: string;
   discipline: number;
   periode: number;
+  t_gestart?: number;
 }
 
 export default function ToernooirondenPage({
@@ -46,6 +47,13 @@ export default function ToernooirondenPage({
       const compRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`);
       const compData = await compRes.json();
       setCompetition(compData);
+      const isStarted = (Number(compData.t_gestart) || 0) === 1;
+      if (!isStarted) {
+        setRounds([]);
+        setPoules([]);
+        setPoulePlayers({});
+        return;
+      }
 
       // Fetch all poules to determine existing rounds
       const poulesRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules`);
@@ -131,6 +139,8 @@ export default function ToernooirondenPage({
     );
   }
 
+  const isStarted = (Number(competition?.t_gestart) || 0) === 1;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {competition && (
@@ -138,6 +148,7 @@ export default function ToernooirondenPage({
           compNr={competition.comp_nr} 
           compNaam={competition.comp_naam} 
           periode={selectedRound || competition.periode} 
+          tGestart={competition.t_gestart}
         />
       )}
 
@@ -148,15 +159,17 @@ export default function ToernooirondenPage({
             Beheer de ronden en poule-indelingen voor {competition?.comp_naam}
           </p>
         </div>
-        <button
-          onClick={() => router.push(`/toernooien/${id}/ronden/nieuw`)}
-          className="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nieuwe Ronde Starten
-        </button>
+        {isStarted && (
+          <button
+            onClick={() => router.push(`/toernooien/${id}/ronden/nieuw`)}
+            className="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nieuwe Ronde Starten
+          </button>
+        )}
       </div>
 
       {error && (
@@ -165,7 +178,15 @@ export default function ToernooirondenPage({
         </div>
       )}
 
-      {rounds.length === 0 ? (
+      {!isStarted && (
+        <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl p-8 text-center border border-amber-200 dark:border-amber-800">
+          <p className="text-amber-700 dark:text-amber-300 font-medium">
+            Rondebeheer is pas beschikbaar nadat het toernooi is gestart.
+          </p>
+        </div>
+      )}
+
+      {isStarted && rounds.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-700">
           <svg className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -173,7 +194,8 @@ export default function ToernooirondenPage({
           <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Geen ronden gevonden</h3>
           <p className="mt-2 text-slate-500 dark:text-slate-400">Klik op de knop hierboven om de eerste ronde van het toernooi te starten.</p>
         </div>
-      ) : (
+      )}
+      {isStarted && rounds.length > 0 && (
         <div className="space-y-8">
           {/* Round Selector Tabs */}
           <div className="flex border-b border-slate-200 dark:border-slate-700 overflow-x-auto">

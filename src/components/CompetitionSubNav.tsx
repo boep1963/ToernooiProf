@@ -10,6 +10,7 @@ interface CompetitionSubNavProps {
   compNr: number;
   compNaam: string;
   periode?: number;
+  tGestart?: number;
 }
 
 const navItems = [
@@ -27,14 +28,20 @@ const CONTROLE_ITEM = {
   icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
 };
 
-export default function CompetitionSubNav({ compNr, compNaam, periode }: CompetitionSubNavProps) {
+export default function CompetitionSubNav({ compNr, compNaam, periode, tGestart }: CompetitionSubNavProps) {
   const pathname = usePathname();
   const { isSuperAdmin } = useSuperAdmin();
   const basePath = `/toernooien/${compNr}`;
   const { setActiveTournament } = useTournament();
+  const isStarted = tGestart === undefined ? true : (Number(tGestart) || 0) === 1;
 
   // Controle-tab alleen voor admingebruikers (super-admins)
-  const visibleNavItems = [...navItems, ...(isSuperAdmin ? [CONTROLE_ITEM] : [])];
+  const visibleNavItems = [...navItems, ...(isSuperAdmin ? [CONTROLE_ITEM] : [])].filter((item) => {
+    if (isStarted || item.segment === '' || item.segment === '/spelers' || item.segment === '/planning' || item.segment === '/controle') {
+      return true;
+    }
+    return !['/stand', '/uitslagen/per-speler', '/ronden'].includes(item.segment);
+  });
 
   // Set this tournament as active whenever a sub-page is viewed
   useEffect(() => {

@@ -22,6 +22,7 @@ interface CompetitionData {
   punten_sys?: number;
   t_ronde: number;
   periode?: number;
+  t_gestart?: number;
 }
 
 interface StandingEntry {
@@ -217,9 +218,16 @@ export default function ToernooiStandPage({
     const init = async () => {
       const comp = await fetchCompetition();
       if (comp) {
-        const period = comp.periode || 1;
-        await fetchPoules(period);
-        // We'll let the selectedPouleId effect handle the fetchStandings
+        const isStarted = (Number(comp.t_gestart) || 0) === 1;
+        if (isStarted) {
+          const period = comp.periode || 1;
+          await fetchPoules(period);
+          // We'll let the selectedPouleId effect handle the fetchStandings
+        } else {
+          setStandings([]);
+          setPoules([]);
+          setIsLoading(false);
+        }
       } else {
         setIsLoading(false);
       }
@@ -229,6 +237,12 @@ export default function ToernooiStandPage({
 
   useEffect(() => {
     if (competition) {
+      const isStarted = (Number(competition.t_gestart) || 0) === 1;
+      if (!isStarted) {
+        setStandings([]);
+        setIsLoading(false);
+        return;
+      }
       if (selectedPouleNr) {
         fetchStandings(selectedPeriod, selectedPouleNr);
       } else {
@@ -303,10 +317,12 @@ export default function ToernooiStandPage({
     );
   }
 
+  const isStarted = (Number(competition.t_gestart) || 0) === 1;
+
   return (
     <div>
       <div className="print:hidden">
-        <CompetitionSubNav compNr={compNr} compNaam={competition.t_naam ?? competition.comp_naam ?? ''} periode={competition.t_ronde ?? competition.periode ?? 1} />
+        <CompetitionSubNav compNr={compNr} compNaam={competition.t_naam ?? competition.comp_naam ?? ''} periode={competition.t_ronde ?? competition.periode ?? 1} tGestart={competition.t_gestart} />
       </div>
 
       {/* Print-only header */}
@@ -336,6 +352,14 @@ export default function ToernooiStandPage({
         </p>
       </div>
 
+      {!isStarted && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-amber-200 dark:border-amber-800 p-8 text-center mb-4">
+          <p className="text-amber-700 dark:text-amber-300 font-medium">
+            Stand is beschikbaar nadat het toernooi is gestart.
+          </p>
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
           <span>{error}</span>
@@ -351,6 +375,7 @@ export default function ToernooiStandPage({
       )}
 
       {/* Period selector and actions */}
+      {isStarted && (
       <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
         <div className="flex items-center gap-2">
           <label htmlFor="period-select" className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -454,9 +479,10 @@ export default function ToernooiStandPage({
           </button>
         </div>
       </div>
+      )}
 
       {/* Loading: skeleton tabel in plaats van leeg scherm */}
-      {isLoading && (
+      {isStarted && isLoading && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center gap-3 mb-4">
             <LoadingSpinner size="sm" />
@@ -467,7 +493,7 @@ export default function ToernooiStandPage({
       )}
 
       {/* Standings Table */}
-      {!isLoading && !selectedPouleNr && (
+      {isStarted && !isLoading && !selectedPouleNr && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <p className="text-slate-600 dark:text-slate-400">
             Kies eerst een poule om de stand te tonen.
@@ -475,7 +501,7 @@ export default function ToernooiStandPage({
         </div>
       )}
 
-      {!isLoading && selectedPouleNr && standings.length === 0 && (
+      {isStarted && !isLoading && selectedPouleNr && standings.length === 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -494,7 +520,7 @@ export default function ToernooiStandPage({
         </div>
       )}
 
-      {!isLoading && standings.length > 0 && (
+      {isStarted && !isLoading && standings.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
