@@ -125,13 +125,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const rondeNrValue = Number(ronde_nr) || 0;
+    const pouleNrValue = Number(poule_nr) || 0;
     const newPoule = await createPoule(
       orgNummer,
       compNumber,
-      ronde_nr,
-      poule_nr,
-      poule_naam || `Poule ${String.fromCharCode(64 + poule_nr)}`
+      rondeNrValue,
+      pouleNrValue,
+      poule_naam || `Poule ${String.fromCharCode(64 + pouleNrValue)}`
     );
+
+    // PHP-flow equivalent: bij nieuwe ronde moet de huidige ronde in toernooi-data mee schuiven.
+    const currentRound = Number(compData.t_ronde ?? 0) || 0;
+    if (rondeNrValue > currentRound) {
+      await compSnap.docs[0].ref.update({
+        t_ronde: rondeNrValue,
+        periode: rondeNrValue,
+        updated_at: new Date().toISOString(),
+      });
+    }
 
     return NextResponse.json(newPoule, { status: 201 });
   } catch (error) {
