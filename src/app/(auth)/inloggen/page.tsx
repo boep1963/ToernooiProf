@@ -10,6 +10,7 @@ import Turnstile from 'react-turnstile';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const SHOW_TURNSTILE_AFTER_FAILURES = 3;
+const SHOW_EMAIL_LOGIN = false; // Later mogelijk weer inschakelen
 
 export default function LoginPage() {
   const router = useRouter();
@@ -143,7 +144,8 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 p-8 border border-slate-200 dark:border-slate-700">
-          {/* Login method tabs */}
+          {/* Login method tabs – alleen tonen als e-mail login actief is */}
+          {SHOW_EMAIL_LOGIN && (
           <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
             <button
               type="button"
@@ -168,6 +170,7 @@ export default function LoginPage() {
               E-mail / Wachtwoord
             </button>
           </div>
+          )}
 
           {error && (
             <div role="alert" className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
@@ -190,7 +193,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {loginMethod === 'code' ? (
+          {(loginMethod === 'code' || !SHOW_EMAIL_LOGIN) ? (
             <form onSubmit={handleCodeLogin} className="space-y-4">
               <div>
                 <label htmlFor="loginCode"className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -302,13 +305,18 @@ export default function LoginPage() {
               Nog geen account? Registreer hier
             </a>
           </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400 dark:text-slate-500" suppressHydrationWarning>
+            Versie {process.env.NEXT_PUBLIC_APP_VERSION ?? '–'}
+            {process.env.NEXT_PUBLIC_BUILD_ID && ` (build ${process.env.NEXT_PUBLIC_BUILD_ID})`}
+          </div>
         </div>
       </div>
 
       {/* Footer credits */}
       <footer className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none">
         <p className="text-xm text-slate-400 dark:text-slate-500">
-          Deze applicatie is gebaseerd op het werk van Hans Eekels gedurende 1990-2026 (windows en web).
+          Deze applicatie is gebaseerd op het werk van Hans Eekels gedurende 1992-2026 (windows en web).
           <br className="sm:hidden" /> Compleet herschreven samen met Pierre de Boer in 2026.
         </p>
       </footer>
