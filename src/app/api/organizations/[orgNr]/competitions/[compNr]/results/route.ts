@@ -122,10 +122,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .get();
       const spelerMap = new Map<number, string>();
       spelersSnap.docs.forEach(d => {
-        const d_ = d.data();
-        const nr = Number(d_.sp_nummer);
-        const naam = d_.sp_naam;
-        if (nr && naam) spelerMap.set(nr, naam);
+        const d_ = (d.data() ?? {}) as Record<string, unknown>;
+        const nr = Number(d_.sp_nummer) || 0;
+        const naam = String(d_.sp_naam ?? '').trim();
+        if (nr > 0 && naam) spelerMap.set(nr, naam);
       });
 
       const compSnap = await db.collection('toernooien')
@@ -140,18 +140,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
 
       results = uitslagenSnap.docs.map((doc) => {
-        const u = doc.data();
+        const u = (doc.data() ?? {}) as Record<string, unknown>;
         const tRonde = Number(u.t_ronde) || 1;
         const pRonde = Number(u.p_ronde) || 1;
         const koppel = Number(u.koppel) || 1;
         const d = new Date(speeldatumBase);
         d.setDate(d.getDate() + (tRonde - 1));
         const speeldatum = d.toISOString().slice(0, 10);
-        const sp1Nr = Number(u.sp_nummer_1);
-        const sp2Nr = Number(u.sp_nummer_2);
+        const sp1Nr = Number(u.sp_nummer_1) || 0;
+        const sp2Nr = Number(u.sp_nummer_2) || 0;
         return {
           id: doc.id,
-          uitslag_code: u.sp_partcode || `${tRonde}_${pRonde}_${koppel}`,
+          uitslag_code: String(u.sp_partcode ?? `${tRonde}_${pRonde}_${koppel}`),
           speeldatum,
           periode: tRonde,
           sp_1_nr: sp1Nr,
@@ -606,7 +606,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const memberDataMap = new Map<number, FirebaseFirestore.DocumentData>();
     membersSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      memberDataMap.set(Number(data.spa_nummer), data);
+      if (data) {
+        memberDataMap.set(Number(data.spa_nummer), data);
+      }
     });
 
     const m1Data = memberDataMap.get(Number(sp_1_nr));

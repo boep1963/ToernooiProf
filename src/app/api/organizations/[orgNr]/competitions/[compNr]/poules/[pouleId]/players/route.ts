@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const orgNummer = authResult.orgNummer;
     const compNumber = parseInt(compNr, 10);
-    let players = await getPoulePlayers(pouleId);
+    let players: any[] = await getPoulePlayers(pouleId);
 
     // Fallback: ToernooiProf gebruikt poules-collectie (tp_poules) - elke doc = één speler in poule
     if (players.length === 0) {
@@ -43,15 +43,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             .where('t_nummer', '==', compNumber)
             .get();
           spelersSnap.docs.forEach(d => {
-            const d_ = d.data();
-            const nr = Number(d_.sp_nummer);
-            if (nr) spelerMap.set(nr, (d_.sp_naam as string) || `Speler ${nr}`);
+            const d_ = (d.data() ?? {}) as Record<string, unknown>;
+            const nr = Number(d_.sp_nummer) || 0;
+            if (nr > 0) spelerMap.set(nr, String(d_.sp_naam ?? `Speler ${nr}`));
           });
         }
 
         const mapped = poulesSnap.docs.map(doc => {
-          const u = doc.data();
-          const spNr = Number(u.sp_nummer);
+          const u = (doc.data() ?? {}) as Record<string, unknown>;
+          const spNr = Number(u.sp_nummer) || 0;
           return {
             id: doc.id,
             spc_nummer: spNr,

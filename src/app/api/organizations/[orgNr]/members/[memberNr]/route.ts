@@ -167,8 +167,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       // Member is linked to competitions - block deletion and get competition names
       const competitionIds = new Set<number>();
       for (const playerDoc of playerSnapshot.docs) {
-        const playerData = playerDoc.data();
-        competitionIds.add(playerData.spc_competitie);
+        const playerData = (playerDoc.data() ?? {}) as Record<string, unknown>;
+        const compId = Number(playerData.spc_competitie) || 0;
+        if (compId > 0) {
+          competitionIds.add(compId);
+        }
       }
 
       // Fetch competition names
@@ -181,10 +184,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
           .get();
 
         if (!compSnapshot.empty) {
-          const compData = compSnapshot.docs[0].data();
+          const compData = (compSnapshot.docs[0].data() ?? {}) as Record<string, unknown>;
+          const compNr = Number(compData.comp_nr) || compId;
           competitions.push({
-            comp_nr: compData.comp_nr,
-            comp_naam: compData.comp_naam || `Competitie ${compData.comp_nr}`
+            comp_nr: compNr,
+            comp_naam: String(compData.comp_naam ?? `Competitie ${compNr}`)
           });
         }
       }

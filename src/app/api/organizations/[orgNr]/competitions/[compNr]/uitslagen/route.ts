@@ -102,28 +102,28 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .get();
 
     const uitslagen = snapshot.docs.map((doc) => {
-      const d = doc.data();
+      const d = (doc.data() ?? {}) as Record<string, unknown>;
       return {
         id: doc.id,
-        uitslag_id: d.uitslag_id,
-        sp_nummer_1: d.sp_nummer_1,
-        sp_nummer_2: d.sp_nummer_2,
-        sp_volgnummer_1: d.sp_volgnummer_1,
-        sp_volgnummer_2: d.sp_volgnummer_2,
-        sp1_car_tem: d.sp1_car_tem ?? 0,
-        sp2_car_tem: d.sp2_car_tem ?? 0,
-        sp1_car_gem: d.sp1_car_gem ?? 0,
-        sp2_car_gem: d.sp2_car_gem ?? 0,
-        brt: d.brt ?? 0,
-        sp1_hs: d.sp1_hs ?? 0,
-        sp2_hs: d.sp2_hs ?? 0,
-        sp1_punt: d.sp1_punt ?? 0,
-        sp2_punt: d.sp2_punt ?? 0,
-        p_ronde: d.p_ronde,
-        koppel: d.koppel,
-        sp_partcode: d.sp_partcode ?? `${d.p_ronde}_${d.koppel}`,
-        gespeeld: d.gespeeld ?? 0,
-        tafel_nr: d.tafel_nr ?? 0,
+        uitslag_id: Number(d.uitslag_id) || 0,
+        sp_nummer_1: Number(d.sp_nummer_1) || 0,
+        sp_nummer_2: Number(d.sp_nummer_2) || 0,
+        sp_volgnummer_1: Number(d.sp_volgnummer_1) || 0,
+        sp_volgnummer_2: Number(d.sp_volgnummer_2) || 0,
+        sp1_car_tem: Number(d.sp1_car_tem) || 0,
+        sp2_car_tem: Number(d.sp2_car_tem) || 0,
+        sp1_car_gem: Number(d.sp1_car_gem) || 0,
+        sp2_car_gem: Number(d.sp2_car_gem) || 0,
+        brt: Number(d.brt) || 0,
+        sp1_hs: Number(d.sp1_hs) || 0,
+        sp2_hs: Number(d.sp2_hs) || 0,
+        sp1_punt: Number(d.sp1_punt) || 0,
+        sp2_punt: Number(d.sp2_punt) || 0,
+        p_ronde: Number(d.p_ronde) || 0,
+        koppel: Number(d.koppel) || 0,
+        sp_partcode: String(d.sp_partcode ?? `${Number(d.p_ronde) || 0}_${Number(d.koppel) || 0}`),
+        gespeeld: Number(d.gespeeld) || 0,
+        tafel_nr: Number(d.tafel_nr) || 0,
       };
     });
 

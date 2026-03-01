@@ -70,7 +70,9 @@ function InvoerContent({
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`)
           .then((r) => r.json())
           .then(({ players }) => {
-            const map = new Map((players || []).map((p: { sp_nummer: number; sp_naam: string }) => [p.sp_nummer, p.sp_naam]));
+            const map = new Map<number, string>(
+              (players || []).map((p: { sp_nummer: number; sp_naam: string }) => [p.sp_nummer, p.sp_naam ?? ''])
+            );
             setUitslag({
               sp_nummer_1: match.sp_nummer_1,
               sp_nummer_2: match.sp_nummer_2,

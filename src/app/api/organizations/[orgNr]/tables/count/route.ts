@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .get();
 
       if (!orgSnapshot.empty) {
-        const orgData = orgSnapshot.docs[0].data();
+        const orgData = (orgSnapshot.docs[0].data() ?? {}) as Record<string, unknown>;
         const aantalTafels = orgData.aantal_tafels;
 
         if (typeof aantalTafels === 'number' && aantalTafels > 0) {
@@ -68,7 +68,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       const uniqueTables = new Set<number>();
       matchesSnapshot.docs.forEach(doc => {
-        const tafel = doc.data().tafel;
+        const data = (doc.data() ?? {}) as Record<string, unknown>;
+        const tafel = data.tafel;
         if (typeof tafel === 'number' && tafel > 0) {
           uniqueTables.add(tafel);
         }
@@ -91,7 +92,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       const uniqueTables = new Set<number>();
       resultsSnapshot.docs.forEach(doc => {
-        const tafelNr = doc.data().tafel_nr;
+        const data = (doc.data() ?? {}) as Record<string, unknown>;
+        const tafelNr = data.tafel_nr;
         if (typeof tafelNr === 'number' && tafelNr > 0) {
           uniqueTables.add(tafelNr);
         }

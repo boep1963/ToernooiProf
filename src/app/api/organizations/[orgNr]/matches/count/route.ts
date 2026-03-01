@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       // Count unique uitslag_code values
       const uniqueCodes = new Set<string>();
       resultsSnapshot.forEach(doc => {
-        const data = doc.data();
+        const data = (doc.data() ?? {}) as Record<string, unknown>;
         if (data.uitslag_code) {
           uniqueCodes.add(String(data.uitslag_code));
         }

@@ -42,7 +42,7 @@ export async function GET(
       .where('spc_competitie', '==', comp_nr)
       .get();
 
-    const players = playersSnapshot.docs.map((doc) => doc.data());
+    const players = playersSnapshot.docs.map((doc) => (doc.data() ?? {}) as Record<string, unknown>);
 
     // 3. Fetch all results for this competition ONCE (performance optimization)
     const resultsSnapshot = await db
@@ -57,7 +57,8 @@ export async function GET(
     const playerMoyennes = [];
 
     for (const player of players) {
-      const spc_nummer = player.spc_nummer;
+      const spc_nummer = Number(player.spc_nummer) || 0;
+      if (spc_nummer <= 0) continue;
 
       // Filter results for this player (in-memory filtering)
       const playerResults = allResults.filter(
@@ -104,7 +105,7 @@ export async function GET(
         .join(' ') || `Speler ${spc_nummer}`;
 
       // Get start moyenne (from period 1)
-      const startMoyenne = player.spc_moyenne_1 || 0;
+      const startMoyenne = Number(player.spc_moyenne_1) || 0;
 
       playerMoyennes.push({
         spc_nummer,
@@ -210,7 +211,7 @@ export async function POST(
       if (playerSnapshot.empty) continue;
 
       const playerDoc = playerSnapshot.docs[0];
-      const player = playerDoc.data();
+      const player = (playerDoc.data() ?? {}) as Record<string, unknown>;
 
       // 2. Calculate moyenne for selected period (using in-memory filtering)
       const playerResults = relevantResults.filter(

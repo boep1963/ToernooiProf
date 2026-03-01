@@ -56,10 +56,10 @@ export async function GET(
     // For email_queue, sort by created_at descending (most recent first)
     if (collection === 'email_queue') {
       allDocs = allDocs.sort((a, b) => {
-        const aData = a.data();
-        const bData = b.data();
-        const aCreated = aData.created_at || '';
-        const bCreated = bData.created_at || '';
+        const aData = (a.data() ?? {}) as Record<string, unknown>;
+        const bData = (b.data() ?? {}) as Record<string, unknown>;
+        const aCreated = String(aData.created_at ?? '');
+        const bCreated = String(bData.created_at ?? '');
         return bCreated.localeCompare(aCreated);
       });
     }
@@ -67,10 +67,10 @@ export async function GET(
     // For contact_messages, sort by tijd descending (most recent first)
     if (collection === 'contact_messages') {
       allDocs = allDocs.sort((a, b) => {
-        const aData = a.data();
-        const bData = b.data();
-        const aTime = aData.tijd || '';
-        const bTime = bData.tijd || '';
+        const aData = (a.data() ?? {}) as Record<string, unknown>;
+        const bData = (b.data() ?? {}) as Record<string, unknown>;
+        const aTime = String(aData.tijd ?? '');
+        const bTime = String(bData.tijd ?? '');
         return bTime.localeCompare(aTime);
       });
     }
@@ -80,7 +80,7 @@ export async function GET(
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filteredDocs = allDocs.filter((doc) => {
-        const data = doc.data();
+        const data = (doc.data() ?? {}) as Record<string, unknown>;
         // Search in document ID and all string fields
         if (doc.id.toLowerCase().includes(searchLower)) {
           return true;

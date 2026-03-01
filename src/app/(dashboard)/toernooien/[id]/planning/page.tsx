@@ -98,7 +98,7 @@ function PlanningContent({
           const { poules: p } = await poulesRes.json();
           setPoules(p || []);
           const wantedPoule = pouleFromUrl ? parseInt(pouleFromUrl, 10) : null;
-          if (!isNaN(wantedPoule)) setSelectedPoule(wantedPoule);
+          if (wantedPoule !== null && !Number.isNaN(wantedPoule)) setSelectedPoule(wantedPoule);
           else if (p?.length === 1) setSelectedPoule(p[0].poule_nr);
         }
 

@@ -114,14 +114,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // If email changed, update Firebase Auth and add entry to email_queue
     if (emailChanged && newEmail && currentEmail) {
       console.log('[ORG] Email changed from', currentEmail, 'to', newEmail);
+      const currentEmailStr = String(currentEmail);
+      const newEmailStr = String(newEmail);
 
       // Update Firebase Auth user email (if user exists)
       try {
-        const firebaseUser = await adminAuth.getUserByEmail(currentEmail);
+        const firebaseUser = await adminAuth.getUserByEmail(currentEmailStr);
         if (firebaseUser) {
           console.log('[ORG] Updating Firebase Auth email for user:', firebaseUser.uid);
           await adminAuth.updateUser(firebaseUser.uid, {
-            email: newEmail,
+            email: newEmailStr,
             emailVerified: true, // Keep email verified after change
           });
           console.log('[ORG] Firebase Auth email updated successfully');

@@ -41,7 +41,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         .get();
     }
 
-    const rawDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const rawDocs: Array<Record<string, unknown> & { id: string }> = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...((doc.data() ?? {}) as Record<string, unknown>),
+    }));
 
     // ToernooiProf: elk doc = één speler-in-poule. Groepeer op (ronde_nr, poule_nr) tot poules.
     const hasSpNummer = rawDocs.some((d: any) => d.sp_nummer != null);

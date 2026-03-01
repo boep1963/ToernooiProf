@@ -82,7 +82,7 @@ export async function batchEnrichPlayerNames(
     console.log(`[BATCH_ENRICH] Fetching batch of ${batch.length} members: ${batch.join(', ')}`);
 
     const snapshot = await queryWithOrgComp(
-      db.collection('members'),
+      db.collection('members') as any,
       orgNummer,
       null,
       [{ field: 'spa_nummer', op: 'in', value: batch }],

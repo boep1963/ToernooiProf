@@ -71,8 +71,10 @@ export async function GET(
       .where('t_nummer', '==', comp_nr)
       .get();
 
-    const players = spelersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    const playerIds = players.map((p: { sp_nummer?: number }) => p.sp_nummer).filter(Boolean);
+    const players = spelersSnapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() ?? {}) })) as Array<Record<string, unknown>>;
+    const playerIds = players
+      .map((p) => Number(p.sp_nummer))
+      .filter((nr) => Number.isFinite(nr) && nr > 0);
 
     if (playerIds.length === 0) {
       issues.push({
@@ -90,8 +92,8 @@ export async function GET(
       .where('t_nummer', '==', comp_nr)
       .get();
 
-    const uitslagen = uitslagenSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    const gespeeldUitslagen = uitslagen.filter((u: { gespeeld?: number }) => (u.gespeeld ?? 0) === 1);
+    const uitslagen = uitslagenSnapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() ?? {}) })) as Array<Record<string, unknown>>;
+    const gespeeldUitslagen = uitslagen.filter((u) => (Number(u.gespeeld) || 0) === 1);
 
     // 4. Validate uitslagen: spelers bestaan, geen speler tegen zichzelf
     for (const u of uitslagen) {
@@ -195,7 +197,7 @@ export async function GET(
     }
 
     // 7. Info: nog niet gespeelde partijen
-    const nietGespeeld = uitslagen.filter((u: { gespeeld?: number }) => (u.gespeeld ?? 0) !== 1);
+    const nietGespeeld = uitslagen.filter((u) => (Number(u.gespeeld) || 0) !== 1);
     if (nietGespeeld.length > 0) {
       issues.push({
         type: 'info',
