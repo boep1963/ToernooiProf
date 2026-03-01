@@ -277,11 +277,6 @@ export default function ToernooirondenPage({
                   )}
                   
                   <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-lg transition-colors"
-                    >
-                      Wedstrijden Genereren
-                    </button>
                     <Link
                       href={`/toernooien/${id}/stand?poule_nr=${poule.poule_nr}`}
                       className="px-4 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-sm font-semibold rounded-lg border border-orange-200 dark:border-orange-800 transition-colors"

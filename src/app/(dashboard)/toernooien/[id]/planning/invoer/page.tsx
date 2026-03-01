@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
-import { use, useSearchParams } from 'next/navigation';
+import React, { use, useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';

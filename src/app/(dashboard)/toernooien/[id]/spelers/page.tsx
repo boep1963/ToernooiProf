@@ -394,11 +394,10 @@ export default function ToernooiSpelersPage({
       )}
 
       {/* Add button */}
-      {!showAddForm && (
+      {!showAddForm && !isStarted && (
         <div className="mb-4">
           <button
             onClick={() => setShowAddForm(true)}
-            disabled={isStarted}
             className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,11 +405,14 @@ export default function ToernooiSpelersPage({
             </svg>
             Speler toevoegen
           </button>
-          {isStarted && (
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Toernooi is gestart. Spelerslijst is nu alleen-lezen; toevoegen, wijzigen en verwijderen zijn niet meer toegestaan.
-            </p>
-          )}
+        </div>
+      )}
+
+      {isStarted && (
+        <div className="mb-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Toernooi is gestart. Spelerslijst is nu alleen-lezen; toevoegen, wijzigen en verwijderen zijn niet meer toegestaan.
+          </p>
         </div>
       )}
 

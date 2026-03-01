@@ -37,10 +37,10 @@ export default function CompetitionSubNav({ compNr, compNaam, periode, tGestart 
 
   // Controle-tab alleen voor admingebruikers (super-admins)
   const visibleNavItems = [...navItems, ...(isSuperAdmin ? [CONTROLE_ITEM] : [])].filter((item) => {
-    if (isStarted || item.segment === '' || item.segment === '/spelers' || item.segment === '/planning' || item.segment === '/controle') {
+    if (isStarted || item.segment === '' || item.segment === '/spelers' || item.segment === '/controle') {
       return true;
     }
-    return !['/stand', '/uitslagen/per-speler', '/ronden'].includes(item.segment);
+    return !['/planning', '/stand', '/uitslagen/per-speler', '/ronden'].includes(item.segment);
   });
 
   // Set this tournament as active whenever a sub-page is viewed

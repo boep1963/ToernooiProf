@@ -185,7 +185,7 @@ function PlanningContent({
                   onClick={() => setSelectedPoule(p.poule_nr)}
                   className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  Poule {String.fromCharCode(64 + p.poule_nr)}
+                  Poule {p.poule_nr}
                   {p.playerCount != null && ` (${p.playerCount} spelers)`}
                 </button>
               ))}
@@ -200,7 +200,7 @@ function PlanningContent({
           <div className="p-4">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                Planning poule {String.fromCharCode(64 + selectedPoule)} in ronde {ronde}
+                Planning poule {selectedPoule} in ronde {ronde}
               </h2>
               <button
                 onClick={() => setSelectedPoule(null)}
