@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useTournament } from '@/context/TournamentContext';
 import { DISCIPLINES } from '@/types';
-import { formatDate, parseDutchDate } from '@/lib/dateUtils';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface CompetitionItem {
@@ -38,14 +37,9 @@ export default function ToernooienPage() {
       const res = await fetch(`/api/organizations/${orgNummer}/competitions`);
       if (res.ok) {
         const data = await res.json();
-        // Sort competitions by date (newest first)
+        // Sort competitions by competition number (newest first)
         const sorted = data.sort((a: CompetitionItem, b: CompetitionItem) => {
-          const dateA = parseDutchDate(a.comp_datum);
-          const dateB = parseDutchDate(b.comp_datum);
-          if (!dateA && !dateB) return 0;
-          if (!dateA) return 1;
-          if (!dateB) return -1;
-          return dateB.getTime() - dateA.getTime();
+          return Number(b.comp_nr) - Number(a.comp_nr);
         });
         setCompetitions(sorted);
       } else {
@@ -216,7 +210,7 @@ export default function ToernooienPage() {
                 <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nr</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Naam</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Datum</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subtitel</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Discipline</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acties</th>
                 </tr>
@@ -232,7 +226,7 @@ export default function ToernooienPage() {
                         {comp.comp_naam}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{formatDate(comp.datum_start || comp.comp_datum)}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{comp.comp_datum || '-'}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{DISCIPLINES[comp.discipline] || '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <button

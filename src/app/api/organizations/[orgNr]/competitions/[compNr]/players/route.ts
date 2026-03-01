@@ -74,10 +74,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const players = snapshot.docs.map((doc) => {
       const data = doc.data() ?? {};
       const spNummer = Number(data.sp_nummer) || 0;
+      const storedPoule = Number(data.poule_nr) || 0;
       return {
         id: doc.id,
         ...data,
-        poule_nr: pouleBySpeler.get(spNummer) ?? (Number(data.poule_nr) || null),
+        poule_nr: pouleBySpeler.get(spNummer) ?? (storedPoule > 0 ? storedPoule : 1),
       };
     });
 
