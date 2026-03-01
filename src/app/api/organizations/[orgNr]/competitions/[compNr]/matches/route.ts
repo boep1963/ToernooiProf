@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get competition details
+    // Get competition details (ClubMatch + ToernooiProf fallback)
     console.log('[MATCHES] Fetching competition details...');
     const compSnapshot = await queryWithOrgComp(
       db.collection('competitions') as any,
@@ -118,16 +118,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       compNumber
     );
 
-    if (compSnapshot.empty) {
-      return NextResponse.json(
-        { error: 'Competitie niet gevonden' },
-        { status: 404 }
-      );
+    let compData: Record<string, unknown> = {};
+    if (!compSnapshot.empty) {
+      compData = (compSnapshot.docs[0].data() ?? {}) as Record<string, unknown>;
+    } else {
+      const toernooiSnap = await db.collection('toernooien')
+        .where('org_nummer', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .limit(1)
+        .get();
+      if (toernooiSnap.empty) {
+        return NextResponse.json(
+          { error: 'Competitie niet gevonden' },
+          { status: 404 }
+        );
+      }
+      compData = (toernooiSnap.docs[0].data() ?? {}) as Record<string, unknown>;
     }
 
-    const compData = compSnapshot.docs[0].data();
     const discipline = Number(compData?.discipline) || 1;
-    const periode = Number(compData?.periode) || 1;
+    const periode = Number(compData?.periode ?? compData?.t_ronde) || 1;
     const sorteren = Number(compData?.sorteren) || 1;
 
     const body = await request.json().catch(() => ({}));
@@ -347,6 +357,84 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const totalExpectedMatches = (playerNumbers.length * (playerNumbers.length - 1)) / 2;
     console.log(`[MATCHES] Created ${createdMatches.length} matches (expected: ${totalExpectedMatches})`);
+
+    // ToernooiProf compatibility: mirror generated matches to tp_uitslagen for planning/result entry.
+    if (pouleId && createdMatches.length > 0) {
+      const pouleDoc = await db.collection('poules').doc(String(pouleId)).get();
+      const pouleData = (pouleDoc.data() ?? {}) as Record<string, unknown>;
+      const tpRonde = Number(pouleData.ronde_nr) || effectivePeriode;
+      const tpPoule = Number(pouleData.poule_nr) || 1;
+
+      if (forceRegenerate) {
+        const oldUitslagenSnap = await db.collection('uitslagen')
+          .where('gebruiker_nr', '==', orgNummer)
+          .where('t_nummer', '==', compNumber)
+          .where('t_ronde', '==', tpRonde)
+          .where('sp_poule', '==', tpPoule)
+          .get();
+        for (const doc of oldUitslagenSnap.docs) {
+          await doc.ref.delete();
+        }
+      }
+
+      let nextUitslagId = 1;
+      const existingUitslagen = await db.collection('uitslagen')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .get();
+      existingUitslagen.forEach((doc) => {
+        const uid = Number(doc.data()?.uitslag_id) || 0;
+        if (uid >= nextUitslagId) nextUitslagId = uid + 1;
+      });
+
+      const volgnrBySpeler = new Map<number, number>();
+      const poulePlayersSnap = await db.collection('poule_players')
+        .where('poule_id', '==', String(pouleId))
+        .get();
+      poulePlayersSnap.docs.forEach((doc, idx) => {
+        const d = (doc.data() ?? {}) as Record<string, unknown>;
+        const spNr = Number(d.spc_nummer) || 0;
+        if (spNr > 0 && !volgnrBySpeler.has(spNr)) {
+          volgnrBySpeler.set(spNr, idx + 1);
+        }
+      });
+
+      const koppelPerRonde = new Map<number, number>();
+      for (const match of createdMatches) {
+        const ronde = Number(match.ronde) || 1;
+        const koppel = (koppelPerRonde.get(ronde) || 0) + 1;
+        koppelPerRonde.set(ronde, koppel);
+        const sp1Nr = Number(match.nummer_A) || 0;
+        const sp2Nr = Number(match.nummer_B) || 0;
+
+        await db.collection('uitslagen').doc(String(nextUitslagId)).set({
+          uitslag_id: nextUitslagId,
+          gebruiker_nr: orgNummer,
+          t_nummer: compNumber,
+          sp_nummer_1: sp1Nr,
+          sp_volgnummer_1: volgnrBySpeler.get(sp1Nr) || 0,
+          sp_nummer_2: sp2Nr,
+          sp_volgnummer_2: volgnrBySpeler.get(sp2Nr) || 0,
+          sp_poule: tpPoule,
+          t_ronde: tpRonde,
+          p_ronde: ronde,
+          koppel,
+          sp_partcode: `${ronde}_${koppel}`,
+          sp1_car_tem: Number(match.cartem_A) || 0,
+          sp2_car_tem: Number(match.cartem_B) || 0,
+          sp1_car_gem: 0,
+          sp2_car_gem: 0,
+          brt: 0,
+          sp1_hs: 0,
+          sp2_hs: 0,
+          sp1_punt: 0,
+          sp2_punt: 0,
+          gespeeld: 0,
+          tafel_nr: 0,
+        });
+        nextUitslagId++;
+      }
+    }
 
     return NextResponse.json({
       matches: createdMatches,
