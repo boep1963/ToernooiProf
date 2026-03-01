@@ -19,8 +19,13 @@ const navItems = [
   { label: 'Stand', segment: '/stand', icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
   { label: 'Uitslagen per speler', segment: '/uitslagen/per-speler', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
   { label: 'Ronden', segment: '/ronden', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-  { label: 'Controle', segment: '/controle', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', adminOnly: true },
 ];
+
+const CONTROLE_ITEM = {
+  label: 'Controle',
+  segment: '/controle',
+  icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+};
 
 export default function CompetitionSubNav({ compNr, compNaam, periode }: CompetitionSubNavProps) {
   const pathname = usePathname();
@@ -28,9 +33,8 @@ export default function CompetitionSubNav({ compNr, compNaam, periode }: Competi
   const basePath = `/toernooien/${compNr}`;
   const { setActiveTournament } = useTournament();
 
-  const visibleNavItems = navItems.filter(
-    (item) => !('adminOnly' in item && item.adminOnly) || isSuperAdmin
-  );
+  // Controle-tab alleen voor admingebruikers (super-admins)
+  const visibleNavItems = [...navItems, ...(isSuperAdmin ? [CONTROLE_ITEM] : [])];
 
   // Set this tournament as active whenever a sub-page is viewed
   useEffect(() => {

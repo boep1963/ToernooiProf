@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface Collection {
   name: string;
@@ -156,10 +157,7 @@ export default function AdminPage() {
         <div className="p-6">
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 dark:border-green-400"></div>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Laden...</p>
-              </div>
+              <LoadingSpinner size="lg" label="Collecties laden..." />
             </div>
           )}
 

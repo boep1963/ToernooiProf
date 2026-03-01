@@ -4,8 +4,9 @@ import React, { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 import { Poule, PoulePlayer } from '@/types/tournament';
-import { DISCIPLINES } from '@/types';
 import { formatDecimal } from '@/lib/formatUtils';
 import Link from 'next/link';
 
@@ -33,6 +34,7 @@ export default function ToernooirondenPage({
   const [poules, setPoules] = useState<Poule[]>([]);
   const [poulePlayers, setPoulePlayers] = useState<Record<string, PoulePlayer[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
   const [isUndoing, setIsUndoing] = useState(false);
   const [error, setError] = useState('');
 
@@ -56,18 +58,31 @@ export default function ToernooirondenPage({
       if (distinctRounds.length > 0) {
         const currentRound = selectedRound || distinctRounds[0];
         setSelectedRound(currentRound);
-        
+
         const currentPoules = poulesData.poules.filter((p: any) => p.ronde_nr === currentRound);
         setPoules(currentPoules);
+        setPoulePlayers({}); // Leeg bij rondewissel, skeleton tot spelers geladen zijn
 
-        // Fetch players for each poule
-        const playersMap: Record<string, PoulePlayer[]> = {};
-        for (const poule of currentPoules) {
-          const pRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules/${poule.id}/players`);
-          const pData = await pRes.json();
-          playersMap[poule.id] = pData.players;
+        // Fetch players for all poules in parallel (sneller)
+        setIsLoadingPlayers(true);
+        try {
+          const playerResults = await Promise.all(
+            currentPoules.map(async (poule: { id: string }) => {
+              const pRes = await fetch(
+                `/api/organizations/${orgNummer}/competitions/${compNr}/poules/${poule.id}/players`
+              );
+              const pData = await pRes.json();
+              return { pouleId: poule.id, players: pData.players || [] };
+            })
+          );
+          const playersMap: Record<string, PoulePlayer[]> = {};
+          for (const { pouleId, players } of playerResults) {
+            playersMap[pouleId] = players;
+          }
+          setPoulePlayers(playersMap);
+        } finally {
+          setIsLoadingPlayers(false);
         }
-        setPoulePlayers(playersMap);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -122,7 +137,7 @@ export default function ToernooirondenPage({
   if (isLoading && !competition) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoadingSpinner size="lg" label="Toernooi laden..." />
       </div>
     );
   }
@@ -210,34 +225,45 @@ export default function ToernooirondenPage({
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">{poule.poule_naam}</h2>
                   <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 text-xs font-bold rounded uppercase">
-                    {poulePlayers[poule.id]?.length || 0} Spelers
+                    {isLoadingPlayers ? (
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-orange-600 border-t-transparent" />
+                        laden...
+                      </span>
+                    ) : (
+                      `${poulePlayers[poule.id]?.length ?? 0} Spelers`
+                    )}
                   </span>
                 </div>
                 <div className="p-6">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                      <tr>
-                        <th className="pb-3 font-semibold">Speler</th>
-                        <th className="pb-3 font-semibold text-right">Start Moy</th>
-                        <th className="pb-3 font-semibold text-right">Car</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                      {poulePlayers[poule.id]?.map((pp) => (
-                        <tr key={pp.id} className="group">
-                          <td className="py-3 font-medium text-slate-900 dark:text-white">
-                            {pp.naam || `Speler ${pp.spc_nummer}`}
-                          </td>
-                          <td className="py-3 text-right text-slate-600 dark:text-slate-400">
-                            {formatDecimal(pp.moyenne_start)}
-                          </td>
-                          <td className="py-3 text-right text-slate-600 dark:text-slate-400">
-                            {pp.caramboles_start}
-                          </td>
+                  {isLoadingPlayers ? (
+                    <TableSkeleton rows={4} cols={3} />
+                  ) : (
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase">
+                        <tr>
+                          <th className="pb-3 font-semibold">Speler</th>
+                          <th className="pb-3 font-semibold text-right">Start Moy</th>
+                          <th className="pb-3 font-semibold text-right">Car</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {poulePlayers[poule.id]?.map((pp) => (
+                          <tr key={pp.id} className="group">
+                            <td className="py-3 font-medium text-slate-900 dark:text-white">
+                              {pp.naam || `Speler ${pp.spc_nummer}`}
+                            </td>
+                            <td className="py-3 text-right text-slate-600 dark:text-slate-400">
+                              {formatDecimal(pp.moyenne_start)}
+                            </td>
+                            <td className="py-3 text-right text-slate-600 dark:text-slate-400">
+                              {pp.caramboles_start}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                   
                   <div className="mt-6 flex flex-wrap gap-3">
                     <button

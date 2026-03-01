@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPlayerName } from '@/lib/billiards';
 import { formatDecimal } from '@/lib/formatUtils';
 
@@ -193,7 +194,7 @@ export default function NieuweRondePage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <LoadingSpinner size="lg" label="Spelers en poules laden..." />
       </div>
     );
   }

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const PUNTEN_SYSTEMEN: Record<number, string> = {
   1: 'WRV 2-1-0',
@@ -151,9 +152,8 @@ export default function ToernooiBewerkenPage({
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-        <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">Toernooi laden...</p>
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+        <LoadingSpinner size="lg" label="Toernooi laden..." />
       </div>
     );
   }

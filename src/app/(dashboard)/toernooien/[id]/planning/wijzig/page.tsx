@@ -5,6 +5,7 @@ import { use, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function WijzigContent({
   compNr,
@@ -118,10 +119,17 @@ function WijzigContent({
     }
   };
 
-  if (loading || !uitslag) {
+  if (loading && !uitslag) {
     return (
-      <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-        {error || 'Laden...'}
+      <div className="py-12 flex flex-col items-center justify-center gap-3">
+        <LoadingSpinner size="lg" label="Uitslag laden..." />
+      </div>
+    );
+  }
+  if (error || !uitslag) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-red-600 dark:text-red-400">{error || 'Uitslag niet gevonden.'}</p>
       </div>
     );
   }

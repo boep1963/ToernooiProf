@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface OrgDetails {
@@ -295,10 +296,7 @@ export default function AccountPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-slate-600 dark:text-slate-400">Accountgegevens laden...</span>
-        </div>
+        <LoadingSpinner size="lg" label="Accountgegevens laden..." />
       </div>
     );
   }

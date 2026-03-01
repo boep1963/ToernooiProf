@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatDate } from '@/lib/dateUtils';
 import { formatDecimal } from '@/lib/formatUtils';
 
@@ -356,9 +357,8 @@ export default function PlayerResultsPage({
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-        <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">Laden...</p>
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+        <LoadingSpinner size="lg" label="Spelers en competities laden..." />
       </div>
     );
   }
@@ -454,9 +454,8 @@ export default function PlayerResultsPage({
 
       {/* Loading state for results */}
       {isLoadingResults && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-          <div className="w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">Resultaten laden...</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+          <LoadingSpinner size="lg" label="Resultaten laden..." />
         </div>
       )}
 

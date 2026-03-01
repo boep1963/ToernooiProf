@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const { organization, orgNummer } = useAuth();
@@ -10,12 +11,14 @@ export default function DashboardPage() {
   const [memberCount, setMemberCount] = useState<number>(0);
   const [competitionCount, setCompetitionCount] = useState<number>(0);
   const [matchCount, setMatchCount] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Fetch stats
   useEffect(() => {
     if (!orgNummer) return;
 
     const fetchStats = async () => {
+      setStatsLoading(true);
       try {
         const [membersRes, compsRes, matchesRes] = await Promise.all([
           fetch(`/api/organizations/${orgNummer}/members`),
@@ -40,6 +43,8 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
+      } finally {
+        setStatsLoading(false);
       }
     };
 
@@ -72,7 +77,7 @@ export default function DashboardPage() {
                 Toernooien
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {competitionCount}
+                {statsLoading ? <Skeleton className="h-8 w-12 inline-block" /> : competitionCount}
               </p>
             </div>
             <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
@@ -100,7 +105,7 @@ export default function DashboardPage() {
                 Leden
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {memberCount}
+                {statsLoading ? <Skeleton className="h-8 w-12 inline-block" /> : memberCount}
               </p>
             </div>
             <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">

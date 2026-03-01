@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTournament } from '@/context/TournamentContext';
 import { DISCIPLINES } from '@/types';
 import { formatDate, parseDutchDate } from '@/lib/dateUtils';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface CompetitionItem {
   id: string;
@@ -177,9 +178,8 @@ export default function ToernooienPage() {
       )}
 
       {isLoading ? (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">Toernooien laden...</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+          <LoadingSpinner size="lg" label="Toernooien laden..." />
         </div>
       ) : competitions.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">

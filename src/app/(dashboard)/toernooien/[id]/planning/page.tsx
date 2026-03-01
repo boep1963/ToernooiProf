@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 
 interface CompetitionData {
   comp_naam: string;
@@ -134,9 +136,8 @@ function PlanningContent({
 
   if (isLoading || !competition) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center">
-        <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">Toernooi laden...</p>
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8">
+        <LoadingSpinner size="lg" label="Toernooi laden..." />
       </div>
     );
   }
@@ -210,8 +211,12 @@ function PlanningContent({
             </div>
 
             {isLoadingUitslagen ? (
-              <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-                Partijen laden...
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
+                  <LoadingSpinner size="sm" />
+                  Partijen laden...
+                </div>
+                <TableSkeleton rows={6} cols={7} />
               </div>
             ) : uitslagen.length === 0 ? (
               <div className="py-12 text-center text-slate-500 dark:text-slate-400">
@@ -290,9 +295,8 @@ function PlanningContent({
 export default function PlanningPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense fallback={
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center">
-        <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">Laden...</p>
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8">
+        <LoadingSpinner size="lg" label="Laden..." />
       </div>
     }>
       <PlanningContent params={params} />

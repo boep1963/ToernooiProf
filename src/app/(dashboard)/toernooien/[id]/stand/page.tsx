@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 import { formatDecimal } from '@/lib/formatUtils';
 
 interface CompetitionData {
@@ -284,9 +286,8 @@ export default function ToernooiStandPage({
 
   if (isLoading && !competition) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-        <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-slate-500 dark:text-slate-400">Laden...</p>
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+        <LoadingSpinner size="lg" label="Stand laden..." />
       </div>
     );
   }
@@ -440,11 +441,14 @@ export default function ToernooiStandPage({
         </div>
       </div>
 
-      {/* Loading spinner */}
+      {/* Loading: skeleton tabel in plaats van leeg scherm */}
       {isLoading && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">Stand berekenen...</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <LoadingSpinner size="sm" />
+            <span className="text-sm text-slate-500 dark:text-slate-400">Stand berekenen...</span>
+          </div>
+          <TableSkeleton rows={8} cols={6} />
         </div>
       )}
 
