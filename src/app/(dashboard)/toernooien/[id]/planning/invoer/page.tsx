@@ -54,37 +54,49 @@ function InvoerContent({
 
   useEffect(() => {
     if (!orgNummer || !poule || !code) return;
-    const r = ronde;
-    fetch(
-      `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${r}&poule_nr=${poule}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        const list = data.uitslagen || [];
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const r = ronde;
+        const uitslagenRes = await fetch(
+          `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${r}&poule_nr=${poule}`
+        );
+        const uitslagenData = await uitslagenRes.json();
+        const list = uitslagenData.uitslagen || [];
         const match = list.find((u: { sp_partcode: string }) => u.sp_partcode === code);
         if (!match) {
-          setLoadError('Partij niet gevonden.');
-          setLoading(false);
+          if (!cancelled) setLoadError('Partij niet gevonden.');
           return;
         }
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`)
-          .then((r) => r.json())
-          .then(({ players }) => {
-            const map = new Map<number, string>(
-              (players || []).map((p: { sp_nummer: number; sp_naam: string }) => [p.sp_nummer, p.sp_naam ?? ''])
-            );
-            setUitslag({
-              sp_nummer_1: match.sp_nummer_1,
-              sp_nummer_2: match.sp_nummer_2,
-              sp1_car_tem: match.sp1_car_tem,
-              sp2_car_tem: match.sp2_car_tem,
-              sp_naam_1: map.get(match.sp_nummer_1) ?? `Speler ${match.sp_nummer_1}`,
-              sp_naam_2: map.get(match.sp_nummer_2) ?? `Speler ${match.sp_nummer_2}`,
-            });
-          });
-      })
-      .catch(() => setLoadError('Fout bij laden.'))
-      .finally(() => setLoading(false));
+
+        const playersRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`);
+        const playersData = await playersRes.json();
+        const map = new Map<number, string>(
+          (playersData.players || []).map((p: { sp_nummer: number; sp_naam: string }) => [p.sp_nummer, p.sp_naam ?? ''])
+        );
+        if (cancelled) return;
+        setUitslag({
+          sp_nummer_1: match.sp_nummer_1,
+          sp_nummer_2: match.sp_nummer_2,
+          sp1_car_tem: match.sp1_car_tem,
+          sp2_car_tem: match.sp2_car_tem,
+          sp_naam_1: map.get(match.sp_nummer_1) ?? `Speler ${match.sp_nummer_1}`,
+          sp_naam_2: map.get(match.sp_nummer_2) ?? `Speler ${match.sp_nummer_2}`,
+        });
+      } catch {
+        if (!cancelled) setLoadError('Fout bij laden.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [orgNummer, compNr, poule, code, ronde]);
 
   const payload = {
