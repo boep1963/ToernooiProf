@@ -64,7 +64,9 @@ export default function ToernooirondenPage({
       setRounds(distinctRounds);
 
       if (distinctRounds.length > 0) {
-        const currentRound = selectedRound || distinctRounds[0];
+        const currentRound = (selectedRound !== null && distinctRounds.includes(selectedRound))
+          ? selectedRound
+          : distinctRounds[0];
         setSelectedRound(currentRound);
 
         const currentPoules = poulesData.poules.filter((p: any) => p.ronde_nr === currentRound);

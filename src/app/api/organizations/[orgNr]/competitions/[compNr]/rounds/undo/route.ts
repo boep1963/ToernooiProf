@@ -77,6 +77,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       await doc.ref.delete();
     }
 
+    const draftSnap = await db.collection('round_drafts')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('target_ronde', '==', roundToUndo)
+      .get();
+    for (const doc of draftSnap.docs) {
+      await doc.ref.delete();
+    }
+
     const newRound = Math.max(0, currentRound - 1);
     await compDoc.ref.update({
       t_ronde: newRound,
@@ -90,6 +99,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       t_ronde: newRound,
       deleted_uitslagen: uitslagenSnap.size,
       deleted_poules: poulesSnap.size,
+      deleted_drafts: draftSnap.size,
     });
   } catch (error) {
     console.error('[UNDO ROUND] Error:', error);

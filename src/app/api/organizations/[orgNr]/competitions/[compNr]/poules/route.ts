@@ -53,8 +53,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (hasSpNummer && rawDocs.length > 0) {
       const byPoule = new Map<string, any[]>();
       for (const d of rawDocs) {
-        const r = Number(d.ronde_nr) ?? 1;
-        const p = Number(d.poule_nr) ?? 1;
+        const r = Number(d.ronde_nr) || 1;
+        const p = Number(d.poule_nr) || 1;
         const key = `${r}_${p}`;
         if (!byPoule.has(key)) byPoule.set(key, []);
         byPoule.get(key)!.push(d);
@@ -66,12 +66,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           id: `rn${ronde}_pn${pouleNr}`,
           ronde_nr: ronde,
           poule_nr: pouleNr,
-          poule_naam: `Poule ${String.fromCharCode(64 + pouleNr)}`,
+          poule_naam: `Poule ${pouleNr}`,
           gebruiker_nr: first.gebruiker_nr,
           t_nummer: first.t_nummer,
         };
       });
-      poules.sort((a, b) => a.poule_nr - b.poule_nr);
+      poules.sort((a, b) => (a.ronde_nr - b.ronde_nr) || (a.poule_nr - b.poule_nr));
     } else {
       poules = rawDocs;
     }
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       compNumber,
       rondeNrValue,
       pouleNrValue,
-      poule_naam || `Poule ${String.fromCharCode(64 + pouleNrValue)}`
+      poule_naam || `Poule ${pouleNrValue}`
     );
 
     // PHP-flow equivalent: bij nieuwe ronde moet de huidige ronde in toernooi-data mee schuiven.

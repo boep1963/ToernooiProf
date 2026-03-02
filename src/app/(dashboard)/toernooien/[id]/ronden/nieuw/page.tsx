@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, use } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -12,33 +12,23 @@ interface CompetitionData {
   id: string;
   comp_nr: number;
   comp_naam: string;
-  discipline: number;
+  t_naam?: string;
+  t_nummer?: number;
   periode: number;
   sorteren: number;
+  t_ronde?: number;
+  t_gestart?: number;
 }
 
-interface PlayerData {
-  id: string;
-  spc_nummer: number;
-  spa_vnaam: string;
-  spa_tv: string;
-  spa_anaam: string;
-  spc_moyenne_1: number;
-  spc_moyenne_2: number;
-  spc_moyenne_3: number;
-  spc_moyenne_4: number;
-  spc_moyenne_5: number;
-  spc_car_1: number;
-  spc_car_2: number;
-  spc_car_3: number;
-  spc_car_4: number;
-  spc_car_5: number;
-}
-
-interface SelectedPlayer extends PlayerData {
-  poule_nr: number; // 1=A, 2=B, etc.
+interface DraftItem {
+  sp_nummer: number;
+  sp_naam: string;
+  from_poule: number;
+  to_poule: number;
   moy_start: number;
   car_start: number;
+  include: boolean;
+  order_idx: number;
 }
 
 export default function NieuweRondePage({
@@ -52,211 +42,203 @@ export default function NieuweRondePage({
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
-  const [allPlayers, setAllPlayers] = useState<PlayerData[]>([]);
-  const [selectedPlayers, setSelectedPlayers] = useState<Record<number, SelectedPlayer>>({}); // spc_nummer -> data
-  const [step, setStep] = useState(1);
+  const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
+  const [sourceRound, setSourceRound] = useState(0);
+  const [targetRound, setTargetRound] = useState(0);
+  const [selectedSourcePoule, setSelectedSourcePoule] = useState<number | null>(null);
+  const [playedMoyByPlayer, setPlayedMoyByPlayer] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState('');
-  const [nextRondeNr, setNextRondeNr] = useState(1);
+  const [saveMessage, setSaveMessage] = useState('');
 
-  const fetchData = useCallback(async () => {
+  const sourcePoules = useMemo(
+    () => Array.from(new Set(draftItems.map((it) => Number(it.from_poule) || 0).filter((nr) => nr > 0))).sort((a, b) => a - b),
+    [draftItems]
+  );
+
+  const visibleItems = useMemo(() => {
+    if (!selectedSourcePoule) return [];
+    return draftItems
+      .filter((it) => it.from_poule === selectedSourcePoule)
+      .sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0));
+  }, [draftItems, selectedSourcePoule]);
+
+  const groupedTargetOverview = useMemo(() => {
+    const map = new Map<number, DraftItem[]>();
+    draftItems
+      .filter((it) => it.include && (it.to_poule || 0) > 0)
+      .forEach((it) => {
+        if (!map.has(it.to_poule)) map.set(it.to_poule, []);
+        map.get(it.to_poule)!.push(it);
+      });
+    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+  }, [draftItems]);
+
+  const fetchInitialData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
+    setError('');
     try {
-      const [compRes, playersRes, poulesRes] = await Promise.all([
+      const [compRes, draftRes] = await Promise.all([
         fetch(`/api/organizations/${orgNummer}/competitions/${compNr}`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
-        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules`),
+        fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/rounds/draft`),
       ]);
-      
+
       const compData = await compRes.json();
-      const playersData = await playersRes.json();
-      const poulesData = await poulesRes.json();
+      const draftData = await draftRes.json();
+
+      if (!compRes.ok) throw new Error(compData.error || 'Toernooi niet gevonden');
+      if (!draftRes.ok) throw new Error(draftData.error || 'Rondeconcept kon niet geladen worden');
 
       setCompetition(compData);
-      // Map ToernooiProf format (sp_nummer, sp_naam, sp_startmoy, sp_startcar) naar ClubMatch/UI format
-      const rawPlayers = playersData.players || [];
-      const mapped = rawPlayers.map((p: any) => {
-        const parts = (p.sp_naam || '').trim().split(/\s+/);
-        return {
-          id: p.id,
-          spc_nummer: p.sp_nummer ?? p.spc_nummer,
-          spa_vnaam: p.spa_vnaam ?? (parts[0] || ''),
-          spa_tv: p.spa_tv ?? '',
-          spa_anaam: p.spa_anaam ?? (parts.slice(1).join(' ') || ''),
-          spc_moyenne_1: p.sp_startmoy ?? p.spc_moyenne_1 ?? 0,
-          spc_moyenne_2: p.spc_moyenne_2 ?? 0,
-          spc_moyenne_3: p.spc_moyenne_3 ?? 0,
-          spc_moyenne_4: p.spc_moyenne_4 ?? 0,
-          spc_moyenne_5: p.spc_moyenne_5 ?? 0,
-          spc_car_1: p.sp_startcar ?? p.spc_car_1 ?? 0,
-          spc_car_2: p.spc_car_2 ?? 0,
-          spc_car_3: p.spc_car_3 ?? 0,
-          spc_car_4: p.spc_car_4 ?? 0,
-          spc_car_5: p.spc_car_5 ?? 0,
-        };
-      });
-      setAllPlayers(mapped);
-      
-      // Determine next round number
-      const existingRounds = poulesData.poules.map((p: any) => p.ronde_nr);
-      const maxRound = existingRounds.length > 0 ? Math.max(...existingRounds) : 0;
-      setNextRondeNr(maxRound + 1);
+      setSourceRound(Number(draftData.source_ronde) || 0);
+      setTargetRound(Number(draftData.target_ronde) || 0);
+
+      const items = (Array.isArray(draftData.items) ? draftData.items : []) as DraftItem[];
+      setDraftItems(items);
+      const firstSourcePoule = items.length > 0
+        ? Math.min(...items.map((it) => Number(it.from_poule) || 1))
+        : null;
+      setSelectedSourcePoule(firstSourcePoule);
     } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Fout bij ophalen gegevens');
+      console.error('Error loading new-round draft:', err);
+      setError(err instanceof Error ? err.message : 'Fout bij ophalen gegevens');
     } finally {
       setIsLoading(false);
     }
   }, [orgNummer, compNr]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const togglePlayer = (player: PlayerData) => {
-    setSelectedPlayers(prev => {
-      const newMap = { ...prev };
-      if (newMap[player.spc_nummer]) {
-        delete newMap[player.spc_nummer];
-      } else {
-        // Default to Poule 1 (A) and current moyenne
-        const periode = competition?.periode || 1;
-        const moyKey = `spc_moyenne_${periode}` as keyof PlayerData;
-        const carKey = `spc_car_${periode}` as keyof PlayerData;
-        
-        newMap[player.spc_nummer] = {
-          ...player,
-          poule_nr: 1,
-          moy_start: Number(player[moyKey]) || 0,
-          car_start: Number(player[carKey]) || 0
-        };
-      }
-      return newMap;
-    });
-  };
-
-  const updatePlayerPoule = (spc_nummer: number, poule_nr: number) => {
-    setSelectedPlayers(prev => ({
-      ...prev,
-      [spc_nummer]: { ...prev[spc_nummer], poule_nr }
-    }));
-  };
-
-  const handleCreateRonde = async () => {
-    if (Object.keys(selectedPlayers).length < 2) {
-      setError('Selecteer minimaal 2 spelers');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
+  const fetchPlayedMoyennes = useCallback(async () => {
+    if (!orgNummer || isNaN(compNr) || !selectedSourcePoule || sourceRound < 1) return;
     try {
-      // 1. Group players by poule
-      const playersByPoule: Record<number, SelectedPlayer[]> = {};
-      Object.values(selectedPlayers).forEach(p => {
-        if (!playersByPoule[p.poule_nr]) playersByPoule[p.poule_nr] = [];
-        playersByPoule[p.poule_nr].push(p);
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/standings/${sourceRound}?poule_nr=${selectedSourcePoule}`
+      );
+      const data = await res.json();
+      if (!res.ok) return;
+      const map: Record<number, number> = {};
+      const standings = Array.isArray(data.standings) ? data.standings : [];
+      standings.forEach((s: Record<string, unknown>) => {
+        const nr = Number(s.playerNr) || 0;
+        if (nr > 0) map[nr] = Number(s.moyenne) || 0;
       });
+      setPlayedMoyByPlayer(map);
+    } catch {
+      // Non-fatal: keep table usable without played moyenne.
+    }
+  }, [orgNummer, compNr, selectedSourcePoule, sourceRound]);
 
-      const pouleNumbers = Object.keys(playersByPoule).map(Number).sort((a, b) => a - b);
-      if (pouleNumbers.length === 0) {
-        setError('Geen poules geselecteerd.');
-        setIsSubmitting(false);
-        return;
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  useEffect(() => {
+    fetchPlayedMoyennes();
+  }, [fetchPlayedMoyennes]);
+
+  const updateItem = (spNummer: number, patch: Partial<DraftItem>) => {
+    setDraftItems((prev) =>
+      prev.map((it) => {
+        if (it.sp_nummer !== spNummer) return it;
+        const next = { ...it, ...patch };
+        if (patch.include === false) next.to_poule = 0;
+        if (patch.to_poule && patch.to_poule > 0) next.include = true;
+        return next;
+      })
+    );
+    setSaveMessage('');
+  };
+
+  const saveDraft = async (): Promise<boolean> => {
+    if (!orgNummer || isNaN(compNr) || sourceRound < 1 || targetRound < 2) return false;
+    setIsSavingDraft(true);
+    setSaveMessage('');
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/rounds/draft`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_ronde: sourceRound,
+          target_ronde: targetRound,
+          items: draftItems,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Concept opslaan mislukt');
+      setSaveMessage('Concept opgeslagen');
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fout bij opslaan concept');
+      return false;
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  const handleFinalize = async () => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const ok = await saveDraft();
+      if (!ok) return;
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/rounds/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_ronde: sourceRound,
+          target_ronde: targetRound,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Ronde finaliseren mislukt');
       }
-      const maxPoule = pouleNumbers[pouleNumbers.length - 1];
-      for (let nr = 1; nr <= maxPoule; nr++) {
-        if (!playersByPoule[nr]) {
-          setError(`Poule ${nr} ontbreekt. Gebruik aansluitende poulenummers zonder gaten.`);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      for (const [pouleNr, pList] of Object.entries(playersByPoule)) {
-        if (pList.length < 2) {
-          setError(`Poule ${pouleNr} heeft minder dan 2 spelers.`);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // 2. Create Poules and add Players
-      for (const [pouleNrStr, pList] of Object.entries(playersByPoule)) {
-        const pouleNr = parseInt(pouleNrStr, 10);
-        
-        // Create Poule
-        const pouleRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ronde_nr: nextRondeNr,
-            poule_nr: pouleNr,
-            poule_naam: `Poule ${pouleNr}`
-          })
-        });
-        
-        if (!pouleRes.ok) throw new Error('Fout bij aanmaken poule');
-        const poule = await pouleRes.json();
-
-        // Add Players to Poule
-        for (const p of pList) {
-          await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules/${poule.id}/players`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              spc_nummer: p.spc_nummer,
-              ronde_nr: nextRondeNr,
-              moyenne_start: p.moy_start,
-              caramboles_start: p.car_start
-            })
-          });
-        }
-
-        // 3. Generate matches for this poule
-        await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/matches`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-             poule_id: poule.id,
-             force: true
-          })
-        });
-      }
-
       router.push(`/toernooien/${compNr}/ronden`);
     } catch (err) {
-      console.error('Error creating round:', err);
-      setError('Er is een fout opgetreden bij het aanmaken van de ronde.');
+      setError(err instanceof Error ? err.message : 'Fout bij aanmaken nieuwe ronde');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleBackToCurrentRound = async () => {
+    await saveDraft();
+    router.push(`/toernooien/${compNr}/ronden`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" label="Spelers en poules laden..." />
+        <LoadingSpinner size="lg" label="Nieuwe ronde voorbereiden..." />
+      </div>
+    );
+  }
+
+  if (!competition) {
+    return (
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+          Toernooi niet gevonden.
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {competition && (
-        <CompetitionSubNav 
-          compNr={competition.comp_nr} 
-          compNaam={competition.comp_naam} 
-          periode={nextRondeNr} 
-        />
-      )}
+      <CompetitionSubNav
+        compNr={competition.comp_nr}
+        compNaam={competition.comp_naam || competition.t_naam || `Toernooi ${compNr}`}
+        periode={targetRound || competition.periode}
+        tGestart={competition.t_gestart}
+      />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Nieuwe Ronde {nextRondeNr}</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Nieuwe Ronde {targetRound}</h1>
         <p className="mt-1 text-slate-500 dark:text-slate-400">
-          Stap {step} van 2: {step === 1 ? 'Selecteer deelnemers' : 'Deel in poules'}
+          Bronronde {sourceRound}: doorkoppelen per poule, met conceptopslag op server.
         </p>
       </div>
 
@@ -266,125 +248,147 @@ export default function NieuweRondePage({
         </div>
       )}
 
-      {step === 1 ? (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 uppercase text-xs">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Select</th>
-                      <th className="px-6 py-4 font-semibold">Naam</th>
-                      <th className="px-6 py-4 font-semibold text-right">Moyenne</th>
-                      <th className="px-6 py-4 font-semibold text-right">Car</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                    {allPlayers.map((player) => {
-                      const isSelected = !!selectedPlayers[player.spc_nummer];
-                      return (
-                        <tr 
-                          key={player.id} 
-                          onClick={() => togglePlayer(player)}
-                          className={`cursor-pointer transition-colors ${isSelected ? 'bg-orange-50 dark:bg-orange-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
-                        >
-                          <td className="px-6 py-4">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              readOnly
-                              className="w-5 h-5 text-orange-600 border-slate-300 rounded focus:ring-orange-500"
-                            />
-                          </td>
-                          <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                            {formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, competition?.sorteren)}
-                          </td>
-                          <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400 font-mono">
-                            {formatDecimal(player.spc_moyenne_1)}
-                          </td>
-                          <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400 font-mono">
-                            {player.spc_car_1}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-             </div>
-          </div>
-          
-          <div className="flex justify-end gap-4">
-            <button
-               onClick={() => router.back()}
-               className="px-6 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              Annuleren
-            </button>
-            <button
-               onClick={() => setStep(2)}
-               disabled={Object.keys(selectedPlayers).length < 2}
-               className="px-6 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-sm transition-colors"
-            >
-              Volgende: Poule-indeling
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             {Object.values(selectedPlayers).map(player => (
-               <div key={player.spc_nummer} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                  <div>
-                    <div className="font-bold text-slate-900 dark:text-white">
-                      {formatPlayerName(player.spa_vnaam, player.spa_tv, player.spa_anaam, competition?.sorteren)}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      Moy: {formatDecimal(player.moy_start)} | Car: {player.car_start}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold uppercase text-slate-400">Poule:</label>
-                    <select
-                      value={player.poule_nr}
-                      onChange={(e) => updatePlayerPoule(player.spc_nummer, parseInt(e.target.value, 10))}
-                      className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1 text-sm font-bold"
-                    >
-                      {Array.from({ length: 25 }, (_, i) => i + 1).map((nr) => (
-                        <option key={nr} value={nr}>Poule {nr}</option>
-                      ))}
-                    </select>
-                  </div>
-               </div>
-             ))}
-          </div>
-
-          <div className="flex justify-between items-center mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
-            <button
-               onClick={() => setStep(1)}
-               className="px-6 py-2 text-slate-600 dark:text-slate-400 font-semibold hover:underline"
-            >
-              Terug naar selectie
-            </button>
-            <div className="flex gap-4">
-              <button
-                onClick={handleCreateRonde}
-                disabled={isSubmitting}
-                className="px-8 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-orange-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Aanmaken...
-                  </span>
-                ) : 'Ronde Starten & Wedstrijden Genereren'}
-              </button>
-            </div>
-          </div>
+      {saveMessage && (
+        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-700">
+          {saveMessage}
         </div>
       )}
+
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mr-3">Bronpoule huidige ronde</label>
+        <select
+          value={selectedSourcePoule ?? ''}
+          onChange={(e) => setSelectedSourcePoule(Number(e.target.value) || null)}
+          className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+        >
+          {sourcePoules.map((nr) => (
+            <option key={nr} value={nr}>Poule {nr}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Doorkoppelen vanuit poule {selectedSourcePoule ?? '-'}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 uppercase text-xs">
+                <tr>
+                  <th className="px-4 py-3 text-left">Door?</th>
+                  <th className="px-4 py-3 text-left">Speler</th>
+                  <th className="px-4 py-3 text-right">Gespeeld moy</th>
+                  <th className="px-4 py-3 text-right">Start moy</th>
+                  <th className="px-4 py-3 text-right">Car</th>
+                  <th className="px-4 py-3 text-left">Naar poule</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                {visibleItems.map((item) => {
+                  const nameParts = item.sp_naam.split(/\s+/);
+                  const vnaam = nameParts[0] ?? '';
+                  const anaam = nameParts.slice(1).join(' ');
+                  return (
+                    <tr key={item.sp_nummer}>
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={item.include}
+                          onChange={(e) => updateItem(item.sp_nummer, { include: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                        {formatPlayerName(vnaam, '', anaam, competition.sorteren)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                        {playedMoyByPlayer[item.sp_nummer] ? formatDecimal(playedMoyByPlayer[item.sp_nummer]) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <input
+                          type="number"
+                          value={item.moy_start}
+                          min={0.1}
+                          step={0.001}
+                          onChange={(e) => updateItem(item.sp_nummer, { moy_start: Number(e.target.value) || 0 })}
+                          className="w-24 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-right font-mono"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <input
+                          type="number"
+                          value={item.car_start}
+                          min={3}
+                          step={1}
+                          onChange={(e) => updateItem(item.sp_nummer, { car_start: Math.max(Number(e.target.value) || 0, 3) })}
+                          className="w-20 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-right font-mono"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={item.to_poule}
+                          onChange={(e) => updateItem(item.sp_nummer, { to_poule: Number(e.target.value) || 0 })}
+                          className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1"
+                        >
+                          <option value={0}>Niet doorkoppelen</option>
+                          {Array.from({ length: 25 }, (_, i) => i + 1).map((nr) => (
+                            <option key={nr} value={nr}>Poule {nr}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Overzicht nieuwe indeling ronde {targetRound}</h3>
+          <div className="space-y-3">
+            {groupedTargetOverview.length === 0 && (
+              <p className="text-sm text-slate-500">Nog geen spelers doorgeselecteerd.</p>
+            )}
+            {groupedTargetOverview.map(([pouleNr, items]) => (
+              <div key={pouleNr} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                <div className="text-sm font-semibold mb-1">Poule {pouleNr} ({items.length})</div>
+                <div className="text-xs text-slate-500">
+                  {items.map((it) => it.sp_naam).join(', ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <button
+          onClick={saveDraft}
+          disabled={isSavingDraft || isSubmitting}
+          className="px-5 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+        >
+          {isSavingDraft ? 'Opslaan...' : 'Concept opslaan'}
+        </button>
+        <button
+          onClick={handleBackToCurrentRound}
+          disabled={isSavingDraft || isSubmitting}
+          className="px-5 py-2 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+        >
+          Terug naar huidige ronde (met behoud)
+        </button>
+        <button
+          onClick={handleFinalize}
+          disabled={isSavingDraft || isSubmitting}
+          className="px-6 py-2 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 disabled:opacity-50"
+        >
+          {isSubmitting ? 'Nieuwe ronde aanmaken...' : `Maak ronde ${targetRound} aan`}
+        </button>
+        <div className="self-center text-xs text-slate-500">
+          Controle bij aanmaak: min. 2 spelers per poule en geen gaten in poulenummers.
+        </div>
+      </div>
     </div>
   );
 }
