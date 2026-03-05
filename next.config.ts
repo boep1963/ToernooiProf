@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  output: 'standalone',
   outputFileTracingRoot: projectRoot,
   // Turbopack: expliciete root zodat module-resolutie in deze map blijft (niet /Documents).
   turbopack: {

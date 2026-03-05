@@ -10,6 +10,8 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
 
+import LoadingScreen from '@/components/common/LoadingScreen';
+
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAuthenticated, isLoading, isVerified, organization, logout } = useAuth();
@@ -29,14 +31,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLoading, isVerified, router]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">Laden...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated || !isVerified) {
