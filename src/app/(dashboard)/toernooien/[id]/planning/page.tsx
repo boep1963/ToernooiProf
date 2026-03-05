@@ -48,11 +48,10 @@ interface SpelerInfo {
 }
 
 function PlanningContent({
-  params,
+  id,
 }: {
-  params: Promise<{ id: string }>;
+  id: string;
 }) {
-  const { id } = use(params);
   const { orgNummer } = useAuth();
   const searchParams = useSearchParams();
   const compNr = parseInt(id, 10);
@@ -292,14 +291,15 @@ function PlanningContent({
   );
 }
 
-export default function PlanningPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlanningPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <Suspense fallback={
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8">
         <LoadingSpinner size="lg" label="Laden..." />
       </div>
     }>
-      <PlanningContent params={params} />
+      <PlanningContent id={id} />
     </Suspense>
   );
 }
