@@ -8,7 +8,7 @@ runConfig:
   maxInstances: 1
   concurrency: 80
   cpu: 1
-  memoryMiB: 1024
+  memoryMiB: 2048
 
 # Environment variables (converted from .env.local).
 # Fill values in Firebase Console (App Hosting → backend → Environment) or replace "" below.

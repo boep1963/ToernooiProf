@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import { checkLoginLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
 import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile';
 import { logAuthEvent } from '@/lib/authLog';
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     console.log('[AUTH] Verifying Firebase Auth ID token...');
     let decodedToken;
     try {
-      decodedToken = await adminAuth.verifyIdToken(idToken);
+      decodedToken = await getAdminAuth().verifyIdToken(idToken);
     } catch (tokenError) {
       console.error('[AUTH] Token verification failed:', tokenError);
       void logAuthEvent({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
 import { BCC_EMAILS } from '@/lib/emailQueue';
 
@@ -119,10 +119,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
       // Update Firebase Auth user email (if user exists)
       try {
-        const firebaseUser = await adminAuth.getUserByEmail(currentEmailStr);
+        const firebaseUser = await getAdminAuth().getUserByEmail(currentEmailStr);
         if (firebaseUser) {
           console.log('[ORG] Updating Firebase Auth email for user:', firebaseUser.uid);
-          await adminAuth.updateUser(firebaseUser.uid, {
+          await getAdminAuth().updateUser(firebaseUser.uid, {
             email: newEmailStr,
             emailVerified: true, // Keep email verified after change
           });

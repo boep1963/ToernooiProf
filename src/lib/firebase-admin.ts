@@ -12,26 +12,42 @@ function parseServiceAccountKey(raw: string): Record<string, unknown> {
   return JSON.parse(raw);
 }
 
-function getAdminApp(): App {
+let _adminApp: App | undefined;
+
+export function getAdminApp(): App {
+  if (_adminApp) {
+    return _adminApp;
+  }
+
   if (getApps().length > 0) {
-    return getApps()[0];
+    _adminApp = getApps()[0];
+    return _adminApp;
   }
 
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
   if (serviceAccount) {
-    const creds = parseServiceAccountKey(serviceAccount);
-    return initializeApp({
-      credential: cert(creds as Parameters<typeof cert>[0]),
-    });
+    try {
+      const creds = parseServiceAccountKey(serviceAccount);
+      _adminApp = initializeApp({
+        credential: cert(creds as Parameters<typeof cert>[0]),
+      });
+    } catch (error) {
+      console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY, falling back to default credentials:', error);
+      _adminApp = initializeApp();
+    }
+  } else {
+    // Fallback: try to use default credentials (e.g., in Cloud environments)
+    _adminApp = initializeApp();
   }
-
-  // Fallback: try to use default credentials (e.g., in Cloud environments)
-  return initializeApp();
+  
+  return _adminApp;
 }
 
-const adminApp = getAdminApp();
-const adminDb = getFirestore(adminApp);
-const adminAuth = getAuth(adminApp);
+export function getAdminDb() {
+  return getFirestore(getAdminApp());
+}
 
-export { adminApp, adminDb, adminAuth };
+export function getAdminAuth() {
+  return getAuth(getAdminApp());
+}

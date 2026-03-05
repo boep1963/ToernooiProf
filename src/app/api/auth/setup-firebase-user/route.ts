@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 
 /**
  * Development-only endpoint to create a Firebase Auth user for testing.
@@ -20,17 +20,17 @@ export async function POST(request: NextRequest) {
     try {
       // Try to get existing user first
       console.log('[SETUP] Checking if user exists:', email);
-      user = await adminAuth.getUserByEmail(email);
+      user = await getAdminAuth().getUserByEmail(email);
       console.log('[SETUP] User found, updating password:', user.uid);
       // Update password if user exists
-      user = await adminAuth.updateUser(user.uid, { password });
+      user = await getAdminAuth().updateUser(user.uid, { password });
       console.log(`[SETUP] Updated existing Firebase Auth user: ${email} (${user.uid})`);
     } catch (innerErr: unknown) {
       const innerMsg = (innerErr as Error).message || String(innerErr);
       console.log('[SETUP] getUserByEmail error (expected if new user):', innerMsg);
       // User doesn't exist, create a new one
       console.log('[SETUP] Creating new user:', email);
-      user = await adminAuth.createUser({
+      user = await getAdminAuth().createUser({
         email,
         password,
         emailVerified: true,

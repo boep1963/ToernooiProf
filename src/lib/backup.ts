@@ -9,7 +9,7 @@
  */
 
 import { Storage } from '@google-cloud/storage';
-import { adminDb } from './firebase-admin';
+import { getAdminDb } from './firebase-admin';
 
 const FIRESTORE_PREFIX = 'ToernooiProf/data';
 
@@ -57,7 +57,7 @@ function getBucketName(): string {
  */
 async function exportCollection(collectionName: string): Promise<Record<string, unknown>[]> {
   const collectionPath = `${FIRESTORE_PREFIX}/${collectionName}`;
-  const snapshot = await adminDb.collection(collectionPath).get();
+  const snapshot = await getAdminDb().collection(collectionPath).get();
 
   const documents: Record<string, unknown>[] = [];
   snapshot.forEach((doc) => {
@@ -323,11 +323,11 @@ export async function restoreBackup(backupName: string): Promise<{
 
         // Delete existing documents in this collection
         const collectionPath = `${FIRESTORE_PREFIX}/${collectionName}`;
-        const existingDocs = await adminDb.collection(collectionPath).get();
+        const existingDocs = await getAdminDb().collection(collectionPath).get();
 
         if (!existingDocs.empty) {
           console.log(`[Restore] - Deleting ${existingDocs.size} existing documents`);
-          const batch = adminDb.batch();
+          const batch = getAdminDb().batch();
           existingDocs.docs.forEach(doc => {
             batch.delete(doc.ref);
           });
@@ -337,12 +337,12 @@ export async function restoreBackup(backupName: string): Promise<{
         // Restore documents from backup in batches of 500 (Firestore limit)
         const BATCH_SIZE = 500;
         for (let i = 0; i < documents.length; i += BATCH_SIZE) {
-          const batch = adminDb.batch();
+          const batch = getAdminDb().batch();
           const batchDocs = documents.slice(i, i + BATCH_SIZE);
 
           for (const doc of batchDocs) {
             const { id, ...data } = doc;
-            const docRef = adminDb.collection(collectionPath).doc(id);
+            const docRef = getAdminDb().collection(collectionPath).doc(id);
             batch.set(docRef, data);
           }
 
