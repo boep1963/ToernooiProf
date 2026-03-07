@@ -57,33 +57,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Alleen de laatste ronde kan worden teruggedraaid.' }, { status: 409 });
     }
 
-    const [uitslagenSnap, poulesSnap] = await Promise.all([
-      db.collection('uitslagen')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('t_ronde', '==', roundToUndo)
-        .get(),
-      db.collection('poules')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('ronde_nr', '==', roundToUndo)
-        .get(),
-    ]);
+    // Delete uitslagen for the round being undone
+    const uitslagenSnap = await db.collection('uitslagen')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('t_ronde', '==', roundToUndo)
+      .get();
 
     for (const doc of uitslagenSnap.docs) {
       await doc.ref.delete();
     }
-    for (const doc of poulesSnap.docs) {
-      await doc.ref.delete();
-    }
 
+    // Poules are preserved so the WL can adjust them before re-creating the round.
+    // Reset draft status so the poule assignment becomes editable again.
     const draftSnap = await db.collection('round_drafts')
       .where('gebruiker_nr', '==', orgNummer)
       .where('t_nummer', '==', compNumber)
       .where('target_ronde', '==', roundToUndo)
       .get();
     for (const doc of draftSnap.docs) {
-      await doc.ref.delete();
+      await doc.ref.update({
+        status: 'draft',
+        updated_at: new Date().toISOString(),
+      });
     }
 
     const newRound = Math.max(0, currentRound - 1);
@@ -91,6 +87,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       t_ronde: newRound,
       periode: newRound,
       t_gestart: newRound === 0 ? 0 : 1,
+      ronde_status: 'voorlopig',
       updated_at: new Date().toISOString(),
     });
 
@@ -98,8 +95,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       message: `Ronde ${roundToUndo} is teruggedraaid.`,
       t_ronde: newRound,
       deleted_uitslagen: uitslagenSnap.size,
-      deleted_poules: poulesSnap.size,
-      deleted_drafts: draftSnap.size,
+      poules_preserved: true,
     });
   } catch (error) {
     console.error('[UNDO ROUND] Error:', error);

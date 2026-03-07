@@ -272,7 +272,7 @@ export default function ToernooiSpelersPage({
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} tGestart={tournament.t_gestart} />
+      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} tGestart={tournament.t_gestart} playerCount={spelers.length} />
 
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -285,6 +285,20 @@ export default function ToernooiSpelersPage({
             : ` | ${CAR_SYSTEMEN[2]}`}
         </p>
       </div>
+
+      {!isStarted && spelers.length >= 2 && (
+        <div className="mb-4">
+          <Link
+            href={`/toernooien/${compNr}/ronden`}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+            Naar aanmaak ronde 1
+          </Link>
+        </div>
+      )}
 
       {error && (
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
