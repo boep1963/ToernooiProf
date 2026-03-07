@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Geen GET / 200 etc. in de terminal tijdens dev (blijft wel werken)
+  logging: {
+    incomingRequests: false,
+  },
   output: 'standalone',
   outputFileTracingRoot: projectRoot,
   // Turbopack: expliciete root zodat module-resolutie in deze map blijft (niet /Documents).

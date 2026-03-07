@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPlayerName } from '@/lib/billiards';
@@ -38,7 +38,7 @@ export default function NieuweRondePage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -279,7 +279,7 @@ export default function NieuweRondePage({
                   <th className="px-4 py-3 text-left">Door?</th>
                   <th className="px-4 py-3 text-left">Speler</th>
                   <th className="px-4 py-3 text-right">Gespeeld moy</th>
-                  <th className="px-4 py-3 text-right">Start moy</th>
+                  <th className="px-4 py-3 text-right">Moy nieuw</th>
                   <th className="px-4 py-3 text-right">Car</th>
                   <th className="px-4 py-3 text-left">Naar poule</th>
                 </tr>

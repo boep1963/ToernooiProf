@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -28,7 +28,7 @@ export default function ToernooirondenPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -285,15 +285,44 @@ export default function ToernooirondenPage({
         />
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Rondenbeheer</h1>
-          <p className="mt-1 text-slate-500 dark:text-slate-400">
-            {isStarted
-              ? `U werkt in ronde ${currentRound} voor ${competition?.comp_naam}`
-              : `Voorbereiding poule-indeling voor ${competition?.comp_naam}`}
-          </p>
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Rondenbeheer</h1>
+            <p className="mt-1 text-slate-500 dark:text-slate-400">
+              {isStarted
+                ? `U werkt in ronde ${currentRound} voor ${competition?.comp_naam}`
+                : `Voorbereiding poule-indeling voor ${competition?.comp_naam}`}
+            </p>
+          </div>
+          {isStarted && (
+            <div className="shrink-0">
+              <button
+                onClick={() => setShowUndoConfirm(true)}
+                disabled={isUndoing}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                Aanmaak ronde {currentRound} terugdraaien
+              </button>
+            </div>
+          )}
         </div>
+        {isStarted && (
+          <div className="mt-4">
+            <button
+              onClick={() => router.push(`/toernooien/${id}/ronden/nieuw`)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Ronde {currentRound + 1} aanmaken
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -399,7 +428,7 @@ export default function ToernooirondenPage({
                         <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase">
                           <tr>
                             <th className="pb-3 font-semibold">Speler</th>
-                            <th className="pb-3 font-semibold text-right">Start Moy</th>
+                            <th className="pb-3 font-semibold text-right">Moy nieuw</th>
                             <th className="pb-3 font-semibold text-right">Car</th>
                           </tr>
                         </thead>
@@ -431,29 +460,6 @@ export default function ToernooirondenPage({
       {/* ========== MODUS B: TOERNOOI GESTART ========== */}
       {isStarted && (
         <div className="space-y-6">
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setShowUndoConfirm(true)}
-              disabled={isUndoing}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-lg transition-colors shadow-sm"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-              Aanmaak ronde {currentRound} terugdraaien
-            </button>
-            <button
-              onClick={() => router.push(`/toernooien/${id}/ronden/nieuw`)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Ronde {currentRound + 1} aanmaken
-            </button>
-          </div>
-
           {/* Round selector tabs */}
           {rounds.length > 0 && (
             <>
@@ -498,7 +504,7 @@ export default function ToernooirondenPage({
                           <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase">
                             <tr>
                               <th className="pb-3 font-semibold">Speler</th>
-                              <th className="pb-3 font-semibold text-right">Start Moy</th>
+                              <th className="pb-3 font-semibold text-right">Moy nieuw</th>
                               <th className="pb-3 font-semibold text-right">Car</th>
                             </tr>
                           </thead>

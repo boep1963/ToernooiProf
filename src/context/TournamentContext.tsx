@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 interface ActiveTournament {
   compNr: number;
@@ -47,8 +47,13 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  const value = useMemo(
+    () => ({ activeTournament, setActiveTournament }),
+    [activeTournament, setActiveTournament]
+  );
+
   return (
-    <TournamentContext.Provider value={{ activeTournament, setActiveTournament }}>
+    <TournamentContext.Provider value={value}>
       {children}
     </TournamentContext.Provider>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Breadcrumb from '@/components/common/Breadcrumb';
@@ -20,7 +20,7 @@ interface OrgDetails {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { orgNummer, login, logout, refreshOrganization } = useAuth();
+  const { orgNummer, login, logout, refreshOrganization } = useAuthActions();
 
   const [orgDetails, setOrgDetails] = useState<OrgDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -52,7 +52,7 @@ export default function ToernooiBewerkenPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const compNr = parseInt(id, 10);
 
   const [isLoading, setIsLoading] = useState(true);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -69,6 +69,7 @@ export default function ToernooiStandPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { orgNummer, organization } = useAuth();
   const orgNaam = organization?.org_naam || '';
 
@@ -80,7 +81,13 @@ export default function ToernooiStandPage({
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
   const [poules, setPoules] = useState<any[]>([]);
-  const [selectedPouleNr, setSelectedPouleNr] = useState<string>('');
+  // Initialiseer poule uit URL direct (voorkomt race: eerste request met geldige poule_nr)
+  const [selectedPouleNr, setSelectedPouleNr] = useState<string>(() => {
+    const p = searchParams.get('poule_nr');
+    if (p == null || p === '') return '';
+    const n = parseInt(String(p).trim(), 10);
+    return Number.isInteger(n) && n >= 1 ? String(n) : '';
+  });
   const [sortByPercentage, setSortByPercentage] = useState(false); // false = absolute points, true = percentage points
 
   // Add print styles on mount
@@ -142,14 +149,12 @@ export default function ToernooiStandPage({
       if (res.ok) {
         const data = await res.json();
         setCompetition(data);
-        
-        // Handle initial poule_nr from URL
-        const { searchParams } = new URL(window.location.href);
-        const pouleNrParam = searchParams.get('poule_nr');
-        if (pouleNrParam) {
-           setSelectedPouleNr(pouleNrParam);
+        // Zorg dat poule uit URL overeenkomt met state (als nog niet gezet door init state)
+        const p = searchParams.get('poule_nr');
+        if (p != null && p !== '') {
+          const n = parseInt(String(p).trim(), 10);
+          if (Number.isInteger(n) && n >= 1) setSelectedPouleNr(String(n));
         }
-
         setSelectedPeriod(data.t_ronde ?? data.periode ?? 1);
         return data;
       } else {
@@ -159,7 +164,7 @@ export default function ToernooiStandPage({
       setError('Er is een fout opgetreden.');
     }
     return null;
-  }, [orgNummer, compNr]);
+  }, [orgNummer, compNr, searchParams]);
 
   const fetchPoules = useCallback(async (period: number) => {
     if (!orgNummer || isNaN(compNr)) return;

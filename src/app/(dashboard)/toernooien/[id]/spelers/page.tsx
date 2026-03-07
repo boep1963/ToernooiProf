@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS, CAR_SYSTEMEN } from '@/types';
 import { calculateCaramboles } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -43,7 +43,7 @@ export default function ToernooiSpelersPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const compNr = parseInt(id, 10);
 
   const [tournament, setTournament] = useState<TournamentData | null>(null);

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import { useTournament } from '@/context/TournamentContext';
 import { DISCIPLINES } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -18,7 +18,7 @@ interface CompetitionItem {
 
 
 export default function ToernooienPage() {
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const { activeTournament, setActiveTournament } = useTournament();
   const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

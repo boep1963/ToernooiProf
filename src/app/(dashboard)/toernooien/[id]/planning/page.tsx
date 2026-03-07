@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -52,7 +52,7 @@ function PlanningContent({
 }: {
   id: string;
 }) {
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const searchParams = useSearchParams();
   const compNr = parseInt(id, 10);
   const pouleFromUrl = searchParams.get('poule');

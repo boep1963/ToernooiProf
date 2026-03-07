@@ -32,9 +32,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const pouleNrRaw = searchParams.get('poule_nr');
     let pouleNr: number | null = null;
     if (pouleNrRaw !== null && pouleNrRaw !== '') {
-      pouleNr = parseInt(pouleNrRaw, 10);
-      if (isNaN(pouleNr)) {
-        return NextResponse.json({ error: 'Ongeldige poulefilter. Gebruik een numerieke poule_nr.' }, { status: 400 });
+      const trimmed = String(pouleNrRaw).trim();
+      if (trimmed !== '') {
+        const parsed = Number(trimmed);
+        if (Number.isInteger(parsed) && parsed >= 1) {
+          pouleNr = parsed;
+        } else {
+          return NextResponse.json({ error: 'Ongeldige poulefilter. Gebruik een numerieke poule_nr.' }, { status: 400 });
+        }
       }
     }
 
@@ -69,8 +74,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const spelerMap: Record<number, string> = {};
     spelersSnap.docs.forEach(d => {
       const data = d.data() ?? {};
-      const nr = (data.sp_nummer as number) || 0;
-      if (nr) spelerMap[nr] = (data.sp_naam as string) || `Speler ${nr}`;
+      const nr = Number(data.sp_nummer) || 0;
+      if (nr > 0) {
+        const naam = (data.sp_naam != null && String(data.sp_naam).trim() !== '')
+          ? String(data.sp_naam).trim()
+          : (data.spa_vnaam != null || data.spa_anaam != null)
+            ? [data.spa_vnaam, data.spa_tv, data.spa_anaam].filter(Boolean).map(String).join(' ').trim()
+            : '';
+        spelerMap[nr] = naam || `Speler ${nr}`;
+      }
     });
 
     // If filtering by poule, get only sp_nummers in that poule
@@ -87,8 +99,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       pouleSpelers = new Set<number>();
       poulesSnap.docs.forEach(d => {
-        const nr = (d.data()?.sp_nummer as number) || 0;
-        if (nr) pouleSpelers!.add(nr);
+        const nr = Number(d.data()?.sp_nummer) || 0;
+        if (nr > 0) pouleSpelers!.add(nr);
       });
     }
 
@@ -127,9 +139,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       : Object.keys(spelerMap).map(Number);
 
     for (const nr of relevantSpelers) {
-      statsMap[nr] = {
-        sp_nummer: nr,
-        sp_naam: spelerMap[nr] ?? `Speler ${nr}`,
+      const spNr = Number(nr);
+      if (spNr <= 0) continue;
+      statsMap[spNr] = {
+        sp_nummer: spNr,
+        sp_naam: spelerMap[spNr] ?? spelerMap[Number(nr)] ?? `Speler ${spNr}`,
         matchesPlayed: 0,
         carambolesGemaakt: 0,
         carambolesTeMaken: 0,

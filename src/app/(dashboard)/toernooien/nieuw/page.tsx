@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import { DISCIPLINES, MOYENNE_FORMULE_LABELS } from '@/types';
 import Breadcrumb from '@/components/common/Breadcrumb';
@@ -15,7 +15,7 @@ const PUNTEN_SYSTEMEN: Record<number, string> = {
 
 export default function NieuwToernooi() {
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
 
   const [formData, setFormData] = useState({
     t_naam: '',

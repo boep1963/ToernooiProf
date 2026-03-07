@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
+import { useAuthState } from '@/context/AuthContext';
 import { isSuperAdmin as checkSuperAdmin } from '@/lib/admin-shared';
 
 /**
@@ -11,7 +11,7 @@ import { isSuperAdmin as checkSuperAdmin } from '@/lib/admin-shared';
  * @returns {{ isSuperAdmin: boolean }} - true if the user's org email matches any admin entry
  */
 export function useSuperAdmin(): { isSuperAdmin: boolean } {
-  const { organization } = useAuth();
+  const { organization } = useAuthState();
   const email = organization?.org_wl_email ?? null;
   return { isSuperAdmin: checkSuperAdmin(email) };
 }

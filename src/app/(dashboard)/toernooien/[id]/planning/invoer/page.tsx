@@ -3,7 +3,7 @@
 import React, { use, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -16,7 +16,7 @@ function InvoerContent({
   compNaam: string;
   ronde: number;
 }) {
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const searchParams = useSearchParams();
   const poule = searchParams.get('poule');
   const code = searchParams.get('code');
@@ -271,7 +271,7 @@ function InvoerContent({
 export default function UitslagInvoerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const compNr = parseInt(id, 10);
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const [comp, setComp] = useState<{ comp_naam: string; t_ronde?: number; periode?: number } | null>(null);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import type { Organization } from '@/types';
 
 interface AuthState {
@@ -11,13 +11,24 @@ interface AuthState {
   orgNummer: number | null;
 }
 
-interface AuthContextType extends AuthState {
+interface AuthStateContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isVerified: boolean;
+  organization: Organization | null;
+}
+
+interface AuthActionsContextType {
+  orgNummer: number | null;
   login: (orgNummer: number) => Promise<void>;
   logout: () => Promise<void>;
   refreshOrganization: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextType extends AuthStateContextType, AuthActionsContextType {}
+
+const AuthStateContext = createContext<AuthStateContextType | undefined>(undefined);
+const AuthActionsContext = createContext<AuthActionsContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -28,8 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     orgNummer: null,
   });
 
+  const orgNummerRef = useRef<number | null>(null);
+  orgNummerRef.current = state.orgNummer;
+
   useEffect(() => {
-    // Check for existing session on mount
     const checkSession = async () => {
       try {
         const res = await fetch('/api/auth/session', { credentials: 'include' });
@@ -53,8 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
-  const login = async (orgNummer: number) => {
-    // Fetch organization data after successful login
+  const login = useCallback(async (orgNummer: number) => {
     try {
       const res = await fetch(`/api/organizations/${orgNummer}`);
       if (res.ok) {
@@ -70,9 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error loading organization:', error);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {
@@ -85,10 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       organization: null,
       orgNummer: null,
     });
-  };
+  }, []);
 
-  const refreshOrganization = async () => {
-    const currentOrgNr = state.orgNummer;
+  const refreshOrganization = useCallback(async () => {
+    const currentOrgNr = orgNummerRef.current;
     if (!currentOrgNr) return;
     try {
       const res = await fetch(`/api/organizations/${currentOrgNr}`);
@@ -99,19 +111,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error refreshing organization:', error);
     }
-  };
+  }, []);
+
+  const stateValue = useMemo(
+    () => ({
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.isLoading,
+      isVerified: state.isVerified,
+      organization: state.organization,
+    }),
+    [state.isAuthenticated, state.isLoading, state.isVerified, state.organization]
+  );
+
+  const actionsValue = useMemo(
+    () => ({ orgNummer: state.orgNummer, login, logout, refreshOrganization }),
+    [state.orgNummer, login, logout, refreshOrganization]
+  );
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, refreshOrganization }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthStateContext.Provider value={stateValue}>
+      <AuthActionsContext.Provider value={actionsValue}>
+        {children}
+      </AuthActionsContext.Provider>
+    </AuthStateContext.Provider>
   );
 }
 
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
+export function useAuthState(): AuthStateContextType {
+  const context = useContext(AuthStateContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuthState must be used within an AuthProvider');
   }
   return context;
+}
+
+export function useAuthActions(): AuthActionsContextType {
+  const context = useContext(AuthActionsContext);
+  if (!context) {
+    throw new Error('useAuthActions must be used within an AuthProvider');
+  }
+  return context;
+}
+
+export function useAuth(): AuthContextType {
+  const state = useAuthState();
+  const actions = useAuthActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

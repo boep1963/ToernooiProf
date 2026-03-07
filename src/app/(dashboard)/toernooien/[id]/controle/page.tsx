@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthActions } from '@/context/AuthContext';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -44,7 +44,7 @@ export default function ToernooiControlePage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { orgNummer } = useAuth();
+  const { orgNummer } = useAuthActions();
   const { isSuperAdmin } = useSuperAdmin();
   const compNr = parseInt(id, 10);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -43,15 +43,13 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     setIsInitialized(true);
   }, [initialTheme]);
 
-  const toggleTheme = async () => {
+  const toggleTheme = useCallback(async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
 
-    // Optimistic update for instant UI response
     setTheme(newTheme);
     localStorage.setItem('toernoiprof-theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
 
-    // Persist to Firestore in background
     try {
       await fetch('/api/organizations/theme', {
         method: 'PATCH',
@@ -62,12 +60,13 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
       });
     } catch (error) {
       console.error('[THEME] Failed to persist theme to Firestore:', error);
-      // Don't revert UI - localStorage still works as fallback
     }
-  };
+  }, [theme]);
+
+  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
