@@ -212,6 +212,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await compDoc.ref.update({
       t_ronde: targetRound,
       periode: targetRound,
+      ronde_status: 'definitief',
       updated_at: new Date().toISOString(),
     });
 

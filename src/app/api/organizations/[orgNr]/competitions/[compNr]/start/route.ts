@@ -282,11 +282,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await commitBatch();
 
-    // Update tournament: t_gestart=1, t_ronde=1
+    // Update tournament: t_gestart=1, t_ronde=1, ronde_status=definitief
     await compDoc.ref.update({
       t_gestart: 1,
       t_ronde: tRonde,
-      periode: tRonde, // routing alias
+      periode: tRonde,
+      ronde_status: 'definitief',
       updated_at: new Date().toISOString(),
     });
 
@@ -357,6 +358,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       t_gestart: 0,
       t_ronde: 0,
       periode: 0,
+      ronde_status: 'voorlopig',
       updated_at: new Date().toISOString(),
     });
 
