@@ -42,7 +42,7 @@ export default function OrganizationLogo({
     <img
       src={imgSrc}
       alt={alt}
-      className={className}
+      className={`rounded-lg ${className}`.trim()}
       onError={handleError}
     />
   );
