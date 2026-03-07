@@ -251,6 +251,37 @@ export default function ToernooiSpelersPage({
     (a.sp_naam || '').localeCompare(b.sp_naam || '', 'nl')
   );
 
+  // Kleuren per poule (1-25) voor licht en donker thema
+  const pouleColorClasses: string[] = [
+    'text-blue-600 dark:text-blue-400',
+    'text-orange-600 dark:text-orange-400',
+    'text-emerald-600 dark:text-emerald-400',
+    'text-rose-600 dark:text-rose-400',
+    'text-violet-600 dark:text-violet-400',
+    'text-amber-600 dark:text-amber-400',
+    'text-teal-600 dark:text-teal-400',
+    'text-indigo-600 dark:text-indigo-400',
+    'text-lime-600 dark:text-lime-400',
+    'text-cyan-600 dark:text-cyan-400',
+    'text-fuchsia-600 dark:text-fuchsia-400',
+    'text-sky-600 dark:text-sky-400',
+    'text-pink-600 dark:text-pink-400',
+    'text-green-600 dark:text-green-400',
+    'text-red-600 dark:text-red-400',
+    'text-blue-700 dark:text-blue-300',
+    'text-orange-700 dark:text-orange-300',
+    'text-emerald-700 dark:text-emerald-300',
+    'text-rose-700 dark:text-rose-300',
+    'text-violet-700 dark:text-violet-300',
+    'text-amber-700 dark:text-amber-300',
+    'text-teal-700 dark:text-teal-300',
+    'text-indigo-700 dark:text-indigo-300',
+    'text-cyan-700 dark:text-cyan-300',
+    'text-fuchsia-700 dark:text-fuchsia-300',
+  ];
+  const getPouleColorClass = (pouleNr: number): string =>
+    pouleColorClasses[Math.max(0, (pouleNr - 1) % 25)] ?? 'text-slate-600 dark:text-slate-400';
+
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
@@ -382,7 +413,12 @@ export default function ToernooiSpelersPage({
                   <option key={nr} value={nr}>Poule {nr}</option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Wordt gebruikt bij start toernooi (ronde 1)</p>
+              <p className="mt-1 flex items-center gap-2 flex-wrap">
+                <span className={`text-xs font-medium ${getPouleColorClass(newPouleNr)}`}>
+                  Poule {newPouleNr}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Wordt gebruikt bij start toernooi (ronde 1)</span>
+              </p>
             </div>
           </div>
 
@@ -522,7 +558,7 @@ export default function ToernooiSpelersPage({
                         speler.sp_startcar
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 text-right tabular-nums">
+                    <td className="px-4 py-3 text-sm text-right tabular-nums">
                       {editingSpelerNummer === speler.sp_nummer ? (
                         <select
                           value={editPouleNr}
@@ -534,7 +570,11 @@ export default function ToernooiSpelersPage({
                           ))}
                         </select>
                       ) : (
-                        Number(speler.poule_nr) > 0 ? `Poule ${Number(speler.poule_nr)}` : '-'
+                        Number(speler.poule_nr) > 0 ? (
+                          <span className={`font-medium ${getPouleColorClass(Number(speler.poule_nr))}`}>
+                            Poule {Number(speler.poule_nr)}
+                          </span>
+                        ) : '-'
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
