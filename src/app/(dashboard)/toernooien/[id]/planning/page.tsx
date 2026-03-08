@@ -398,8 +398,8 @@ function PlanningContent({
   );
 }
 
-export default async function PlanningPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function PlanningPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   return (
     <Suspense fallback={
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8">
