@@ -5,6 +5,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuthActions } from '@/context/AuthContext';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -53,6 +54,7 @@ function PlanningContent({
   id: string;
 }) {
   const { orgNummer } = useAuthActions();
+  const { isSuperAdmin } = useSuperAdmin();
   const searchParams = useSearchParams();
   const compNr = parseInt(id, 10);
   const pouleFromUrl = searchParams.get('poule');
@@ -65,6 +67,8 @@ function PlanningContent({
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingUitslagen, setIsLoadingUitslagen] = useState(false);
   const [error, setError] = useState('');
+  const [testGenerateLoading, setTestGenerateLoading] = useState(false);
+  const [testGenerateSuccess, setTestGenerateSuccess] = useState('');
 
   const huidigeRonde = competition?.t_ronde ?? competition?.periode ?? 1;
   const spelersMap = new Map(spelers.map((s) => [s.sp_nummer, s.sp_naam]));
@@ -154,6 +158,44 @@ function PlanningContent({
 
   const compNaam = competition.comp_naam ?? '';
   const ronde = competition.t_ronde ?? competition.periode ?? 1;
+  const isTestToernooi = String(compNaam).trim().toUpperCase().startsWith('TEST_');
+  const canShowTestGenerate = isTestToernooi && isSuperAdmin && selectedPoule !== null && uitslagen.length > 0;
+
+  const handleTestGenerateUitslagen = async () => {
+    if (!orgNummer || selectedPoule === null) return;
+    setTestGenerateLoading(true);
+    setTestGenerateSuccess('');
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen/test-generate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ronde_nr: ronde, poule_nr: selectedPoule }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setTestGenerateSuccess(data.message ?? 'Testuitslagen gegenereerd.');
+        if (competition) {
+          const r = competition.t_ronde ?? competition.periode ?? 1;
+          const uRes = await fetch(
+            `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${r}&poule_nr=${selectedPoule}`
+          );
+          const uData = await uRes.json();
+          setUitslagen(uData.uitslagen || []);
+        }
+        setTimeout(() => setTestGenerateSuccess(''), 4000);
+      } else {
+        setError(data.error ?? 'Fout bij genereren.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setTestGenerateLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -201,13 +243,31 @@ function PlanningContent({
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
                 Planning poule {selectedPoule} in ronde {ronde}
               </h2>
-              <button
-                onClick={() => setSelectedPoule(null)}
-                className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-              >
-                ← Andere poule kiezen
-              </button>
+              <div className="flex items-center gap-2">
+                {canShowTestGenerate && (
+                  <button
+                    type="button"
+                    onClick={handleTestGenerateUitslagen}
+                    disabled={testGenerateLoading}
+                    className="px-3 py-1.5 text-sm bg-slate-600 hover:bg-slate-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
+                  >
+                    {testGenerateLoading ? 'Bezig...' : 'Genereer testuitslagen'}
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedPoule(null)}
+                  className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                >
+                  ← Andere poule kiezen
+                </button>
+              </div>
             </div>
+
+            {testGenerateSuccess && (
+              <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-sm border border-green-200 dark:border-green-800">
+                {testGenerateSuccess}
+              </div>
+            )}
 
             {isLoadingUitslagen ? (
               <div className="space-y-3">

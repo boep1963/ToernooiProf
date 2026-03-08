@@ -154,7 +154,10 @@ export function useAuthActions(): AuthActionsContextType {
 }
 
 export function useAuth(): AuthContextType {
-  const state = useAuthState();
-  const actions = useAuthActions();
+  const state = useContext(AuthStateContext);
+  const actions = useContext(AuthActionsContext);
+  if (!state || !actions) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

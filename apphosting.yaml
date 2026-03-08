@@ -4,7 +4,7 @@
 # Cloud Run service (server)
 # maxInstances: 1 = tijdens testen maximaal 1 instance (beperkt kosten)
 runConfig:
-  minInstances: 0
+  minInstances: 1
   maxInstances: 1
   concurrency: 80
   cpu: 1

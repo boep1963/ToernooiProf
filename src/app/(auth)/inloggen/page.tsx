@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -13,7 +12,6 @@ const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 const SHOW_EMAIL_LOGIN = false; // Later mogelijk weer inschakelen
 
 export default function LoginPage() {
-  const router = useRouter();
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
   const [loginCode, setLoginCode] = useState('');
   const [email, setEmail] = useState('');
@@ -25,12 +23,15 @@ export default function LoginPage() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  // Als al ingelogd, redirect naar dashboard
-  useEffect(() => {
-    fetch('/api/auth/session', { credentials: 'include' })
-      .then((res) => { if (res.ok) router.replace('/dashboard'); })
-      .catch(() => {});
-  }, [router]);
+  // Niet automatisch naar dashboard redirecten bij geldige sessie: dat veroorzaakt
+  // een loop (dashboard toont loading, sessiecheck 401 → inloggen → sessie ok → dashboard → …).
+  // Bij succesvolle login gaan we via window.location.href naar /dashboard.
+  // Als iemand al ingelogd /inloggen bezoekt, kan hij handmatig naar / of /dashboard.
+  // useEffect(() => {
+  //   fetch('/api/auth/session', { credentials: 'include' })
+  //     .then((res) => { if (res.ok) router.replace('/dashboard'); })
+  //     .catch(() => {});
+  // }, [router]);
 
   const handleCodeLogin = async (e: React.FormEvent) => {
     e.preventDefault();

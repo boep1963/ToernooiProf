@@ -8,7 +8,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { Poule, PoulePlayer } from '@/types/tournament';
 import { formatDecimal } from '@/lib/formatUtils';
-import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import Link from 'next/link';
 
 interface CompetitionData {
@@ -31,7 +30,6 @@ export default function ToernooirondenPage({
   const { id } = use(params);
   const router = useRouter();
   const { orgNummer } = useAuthActions();
-  const { isSuperAdmin } = useSuperAdmin();
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -49,9 +47,6 @@ export default function ToernooirondenPage({
   const [successMsg, setSuccessMsg] = useState('');
   const [playerCount, setPlayerCount] = useState(0);
   const [startBlockedReasons, setStartBlockedReasons] = useState<string[]>([]);
-  const [showTestPopulateModal, setShowTestPopulateModal] = useState(false);
-  const [testPopulatePlayerCount, setTestPopulatePlayerCount] = useState(12);
-  const [testPopulatePouleCount, setTestPopulatePouleCount] = useState(3);
 
   // --- Voorbereiding mode: poules for ronde 1 ---
   const [prepPoules, setPrepPoules] = useState<Poule[]>([]);
@@ -191,23 +186,19 @@ export default function ToernooirondenPage({
 
   // --- Actions ---
 
-  const handleStartToernooi = async (useTestPopulate?: boolean, testPlayerCount?: number, testPouleCount?: number) => {
+  const handleStartToernooi = async () => {
     if (!orgNummer) return;
     setIsStarting(true);
     setError('');
     setSuccessMsg('');
     try {
-      const body = useTestPopulate && testPlayerCount != null && testPouleCount != null
-        ? { testPopulate: true, playerCount: testPlayerCount, pouleCount: testPouleCount }
-        : undefined;
       const res = await fetch(
         `/api/organizations/${orgNummer}/competitions/${compNr}/start`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
       );
       if (res.ok) {
-        setSuccessMsg(useTestPopulate ? 'Toernooi gestart met testspelers en gegenereerde uitslagen.' : 'Toernooi gestart! Ronde 1 is aangemaakt.');
+        setSuccessMsg('Toernooi gestart! Ronde 1 is aangemaakt.');
         setShowStartConfirm(false);
-        setShowTestPopulateModal(false);
         setSelectedRound(null);
         await fetchData();
         setTimeout(() => setSuccessMsg(''), 5000);
@@ -215,12 +206,10 @@ export default function ToernooirondenPage({
         const data = await res.json();
         setError(data.error || 'Fout bij starten toernooi.');
         setShowStartConfirm(false);
-        setShowTestPopulateModal(false);
       }
     } catch {
       setError('Er is een fout opgetreden.');
       setShowStartConfirm(false);
-      setShowTestPopulateModal(false);
     } finally {
       setIsStarting(false);
     }
@@ -283,13 +272,7 @@ export default function ToernooirondenPage({
 
   const isStarted = (Number(competition?.t_gestart) || 0) === 1;
   const currentRound = Number(competition?.t_ronde) || 0;
-  const compNaam = (competition?.comp_naam ?? competition?.t_naam ?? '').trim();
-  const isTestToernooi = compNaam.toUpperCase().startsWith('TEST_');
-  const canStartTestPopulate = isTestToernooi && isSuperAdmin;
-  const canStart = !isStarted && (
-    canStartTestPopulate ||
-    (startBlockedReasons.length === 0 && playerCount >= 2)
-  );
+  const canStart = !isStarted && startBlockedReasons.length === 0 && playerCount >= 2;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -376,7 +359,7 @@ export default function ToernooirondenPage({
           {/* Start button */}
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => canStartTestPopulate ? setShowTestPopulateModal(true) : setShowStartConfirm(true)}
+              onClick={() => setShowStartConfirm(true)}
               disabled={!canStart}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-sm"
             >
@@ -602,71 +585,6 @@ export default function ToernooirondenPage({
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
                 {isStarting ? 'Bezig...' : 'Ja, start toernooi'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Test-populate modal (TEST_-toernooi + super admin) */}
-      {showTestPopulateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-              Start toernooi met testdata
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Genereer automatisch spelers en poules, en vul ronde 1 met gegenereerde uitslagen.
-            </p>
-            <div className="space-y-4 mb-6">
-              <div>
-                <label htmlFor="test-player-count" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Aantal spelers (2–200)
-                </label>
-                <input
-                  id="test-player-count"
-                  type="number"
-                  min={2}
-                  max={200}
-                  value={testPopulatePlayerCount}
-                  onChange={(e) => setTestPopulatePlayerCount(Math.max(2, Math.min(200, parseInt(e.target.value, 10) || 2)))}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label htmlFor="test-poule-count" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Aantal poules (1–25, min. 2 spelers per poule)
-                </label>
-                <input
-                  id="test-poule-count"
-                  type="number"
-                  min={1}
-                  max={25}
-                  value={testPopulatePouleCount}
-                  onChange={(e) => setTestPopulatePouleCount(Math.max(1, Math.min(25, parseInt(e.target.value, 10) || 1)))}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                />
-              </div>
-              {testPopulatePlayerCount < 2 * testPopulatePouleCount && (
-                <p className="text-sm text-amber-600 dark:text-amber-400">
-                  Minimaal 2 spelers per poule. Verhoog het aantal spelers of verlaag het aantal poules.
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-3 justify-end">
-              <button
-                onClick={() => setShowTestPopulateModal(false)}
-                disabled={isStarting}
-                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
-              >
-                Annuleren
-              </button>
-              <button
-                onClick={() => handleStartToernooi(true, testPopulatePlayerCount, testPopulatePouleCount)}
-                disabled={isStarting || testPopulatePlayerCount < 2 * testPopulatePouleCount}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors shadow-sm"
-              >
-                {isStarting ? 'Bezig...' : 'Genereer en start'}
               </button>
             </div>
           </div>

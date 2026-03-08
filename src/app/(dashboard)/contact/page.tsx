@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuthState } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 const PROGRAMMA_OPTIES = ['ToernooiProf'];
 
@@ -12,7 +12,7 @@ const ONDERWERP_OPTIES = [
 ];
 
 export default function ContactPage() {
-  const { organization } = useAuthState();
+  const { organization } = useAuth();
   const [programma, setProgramma] = useState('');
   const [onderwerp, setOnderwerp] = useState('vraag');
   const [bericht, setBericht] = useState('');
