@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import { useAuthActions } from '@/context/AuthContext';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS, CAR_SYSTEMEN } from '@/types';
 import { calculateCaramboles } from '@/lib/billiards';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
@@ -44,6 +45,7 @@ export default function ToernooiSpelersPage({
 }) {
   const { id } = use(params);
   const { orgNummer } = useAuthActions();
+  const { isSuperAdmin } = useSuperAdmin();
   const compNr = parseInt(id, 10);
 
   const [tournament, setTournament] = useState<TournamentData | null>(null);
@@ -66,6 +68,14 @@ export default function ToernooiSpelersPage({
   const [newMoy, setNewMoy] = useState('');
   const [newCar, setNewCar] = useState('');
   const [newPouleNr, setNewPouleNr] = useState(1);
+
+  const [showTestPopulateModal, setShowTestPopulateModal] = useState(false);
+  const [testPopulatePlayerCount, setTestPopulatePlayerCount] = useState(12);
+  const [testPopulatePouleCount, setTestPopulatePouleCount] = useState(3);
+  const [testPopulateNameStyle, setTestPopulateNameStyle] = useState<'test' | 'fake'>('test');
+  const [isTestPopulateLoading, setIsTestPopulateLoading] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [isClearAllLoading, setIsClearAllLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
@@ -106,6 +116,69 @@ export default function ToernooiSpelersPage({
   const multiplier = MOYENNE_MULTIPLIERS[tMoyForm] || 25;
   const compNaam = tournament?.t_naam ?? tournament?.comp_naam ?? '';
   const periode = tournament?.t_ronde ?? tournament?.periode ?? 0;
+  const isTestToernooi = String(compNaam).trim().toUpperCase().startsWith('TEST_');
+  const canShowTestPopulate = isTestToernooi && isSuperAdmin && !isStarted;
+  const canShowClearAll = isTestToernooi && isSuperAdmin && !isStarted && spelers.length > 0;
+
+  const handleClearAllPlayers = async () => {
+    if (!orgNummer) return;
+    setIsClearAllLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/players/clear`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(data.message ?? 'Alle spelers verwijderd.');
+        setShowClearAllConfirm(false);
+        await fetchData();
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        setError(data.error ?? 'Fout bij verwijderen.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsClearAllLoading(false);
+    }
+  };
+
+  const handleTestPopulate = async () => {
+    if (!orgNummer) return;
+    setIsTestPopulateLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(
+        `/api/organizations/${orgNummer}/competitions/${compNr}/test-populate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerCount: testPopulatePlayerCount,
+            pouleCount: testPopulatePouleCount,
+            nameStyle: testPopulateNameStyle,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(data.message || `${data.playerCount} testspelers aangemaakt.`);
+        setShowTestPopulateModal(false);
+        await fetchData();
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        setError(data.error || 'Fout bij genereren testspelers.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setIsTestPopulateLoading(false);
+    }
+  };
 
   const previewCar = (): number => {
     if (!tournament) return 0;
@@ -452,7 +525,7 @@ export default function ToernooiSpelersPage({
 
       {/* Add button */}
       {!showAddForm && !isStarted && (
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowAddForm(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm"
@@ -462,6 +535,28 @@ export default function ToernooiSpelersPage({
             </svg>
             Speler toevoegen
           </button>
+          {canShowTestPopulate && (
+            <button
+              onClick={() => setShowTestPopulateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Genereer testspelers
+            </button>
+          )}
+          {canShowClearAll && (
+            <button
+              onClick={() => setShowClearAllConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Alle spelers verwijderen
+            </button>
+          )}
         </div>
       )}
 
@@ -623,6 +718,136 @@ export default function ToernooiSpelersPage({
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {spelers.length} {spelers.length === 1 ? 'speler' : 'spelers'}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Test-populate modal (TEST_-toernooi + super admin) */}
+      {showTestPopulateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              Genereer testspelers
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Maak automatisch spelers en poule-indeling aan. Het toernooi wordt nog niet gestart; daarna kunt u via Rondenbeheer het toernooi starten.
+            </p>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label htmlFor="test-populate-players" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Aantal spelers (2–200)
+                </label>
+                <input
+                  id="test-populate-players"
+                  type="number"
+                  min={2}
+                  max={200}
+                  value={testPopulatePlayerCount}
+                  onChange={(e) => setTestPopulatePlayerCount(Math.max(2, Math.min(200, parseInt(e.target.value, 10) || 2)))}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label htmlFor="test-populate-poules" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Aantal poules (1–25, min. 2 spelers per poule)
+                </label>
+                <input
+                  id="test-populate-poules"
+                  type="number"
+                  min={1}
+                  max={25}
+                  value={testPopulatePouleCount}
+                  onChange={(e) => setTestPopulatePouleCount(Math.max(1, Math.min(25, parseInt(e.target.value, 10) || 1)))}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Naamstijl spelers
+                </span>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="testPopulateNameStyle"
+                      checked={testPopulateNameStyle === 'test'}
+                      onChange={() => setTestPopulateNameStyle('test')}
+                      className="text-slate-600 dark:text-slate-400"
+                    />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Test Speler 1, 2, 3, …</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="testPopulateNameStyle"
+                      checked={testPopulateNameStyle === 'fake'}
+                      onChange={() => setTestPopulateNameStyle('fake')}
+                      className="text-slate-600 dark:text-slate-400"
+                    />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Nederlandse namen (voornaam + achternaam)</span>
+                  </label>
+                </div>
+                {testPopulateNameStyle === 'fake' && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                    Bij veel spelers blijven namen uniek door een nummer toe te voegen bij dubbele combinaties.
+                  </p>
+                )}
+              </div>
+              {testPopulatePlayerCount < 2 * testPopulatePouleCount && (
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  Minimaal 2 spelers per poule. Verhoog het aantal spelers of verlaag het aantal poules.
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setShowTestPopulateModal(false)}
+                disabled={isTestPopulateLoading}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleTestPopulate}
+                disabled={isTestPopulateLoading || testPopulatePlayerCount < 2 * testPopulatePouleCount}
+                className="px-4 py-2 bg-slate-600 hover:bg-slate-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {isTestPopulateLoading ? 'Bezig...' : 'Genereer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alle spelers verwijderen (TEST_-toernooi + super admin) */}
+      {showClearAllConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+              Alle spelers verwijderen
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+              Weet u zeker dat u <strong>alle {spelers.length} spelers</strong> van dit toernooi wilt verwijderen? De poule-indeling wordt ook gewist.
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Dit kan niet ongedaan gemaakt worden.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setShowClearAllConfirm(false)}
+                disabled={isClearAllLoading}
+                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleClearAllPlayers}
+                disabled={isClearAllLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                {isClearAllLoading ? 'Bezig...' : 'Ja, alle verwijderen'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -14,6 +14,7 @@ interface CompetitionData {
   id: string;
   comp_nr: number;
   comp_naam: string;
+  t_naam?: string;
   discipline: number;
   periode: number;
   t_gestart?: number;
@@ -579,7 +580,7 @@ export default function ToernooirondenPage({
                 Annuleren
               </button>
               <button
-                onClick={handleStartToernooi}
+                onClick={() => handleStartToernooi()}
                 disabled={isStarting}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors shadow-sm"
               >
