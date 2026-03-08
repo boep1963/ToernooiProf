@@ -307,12 +307,23 @@ export default function NieuweRondePage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <input
-                          type="number"
-                          value={item.moy_start}
-                          min={0.1}
-                          step={0.001}
-                          onChange={(e) => updateItem(item.sp_nummer, { moy_start: Number(e.target.value) || 0 })}
+                          type="text"
+                          inputMode="decimal"
+                          value={formatDecimal(item.moy_start)}
+                          onChange={(e) => {
+                            const raw = e.target.value.trim().replace(',', '.');
+                            if (raw === '' || raw === '-') {
+                              updateItem(item.sp_nummer, { moy_start: 0 });
+                              return;
+                            }
+                            const num = parseFloat(raw);
+                            if (!Number.isNaN(num) && num >= 0) {
+                              const rounded = Math.round(num * 1000) / 1000;
+                              updateItem(item.sp_nummer, { moy_start: Math.min(999.999, rounded) });
+                            }
+                          }}
                           className="w-24 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-right font-mono"
+                          placeholder="0.000"
                         />
                       </td>
                       <td className="px-4 py-3 text-right">
