@@ -3,7 +3,6 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd } from '@/lib/billiards';
 import { calculateCaramboles } from '@/lib/billiards';
-import { isSuperAdmin } from '@/lib/admin-shared';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -84,86 +83,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if ((compData?.t_gestart as number) === 1) {
       return NextResponse.json({ error: 'Toernooi is al gestart.' }, { status: 400 });
-    }
-
-    let body: { testPopulate?: boolean; playerCount?: number; pouleCount?: number } = {};
-    try {
-      body = await request.json();
-    } catch {
-      // Geen body of ongeldige JSON
-    }
-
-    const compNaam = String(compData?.t_naam ?? compData?.comp_naam ?? '').trim();
-    const isTestToernooi = compNaam.toUpperCase().startsWith('TEST_');
-    let testPopulateDone = false;
-
-    if (isTestToernooi && body.testPopulate === true) {
-      const playerCount = Math.max(2, Math.min(200, Number(body.playerCount) || 0));
-      const pouleCount = Math.max(1, Math.min(25, Number(body.pouleCount) || 1));
-      if (playerCount < 2 * pouleCount) {
-        return NextResponse.json(
-          { error: 'Minimaal 2 spelers per poule. Verhoog het aantal spelers of verlaag het aantal poules.' },
-          { status: 400 }
-        );
-      }
-      const orgSnap = await db.collection('organizations').where('org_nummer', '==', orgNummer).limit(1).get();
-      if (orgSnap.empty) {
-        return NextResponse.json({ error: 'Organisatie niet gevonden.' }, { status: 404 });
-      }
-      const orgEmail = (orgSnap.docs[0].data()?.org_wl_email as string) ?? '';
-      if (!isSuperAdmin(orgEmail)) {
-        return NextResponse.json(
-          { error: 'Alleen beheerders mogen testdata genereren voor TEST_-toernooien.' },
-          { status: 403 }
-        );
-      }
-      const tCarSys = (compData?.t_car_sys as number) ?? 1;
-      const tMoyForm = (compData?.t_moy_form as number) ?? 3;
-      const tMinCar = (compData?.t_min_car as number) ?? 0;
-      const existingSpelers = await db.collection('spelers')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .get();
-      for (const d of existingSpelers.docs) await d.ref.delete();
-      const existingPoules = await db.collection('poules')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .get();
-      for (const d of existingPoules.docs) await d.ref.delete();
-
-      const pouleVolgnr: Record<number, number> = {};
-      for (let p = 1; p <= pouleCount; p++) pouleVolgnr[p] = 0;
-      for (let i = 0; i < playerCount; i++) {
-        const sp_nummer = i + 1;
-        const sp_startmoy = Math.round((1 + Math.random() * 1.5) * 1000) / 1000;
-        const sp_startcar = tCarSys === 1
-          ? calculateCaramboles(sp_startmoy, tMoyForm, tMinCar)
-          : Math.max(25, Math.floor(sp_startmoy * 25));
-        const pouleNr = (i % pouleCount) + 1;
-        pouleVolgnr[pouleNr]++;
-        const sp_volgnr = pouleVolgnr[pouleNr];
-        await db.collection('spelers').add({
-          gebruiker_nr: orgNummer,
-          t_nummer: compNumber,
-          sp_nummer,
-          sp_naam: `Test Speler ${sp_nummer}`,
-          sp_startmoy,
-          sp_startcar,
-          poule_nr: pouleNr,
-          created_at: new Date().toISOString(),
-        });
-        await db.collection('poules').add({
-          gebruiker_nr: orgNummer,
-          t_nummer: compNumber,
-          sp_nummer,
-          sp_moy: sp_startmoy,
-          sp_car: sp_startcar,
-          sp_volgnr,
-          poule_nr: pouleNr,
-          ronde_nr: 1,
-        });
-      }
-      testPopulateDone = true;
     }
 
     // Get spelers
@@ -362,51 +281,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     await commitBatch();
-
-    // Bij test-populate: vul alle uitslagen met gegenereerde resultaten (gespeeld=1)
-    if (testPopulateDone) {
-      const uitslagenSnap = await db.collection('uitslagen')
-        .where('gebruiker_nr', '==', orgNummer)
-        .where('t_nummer', '==', compNumber)
-        .where('t_ronde', '==', tRonde)
-        .get();
-      for (const doc of uitslagenSnap.docs) {
-        const u = doc.data() ?? {};
-        const sp1_tem = Number(u.sp1_car_tem) || 50;
-        const sp2_tem = Number(u.sp2_car_tem) || 50;
-        const brt = 40 + Math.floor(Math.random() * 30);
-        let sp1_gem = Math.floor(Math.random() * Math.min(sp1_tem, brt));
-        let sp2_gem = Math.floor(Math.random() * Math.min(sp2_tem, brt));
-        sp1_gem = Math.min(sp1_gem, sp1_tem);
-        sp2_gem = Math.min(sp2_gem, sp2_tem);
-        const sp1_hs = 2 + Math.floor(Math.random() * 7);
-        const sp2_hs = 2 + Math.floor(Math.random() * 7);
-        const per1 = sp1_tem > 0 ? (sp1_gem / sp1_tem) * 100 : 0;
-        const per2 = sp2_tem > 0 ? (sp2_gem / sp2_tem) * 100 : 0;
-        let sp1_punt: number;
-        let sp2_punt: number;
-        if (per1 > per2) {
-          sp1_punt = 2;
-          sp2_punt = 0;
-        } else if (per2 > per1) {
-          sp1_punt = 0;
-          sp2_punt = 2;
-        } else {
-          sp1_punt = 1;
-          sp2_punt = 1;
-        }
-        await doc.ref.update({
-          sp1_car_gem: sp1_gem,
-          sp2_car_gem: sp2_gem,
-          brt,
-          sp1_hs,
-          sp2_hs,
-          sp1_punt,
-          sp2_punt,
-          gespeeld: 1,
-        });
-      }
-    }
 
     // Update tournament: t_gestart=1, t_ronde=1, ronde_status=definitief
     await compDoc.ref.update({

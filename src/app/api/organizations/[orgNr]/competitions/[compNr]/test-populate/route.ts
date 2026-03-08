@@ -8,6 +8,26 @@ interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
 }
 
+const VOORNAMEN_NL = [
+  'Jan', 'Pieter', 'Henk', 'Kees', 'Willem', 'Hans', 'Peter', 'Paul', 'Mark', 'Thomas',
+  'Daan', 'Lars', 'Sem', 'Levi', 'Milan', 'Bram', 'Finn', 'Jesse', 'Ruben', 'Tim',
+  'Anna', 'Emma', 'Sophie', 'Julia', 'Lisa', 'Eva', 'Sara', 'Fleur', 'Iris', 'Nina',
+  'Marie', 'Noa', 'Maud', 'Roos', 'Lotte', 'Evi', 'Tess', 'Saar', 'Zoë', 'Lynn',
+];
+
+const ACHTERNAMEN_NL = [
+  'de Vries', 'van Dijk', 'Jansen', 'Bakker', 'Visser', 'Smit', 'de Boer', 'Mulder', 'de Groot', 'Bos',
+  'Vos', 'Peters', 'Hendriks', 'van Leeuwen', 'Dekker', 'Brouwer', 'de Wit', 'Dijkstra', 'Smits', 'de Graaf',
+  'van der Berg', 'Kok', 'Jacobs', 'de Haan', 'Vermeulen', 'van den Berg', 'van Dam', 'Koster', 'van Vliet', 'Maas',
+  'Hoekstra', 'Schouten', 'Willems', 'van der Meer', 'Koning', 'Veenstra', 'Post', 'Kramer', 'van der Laan', 'Timmermans',
+];
+
+function randomNaamNl(): string {
+  const v = VOORNAMEN_NL[Math.floor(Math.random() * VOORNAMEN_NL.length)];
+  const a = ACHTERNAMEN_NL[Math.floor(Math.random() * ACHTERNAMEN_NL.length)];
+  return `${v} ${a}`;
+}
+
 /**
  * POST /api/organizations/:orgNr/competitions/:compNr/test-populate
  * Alleen voor TEST_-toernooien + super admin: genereer testspelers en poule-indeling (ronde 1).
@@ -42,12 +62,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Toernooi is al gestart. Testspelers alleen in voorbereiding.' }, { status: 400 });
     }
 
-    let body: { playerCount?: number; pouleCount?: number } = {};
+    let body: { playerCount?: number; pouleCount?: number; nameStyle?: 'test' | 'fake' } = {};
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: 'Ongeldige body. Stuur { playerCount, pouleCount }.' }, { status: 400 });
+      return NextResponse.json({ error: 'Ongeldige body. Stuur { playerCount, pouleCount, nameStyle? }.' }, { status: 400 });
     }
+
+    const nameStyle = body.nameStyle === 'fake' ? 'fake' : 'test';
 
     const compNaam = String(compData.t_naam ?? compData.comp_naam ?? '').trim();
     if (!compNaam.toUpperCase().startsWith('TEST_')) {
@@ -96,6 +118,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const pouleVolgnr: Record<number, number> = {};
     for (let p = 1; p <= pouleCount; p++) pouleVolgnr[p] = 0;
+    const usedFakeNames = new Set<string>();
 
     for (let i = 0; i < playerCount; i++) {
       const sp_nummer = i + 1;
@@ -107,11 +130,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       pouleVolgnr[pouleNr]++;
       const sp_volgnr = pouleVolgnr[pouleNr];
 
+      let sp_naam: string;
+      if (nameStyle === 'fake') {
+        let naam = randomNaamNl();
+        while (usedFakeNames.has(naam)) naam = `${randomNaamNl()} ${sp_nummer}`;
+        usedFakeNames.add(naam);
+        sp_naam = naam;
+      } else {
+        sp_naam = `Test Speler ${sp_nummer}`;
+      }
+
       await db.collection('spelers').add({
         gebruiker_nr: orgNummer,
         t_nummer: compNumber,
         sp_nummer,
-        sp_naam: `Test Speler ${sp_nummer}`,
+        sp_naam,
         sp_startmoy,
         sp_startcar,
         poule_nr: pouleNr,

@@ -11,7 +11,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 
 interface CompetitionData {
-  comp_naam: string;
+  comp_naam?: string;
+  t_naam?: string;
   t_ronde?: number;
   periode?: number;
 }
@@ -61,6 +62,7 @@ function PlanningContent({
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [poules, setPoules] = useState<PouleInfo[]>([]);
+  const [selectedRonde, setSelectedRonde] = useState<number>(1);
   const [selectedPoule, setSelectedPoule] = useState<number | null>(null);
   const [uitslagen, setUitslagen] = useState<UitslagItem[]>([]);
   const [spelers, setSpelers] = useState<SpelerInfo[]>([]);
@@ -74,7 +76,7 @@ function PlanningContent({
   const spelersMap = new Map(spelers.map((s) => [s.sp_nummer, s.sp_naam]));
   const getNaam = (nr: number) => spelersMap.get(nr) ?? `Speler ${nr}`;
 
-  // Load competition + poules
+  // Load competition + spelers (once)
   useEffect(() => {
     if (!orgNummer || isNaN(compNr)) return;
 
@@ -90,24 +92,14 @@ function PlanningContent({
         }
         const compData = await compRes.json();
         setCompetition(compData);
-
-        const ronde = compData.t_ronde ?? compData.periode ?? 1;
-        const [poulesRes, spelersRes] = await Promise.all([
-          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=${ronde}`),
-          fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`),
-        ]);
-
-        if (poulesRes.ok) {
-          const { poules: p } = await poulesRes.json();
-          setPoules(p || []);
-          const wantedPoule = pouleFromUrl ? parseInt(pouleFromUrl, 10) : null;
-          if (wantedPoule !== null && !Number.isNaN(wantedPoule)) setSelectedPoule(wantedPoule);
-          else if (p?.length === 1) setSelectedPoule(p[0].poule_nr);
+        if (compData.t_ronde != null || compData.periode != null) {
+          setSelectedRonde(Number(compData.t_ronde ?? compData.periode) || 1);
         }
 
+        const spelersRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/players`);
         if (spelersRes.ok) {
-          const { players } = await spelersRes.json();
-          setSpelers((players || []).map((pl: { sp_nummer: number; sp_naam: string }) => ({
+          const data = await spelersRes.json();
+          setSpelers((data.players || []).map((pl: { sp_nummer: number; sp_naam: string }) => ({
             sp_nummer: pl.sp_nummer,
             sp_naam: pl.sp_naam ?? '',
           })));
@@ -120,22 +112,55 @@ function PlanningContent({
     };
 
     load();
-  }, [orgNummer, compNr, pouleFromUrl]);
+  }, [orgNummer, compNr]);
 
-  // Load uitslagen when poule is selected
+  // Sync selectedRonde when competition loads (default to current round)
+  useEffect(() => {
+    if (competition) {
+      const r = Number(competition.t_ronde ?? competition.periode) || 1;
+      setSelectedRonde((prev) => (prev > r ? r : prev));
+    }
+  }, [competition]);
+
+  // Load poules for selected round
+  useEffect(() => {
+    if (!orgNummer || isNaN(compNr) || !competition) return;
+
+    const loadPoules = async () => {
+      try {
+        const poulesRes = await fetch(
+          `/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=${selectedRonde}`
+        );
+        if (poulesRes.ok) {
+          const { poules: p } = await poulesRes.json();
+          setPoules(p || []);
+          const wantedPoule = pouleFromUrl ? parseInt(pouleFromUrl, 10) : null;
+          if (wantedPoule !== null && !Number.isNaN(wantedPoule)) setSelectedPoule(wantedPoule);
+          else if (p?.length === 1) setSelectedPoule(p[0].poule_nr);
+        } else {
+          setPoules([]);
+        }
+      } catch {
+        setPoules([]);
+      }
+    };
+
+    loadPoules();
+  }, [orgNummer, compNr, selectedRonde, competition, pouleFromUrl]);
+
+  // Load uitslagen when poule + round selected
   useEffect(() => {
     if (!orgNummer || isNaN(compNr) || selectedPoule === null || !competition) return;
 
-    const ronde = competition.t_ronde ?? competition.periode ?? 1;
     setIsLoadingUitslagen(true);
     fetch(
-      `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${ronde}&poule_nr=${selectedPoule}`
+      `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${selectedRonde}&poule_nr=${selectedPoule}`
     )
       .then((r) => r.json())
       .then((data) => setUitslagen(data.uitslagen || []))
       .catch(() => setUitslagen([]))
       .finally(() => setIsLoadingUitslagen(false));
-  }, [orgNummer, compNr, selectedPoule, competition]);
+  }, [orgNummer, compNr, selectedPoule, selectedRonde, competition]);
 
   if (isLoading || !competition) {
     return (
@@ -156,10 +181,10 @@ function PlanningContent({
     );
   }
 
-  const compNaam = competition.comp_naam ?? '';
-  const ronde = competition.t_ronde ?? competition.periode ?? 1;
-  const isTestToernooi = String(compNaam).trim().toUpperCase().startsWith('TEST_');
-  const canShowTestGenerate = isTestToernooi && isSuperAdmin && selectedPoule !== null && uitslagen.length > 0;
+  const compNaam = (competition.comp_naam ?? competition.t_naam ?? '').trim();
+  const ronde = selectedRonde;
+  const isTestToernooi = compNaam.toUpperCase().startsWith('TEST_');
+  const canShowTestGenerate = isTestToernooi && isSuperAdmin && selectedPoule !== null;
 
   const handleTestGenerateUitslagen = async () => {
     if (!orgNummer || selectedPoule === null) return;
@@ -178,14 +203,11 @@ function PlanningContent({
       const data = await res.json();
       if (res.ok) {
         setTestGenerateSuccess(data.message ?? 'Testuitslagen gegenereerd.');
-        if (competition) {
-          const r = competition.t_ronde ?? competition.periode ?? 1;
-          const uRes = await fetch(
-            `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${r}&poule_nr=${selectedPoule}`
-          );
-          const uData = await uRes.json();
-          setUitslagen(uData.uitslagen || []);
-        }
+        const uRes = await fetch(
+          `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${ronde}&poule_nr=${selectedPoule}`
+        );
+        const uData = await uRes.json();
+        setUitslagen(uData.uitslagen || []);
         setTimeout(() => setTestGenerateSuccess(''), 4000);
       } else {
         setError(data.error ?? 'Fout bij genereren.');
@@ -199,14 +221,35 @@ function PlanningContent({
 
   return (
     <div>
-      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={ronde} />
+      <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={huidigeRonde} />
 
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Planning – {compNaam}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-          {compNaam} | Ronde {ronde}
+          {compNaam} | Huidige toernooironde: <strong>Ronde {huidigeRonde}</strong>
+        </p>
+        <div className="flex flex-wrap items-center gap-3 mt-2">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Bekijk ronde:</span>
+          <div className="flex flex-wrap gap-1">
+            {Array.from({ length: Math.max(huidigeRonde, 1) }, (_, i) => i + 1).map((r) => (
+              <button
+                key={r}
+                onClick={() => setSelectedRonde(r)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                  selectedRonde === r
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                }`}
+              >
+                Ronde {r}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Je kunt elke ronde (1 t/m {huidigeRonde}) bekijken en beheren. Testuitslagen genereren kan voor elke ronde.
         </p>
       </div>
 
@@ -233,7 +276,7 @@ function PlanningContent({
             </div>
             {poules.length === 0 && (
               <p className="text-slate-500 dark:text-slate-400">
-                Geen poules gevonden voor ronde {ronde}. Start het toernooi eerst.
+                Geen poules gevonden voor ronde {selectedRonde}. {selectedRonde === 1 ? 'Start het toernooi eerst.' : 'Maak eerst deze ronde aan.'}
               </p>
             )}
           </div>
@@ -241,7 +284,8 @@ function PlanningContent({
           <div className="p-4">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                Planning poule {selectedPoule} in ronde {ronde}
+                Planning poule {selectedPoule} – Ronde {selectedRonde}
+                {selectedRonde === huidigeRonde && ' (huidige ronde)'}
               </h2>
               <div className="flex items-center gap-2">
                 {canShowTestGenerate && (
@@ -283,10 +327,13 @@ function PlanningContent({
               </div>
             ) : (
               <div className="overflow-x-auto">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                  Alle {uitslagen.length} partijen voor poule {selectedPoule} in ronde {selectedRonde}. Round Robin: iedereen speelt tegen iedereen.
+                </p>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Ronde</th>
+                      <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">#</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Koppel</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Invoer</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Wijzig</th>
@@ -298,12 +345,12 @@ function PlanningContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {uitslagen.map((u) => (
+                    {uitslagen.map((u, idx) => (
                       <tr
                         key={u.id}
                         className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
-                        <td className="py-2 px-2 font-medium">{u.p_ronde}</td>
+                        <td className="py-2 px-2 font-medium text-slate-500 dark:text-slate-400">{idx + 1}</td>
                         <td className="py-2 px-2">{u.koppel}</td>
                         <td className="py-2 px-2">
                           {u.gespeeld === 0 ? (

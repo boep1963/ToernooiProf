@@ -71,6 +71,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const huidigeRonde = Number(compData.t_ronde ?? compData.periode) || 1;
+    if (rondeNr < 1 || rondeNr > huidigeRonde) {
+      return NextResponse.json(
+        { error: `Testuitslagen kunnen alleen voor bestaande rondes (1 t/m ${huidigeRonde}) gegenereerd worden.` },
+        { status: 400 }
+      );
+    }
+
     let snapshot;
     if (body.poule_nr != null && body.poule_nr > 0) {
       snapshot = await db.collection('uitslagen')

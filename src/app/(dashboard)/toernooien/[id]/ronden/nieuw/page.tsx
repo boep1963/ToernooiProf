@@ -43,27 +43,43 @@ export default function NieuweRondePage({
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
+  const [sourcePoulesOrder, setSourcePoulesOrder] = useState<{ poule_nr: number }[]>([]);
   const [sourceRound, setSourceRound] = useState(0);
   const [targetRound, setTargetRound] = useState(0);
   const [selectedSourcePoule, setSelectedSourcePoule] = useState<number | null>(null);
   const [playedMoyByPlayer, setPlayedMoyByPlayer] = useState<Record<number, number>>({});
+  const [standingsOrderByPoule, setStandingsOrderByPoule] = useState<Record<number, number[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
 
-  const sourcePoules = useMemo(
-    () => Array.from(new Set(draftItems.map((it) => Number(it.from_poule) || 0).filter((nr) => nr > 0))).sort((a, b) => a - b),
-    [draftItems]
-  );
+  const sourcePoules = useMemo(() => {
+    const fromDraft = new Set(draftItems.map((it) => Number(it.from_poule) || 0).filter((nr) => nr > 0));
+    if (sourcePoulesOrder.length > 0) {
+      return sourcePoulesOrder
+        .map((p) => p.poule_nr)
+        .filter((nr) => fromDraft.has(nr));
+    }
+    return Array.from(fromDraft).sort((a, b) => a - b);
+  }, [draftItems, sourcePoulesOrder]);
 
   const visibleItems = useMemo(() => {
     if (!selectedSourcePoule) return [];
-    return draftItems
-      .filter((it) => it.from_poule === selectedSourcePoule)
-      .sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0));
-  }, [draftItems, selectedSourcePoule]);
+    const filtered = draftItems.filter((it) => it.from_poule === selectedSourcePoule);
+    const standOrder = standingsOrderByPoule[selectedSourcePoule];
+    if (standOrder && standOrder.length > 0) {
+      const rankBySp = new Map<number, number>();
+      standOrder.forEach((spNr, idx) => rankBySp.set(spNr, idx));
+      return filtered.sort((a, b) => {
+        const ra = rankBySp.get(a.sp_nummer) ?? 9999;
+        const rb = rankBySp.get(b.sp_nummer) ?? 9999;
+        return ra - rb;
+      });
+    }
+    return filtered.sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0));
+  }, [draftItems, selectedSourcePoule, standingsOrderByPoule]);
 
   const groupedTargetOverview = useMemo(() => {
     const map = new Map<number, DraftItem[]>();
@@ -102,6 +118,16 @@ export default function NieuweRondePage({
         ? Math.min(...items.map((it) => Number(it.from_poule) || 1))
         : null;
       setSelectedSourcePoule(firstSourcePoule);
+
+      const ronde = Number(draftData.source_ronde) || compData.t_ronde || 1;
+      const poulesRes = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=${ronde}`);
+      if (poulesRes.ok) {
+        const poulesData = await poulesRes.json();
+        const poules = Array.isArray(poulesData.poules) ? poulesData.poules : [];
+        setSourcePoulesOrder(poules.map((p: { poule_nr: number }) => ({ poule_nr: p.poule_nr })));
+      } else {
+        setSourcePoulesOrder([]);
+      }
     } catch (err) {
       console.error('Error loading new-round draft:', err);
       setError(err instanceof Error ? err.message : 'Fout bij ophalen gegevens');
@@ -120,11 +146,16 @@ export default function NieuweRondePage({
       if (!res.ok) return;
       const map: Record<number, number> = {};
       const standings = Array.isArray(data.standings) ? data.standings : [];
+      const order: number[] = [];
       standings.forEach((s: Record<string, unknown>) => {
         const nr = Number(s.playerNr) || 0;
-        if (nr > 0) map[nr] = Number(s.moyenne) || 0;
+        if (nr > 0) {
+          map[nr] = Number(s.moyenne) || 0;
+          order.push(nr);
+        }
       });
       setPlayedMoyByPlayer(map);
+      setStandingsOrderByPoule((prev) => ({ ...prev, [selectedSourcePoule]: order }));
     } catch {
       // Non-fatal: keep table usable without played moyenne.
     }
@@ -271,6 +302,9 @@ export default function NieuweRondePage({
         <div className="xl:col-span-2 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200">
             Doorkoppelen vanuit poule {selectedSourcePoule ?? '-'}
+            <span className="block text-xs font-normal text-slate-500 dark:text-slate-400 mt-0.5">
+              Volgorde = eindstand bronronde (zoals in Stand)
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
