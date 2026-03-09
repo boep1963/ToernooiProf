@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { navigateTo } from '@/lib/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -129,7 +130,7 @@ export default function BackupsPage() {
       );
 
       // Reload the page to reflect restored data
-      window.location.href = '/dashboard';
+      navigateTo('/dashboard');
     } catch (err) {
       console.error('Restore failed:', err);
       setRestoreProgress('');

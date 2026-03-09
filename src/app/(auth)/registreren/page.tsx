@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
+import { navigateTo } from '@/lib/navigation';
 
 export default function RegisterPage() {
   const [orgNaam, setOrgNaam] = useState('');
@@ -56,7 +57,7 @@ export default function RegisterPage() {
 
       if (res.ok) {
         // Redirect to verification page with email
-        window.location.href = `/verificatie?email=${encodeURIComponent(email.trim())}`;
+        navigateTo(`/verificatie?email=${encodeURIComponent(email.trim())}`);
         return;
       } else {
         if (data.errors && Array.isArray(data.errors)) {

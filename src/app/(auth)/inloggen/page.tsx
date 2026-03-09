@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import logo from '../../../../public/ToernooiProf.png';
+import { navigateTo } from '@/lib/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -50,7 +51,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        window.location.href = '/dashboard';
+        navigateTo('/dashboard');
       } else {
         const data = await res.json();
         setError(data.error || 'Onjuiste inloggegevens.');
@@ -87,7 +88,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        window.location.href = '/dashboard';
+        navigateTo('/dashboard');
       } else {
         const data = await res.json();
         setError(data.error || 'Onjuiste inloggegevens.');

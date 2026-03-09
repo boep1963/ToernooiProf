@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import { navigateTo } from '@/lib/navigation';
 
 function VerificationPageContent() {
   const searchParams = useSearchParams();
@@ -78,7 +79,7 @@ function VerificationPageContent() {
         if (data.already_verified) {
           // Already verified - redirect to login after a short delay
           setTimeout(() => {
-            window.location.href = '/inloggen';
+            navigateTo('/inloggen');
           }, 2000);
         }
       }
