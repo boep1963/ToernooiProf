@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import logo from '../../../../public/ToernooiProf.png';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -128,7 +129,7 @@ export default function LoginPage() {
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Image
-              src="/ToernooiProf.png"
+              src={logo}
               alt="ToernooiProf"
               width={140}
               height={140}

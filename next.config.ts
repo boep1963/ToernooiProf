@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  serverActions: {
+    allowedOrigins: ['biljart.club', 'toernooiprof.biljart.club', 'toernooiprof.specialsoftware.nl'],
+  },
   // Geen GET / 200 etc. in de terminal tijdens dev (blijft wel werken)
   logging: {
     incomingRequests: false,
