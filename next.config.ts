@@ -11,6 +11,7 @@ const appVersion = packageJson.version ?? "0.0.0";
 const projectRoot = __dirname;
 
 const nextConfig: NextConfig = {
+  basePath: '/toernooiprof',
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
   },
