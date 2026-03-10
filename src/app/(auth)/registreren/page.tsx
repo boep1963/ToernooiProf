@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import { navigateTo } from '@/lib/navigation';
+import { apiFetch } from '@/lib/api';
 
 export default function RegisterPage() {
   const [orgNaam, setOrgNaam] = useState('');
@@ -42,7 +44,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,9 +209,9 @@ export default function RegisterPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
+            <Link href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Al een account? Inloggen
-            </a>
+            </Link>
           </div>
         </div>
       </div>

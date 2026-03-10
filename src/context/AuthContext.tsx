@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import type { Organization } from '@/types';
+import { apiFetch } from '@/lib/api';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
+        const res = await apiFetch('/api/auth/session', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setState({
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (orgNummer: number) => {
     try {
-      const res = await fetch(`/api/organizations/${orgNummer}`);
+      const res = await apiFetch(`/api/organizations/${orgNummer}`);
       if (res.ok) {
         const organization = await res.json();
         setState({
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await apiFetch('/api/auth/logout', { method: 'POST' });
     } catch {
       // Continue with local logout even if API fails
     }
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const currentOrgNr = orgNummerRef.current;
     if (!currentOrgNr) return;
     try {
-      const res = await fetch(`/api/organizations/${currentOrgNr}`);
+      const res = await apiFetch(`/api/organizations/${currentOrgNr}`);
       if (res.ok) {
         const organization = await res.json();
         setState((prev) => (prev.orgNummer === currentOrgNr ? { ...prev, organization } : prev));

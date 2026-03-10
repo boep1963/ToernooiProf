@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
 import { navigateTo } from '@/lib/navigation';
+import { apiFetch } from '@/lib/api';
 
 function VerificationPageContent() {
   const searchParams = useSearchParams();
@@ -22,7 +24,7 @@ function VerificationPageContent() {
   // Fetch email from session if not provided in URL params
   useEffect(() => {
     if (!emailParam) {
-      fetch('/api/auth/session')
+      apiFetch('/api/auth/session')
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data?.organization?.org_wl_email) {
@@ -57,7 +59,7 @@ function VerificationPageContent() {
     }
 
     try {
-      const res = await fetch('/api/auth/verify', {
+      const res = await apiFetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,19 +149,19 @@ function VerificationPageContent() {
                 Let op: Noteer uw inlogcode. U heeft deze nodig om in te loggen.
               </p>
 
-              <a
+              <Link
                 href="/dashboard"
                 className="block w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm text-center min-h-[44px] leading-[28px]"
               >
                 Ga naar Dashboard
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="/inloggen"
                 className="block text-sm text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:underline min-h-[44px] leading-[44px]"
               >
                 Naar inlogpagina
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -249,13 +251,13 @@ function VerificationPageContent() {
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            <a href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
+            <Link href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Opnieuw registreren
-            </a>
+            </Link>
             <span className="text-slate-300 dark:text-slate-600 mx-2">|</span>
-            <a href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
+            <Link href="/inloggen" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Inloggen
-            </a>
+            </Link>
           </div>
         </div>
       </div>

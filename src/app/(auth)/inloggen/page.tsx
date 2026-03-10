@@ -1,19 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import logo from '../../../../public/ToernooiProf.png';
 import { navigateTo } from '@/lib/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Turnstile from 'react-turnstile';
+import { apiFetch } from '@/lib/api';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 const SHOW_EMAIL_LOGIN = false; // Later mogelijk weer inschakelen
 
+/** BasePath uit huidige URL (usePathname geeft path zónder basePath, dus gebruiken we location). */
+function useBasePath(): string {
+  const [basePath, setBasePath] = useState('');
+  useEffect(() => {
+    const p = typeof window !== 'undefined' ? window.location.pathname : '';
+    const parts = p.split('/').filter(Boolean);
+    setBasePath(parts.length ? '/' + parts[0] : '');
+  }, []);
+  return basePath;
+}
+
 export default function LoginPage() {
+  const basePath = useBasePath();
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
   const [loginCode, setLoginCode] = useState('');
   const [email, setEmail] = useState('');
@@ -41,7 +55,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login-code', {
+      const res = await apiFetch('/api/auth/login-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,7 +92,7 @@ export default function LoginPage() {
       const idToken = await userCredential.user.getIdToken();
 
       // Step 3: Send the ID token to our backend for verification and session creation
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -304,9 +318,9 @@ export default function LoginPage() {
           )}
 
           <div className="mt-6 text-center">
-            <a href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
+            <Link href={basePath ? `${basePath}/registreren` : '/registreren'} className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Nog geen account? Registreer hier
-            </a>
+            </Link>
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400 dark:text-slate-500" suppressHydrationWarning>

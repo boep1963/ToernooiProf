@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   basePath: '/toernooiprof',
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
+    NEXT_PUBLIC_BASE_PATH: '/toernooiprof',
   },
   typescript: {
     ignoreBuildErrors: true,
