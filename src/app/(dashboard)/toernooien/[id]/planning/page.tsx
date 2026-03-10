@@ -71,6 +71,7 @@ function PlanningContent({
   const [error, setError] = useState('');
   const [testGenerateLoading, setTestGenerateLoading] = useState(false);
   const [testGenerateSuccess, setTestGenerateSuccess] = useState('');
+  const [naamFilter, setNaamFilter] = useState('');
 
   const huidigeRonde = competition?.t_ronde ?? competition?.periode ?? 1;
   const spelersMap = new Map(spelers.map((s) => [s.sp_nummer, s.sp_naam]));
@@ -327,9 +328,39 @@ function PlanningContent({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Alle {uitslagen.length} partijen voor poule {selectedPoule} in ronde {selectedRonde}. Round Robin: iedereen speelt tegen iedereen.
-                </p>
+                {(() => {
+                  const q = naamFilter.trim().toLowerCase();
+                  const filtered = q
+                    ? uitslagen.filter(
+                        (u) =>
+                          getNaam(u.sp_nummer_1).toLowerCase().includes(q) ||
+                          getNaam(u.sp_nummer_2).toLowerCase().includes(q)
+                      )
+                    : uitslagen;
+                  return (
+                    <>
+                      <div className="flex flex-wrap items-center gap-3 mb-3">
+                        <label htmlFor="planning-naam-filter" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Zoek op naam:
+                        </label>
+                        <input
+                          id="planning-naam-filter"
+                          type="search"
+                          placeholder="Filter op Speler A of B..."
+                          value={naamFilter}
+                          onChange={(e) => setNaamFilter(e.target.value)}
+                          className="w-64 max-w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+                          aria-label="Filter partijen op spelersnaam"
+                        />
+                        {q && (
+                          <span className="text-sm text-slate-500 dark:text-slate-400">
+                            {filtered.length} van {uitslagen.length} partijen
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                        {q ? `${filtered.length} partijen` : `Alle ${uitslagen.length} partijen`} voor poule {selectedPoule} in ronde {selectedRonde}. Round Robin: iedereen speelt tegen iedereen.
+                      </p>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700">
@@ -345,7 +376,7 @@ function PlanningContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {uitslagen.map((u, idx) => (
+                    {filtered.map((u, idx) => (
                       <tr
                         key={u.id}
                         className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
@@ -389,6 +420,9 @@ function PlanningContent({
                     ))}
                   </tbody>
                 </table>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
