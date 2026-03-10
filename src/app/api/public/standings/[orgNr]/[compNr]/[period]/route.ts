@@ -148,7 +148,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     });
 
-    const standings = Object.values(statsMap).map((entry, i) => {
+    const standings = Object.values(statsMap).filter(entry => entry.matchesPlayed > 0).map((entry, i) => {
       const percentage = entry.carambolesTeMaken > 0
         ? Math.floor((entry.carambolesGemaakt / entry.carambolesTeMaken) * 100 * 1000) / 1000
         : 0;
