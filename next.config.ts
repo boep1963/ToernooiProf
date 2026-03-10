@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   serverActions: {
-    allowedOrigins: ['biljart.club', 'toernooiprof.biljart.club', 'toernooiprof.specialsoftware.nl'],
+    allowedOrigins: ['biljart.club', 'biljart.app', 'toernooiprof.biljart.club', 'toernooiprof.biljart.app', 'toernooiprof.specialsoftware.nl'],
   },
   // Geen GET / 200 etc. in de terminal tijdens dev (blijft wel werken)
   logging: {
