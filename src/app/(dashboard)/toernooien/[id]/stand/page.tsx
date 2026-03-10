@@ -79,6 +79,8 @@ export default function ToernooiStandPage({
   const [standings, setStandings] = useState<StandingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
+  const [errorIndexLink, setErrorIndexLink] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<number>(1);
   const [poules, setPoules] = useState<any[]>([]);
   // Initialiseer poule uit URL direct (voorkomt race: eerste request met geldige poule_nr)
@@ -184,12 +186,11 @@ export default function ToernooiStandPage({
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
     setError('');
+    setErrorDetails('');
+    setErrorIndexLink('');
     try {
-      const url = new URL(`/api/organizations/${orgNummer}/competitions/${compNr}/standings/${period}`, window.location.origin);
-      if (pouleNr) {
-        url.searchParams.set('poule_nr', pouleNr);
-      }
-      const res = await fetch(url.toString());
+      const path = `/api/organizations/${orgNummer}/competitions/${compNr}/standings/${period}${pouleNr ? `?poule_nr=${encodeURIComponent(pouleNr)}` : ''}`;
+      const res = await fetch(path);
       if (res.ok) {
         const data = await res.json();
         const standingsData = data.standings || [];
@@ -209,8 +210,20 @@ export default function ToernooiStandPage({
 
         setStandings(standingsWithPercentage);
       } else {
-        const data = await res.json();
-        setError(data.error || 'Fout bij laden stand.');
+        let errorMessage = 'Fout bij laden stand.';
+        let details = '';
+        let indexLink = '';
+        try {
+          const data = await res.json();
+          if (data.error) errorMessage = data.error;
+          if (data.details) details = data.details;
+          if (data.indexLink) indexLink = data.indexLink;
+        } catch {
+          details = `HTTP ${res.status}`;
+        }
+        setError(errorMessage);
+        setErrorDetails(details);
+        setErrorIndexLink(indexLink);
       }
     } catch {
       setError('Er is een fout opgetreden bij het laden.');
@@ -367,12 +380,20 @@ export default function ToernooiStandPage({
 
       {error && (
         <div role="alert" className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
-          <span>{error}</span>
-          <div className="flex items-center gap-2 ml-3">
+          <div className="flex flex-col gap-1 min-w-0">
+            <span>{error}</span>
+            {errorDetails && <span className="text-xs opacity-90">{errorDetails}</span>}
+            {errorIndexLink && (
+              <a href={errorIndexLink} target="_blank" rel="noopener noreferrer" className="text-xs underline break-all">
+                Index in Firestore aanmaken
+              </a>
+            )}
+          </div>
+          <div className="flex items-center gap-2 ml-3 flex-shrink-0">
             <button onClick={() => selectedPouleNr && fetchStandings(selectedPeriod, selectedPouleNr)} className="text-xs px-2.5 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 text-red-700 dark:text-red-300 rounded-md transition-colors font-medium flex-shrink-0">
               Opnieuw proberen
             </button>
-            <button onClick={() => setError('')} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
+            <button onClick={() => { setError(''); setErrorDetails(''); setErrorIndexLink(''); }} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors flex-shrink-0" aria-label="Melding sluiten">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>

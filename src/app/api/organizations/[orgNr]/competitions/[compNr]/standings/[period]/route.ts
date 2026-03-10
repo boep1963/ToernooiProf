@@ -45,15 +45,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     console.log(`[STANDINGS] org=${orgNummer} comp=${compNumber} ronde=${rondeNr} poule=${pouleNr ?? 'alle'}`);
 
-    // Fetch tournament for metadata
-    const compSnap = await db.collection('toernooien')
+    // Fetch tournament for metadata (zelfde zoeklogica als GET /competitions/[compNr])
+    let compSnap = await db.collection('toernooien')
       .where('org_nummer', '==', orgNummer)
       .where('t_nummer', '==', compNumber)
       .limit(1)
       .get();
+    if (compSnap.empty) {
+      compSnap = await db.collection('toernooien')
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
+        .limit(1)
+        .get();
+    }
+    if (compSnap.empty) {
+      compSnap = await db.collection('toernooien')
+        .where('gebruiker_nr', '==', orgNummer)
+        .where('t_nummer', '==', compNumber)
+        .limit(1)
+        .get();
+    }
 
     if (compSnap.empty) {
-      return NextResponse.json({ error: 'Toernooi niet gevonden' }, { status: 404 });
+      return NextResponse.json({ error: 'Toernooi niet gevonden', details: 'Geen toernooi met org_nummer/gebruiker_nr en t_nummer/comp_nr.' }, { status: 404 });
     }
 
     const compData = compSnap.docs[0].data();
@@ -251,8 +265,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return cachedJsonResponse(responseData, 'default');
   } catch (error) {
     console.error('[STANDINGS] Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown';
+    // Firestore index errors often contain a URL to create the index
+    const indexLinkMatch = typeof message === 'string' && message.match(/https:\/\/console\.firebase\.google\.com[^\s)]+/);
+    const indexLink = indexLinkMatch ? indexLinkMatch[0] : undefined;
     return NextResponse.json(
-      { error: 'Fout bij berekenen stand', details: error instanceof Error ? error.message : 'Unknown' },
+      { error: 'Fout bij berekenen stand', details: message, ...(indexLink && { indexLink }) },
       { status: 500 }
     );
   }
