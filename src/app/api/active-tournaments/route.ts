@@ -41,6 +41,16 @@ export async function GET() {
       playerCounts.set(key, (playerCounts.get(key) ?? 0) + 1);
     }
 
+    // Check welke toernooien gespeelde wedstrijden hebben
+    const hasResults = new Set<string>();
+    const uitslagenSnapshot = await db.collection('uitslagen')
+      .where('gespeeld', '==', 1)
+      .get();
+    for (const doc of uitslagenSnapshot.docs) {
+      const data = doc.data();
+      hasResults.add(`${data.gebruiker_nr}_${data.t_nummer}`);
+    }
+
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
     const tournaments = snapshot.docs
@@ -72,7 +82,9 @@ export async function GET() {
         if (t.openbaar === 0) return false;
         // Alleen toernooien die vandaag lopen (datum_start <= vandaag <= datum_eind)
         if (!t.datum_start || !t.datum_eind) return false;
-        return t.datum_start <= today && t.datum_eind >= today;
+        if (t.datum_start > today || t.datum_eind < today) return false;
+        // Alleen toernooien met gespeelde wedstrijden
+        return hasResults.has(`${t.gebruiker_nr}_${t.t_nummer}`);
       });
 
     console.log(`[ACTIVE-TOURNAMENTS] Returning ${tournaments.length} active tournaments (filtered on date: ${today})`);
