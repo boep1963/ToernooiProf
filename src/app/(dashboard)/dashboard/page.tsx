@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { apiFetch } from '@/lib/api';
 
 export default function DashboardPage() {
   const { organization, orgNummer } = useAuth();
@@ -18,7 +19,7 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       setStatsLoading(true);
       try {
-        const compsRes = await fetch(`/api/organizations/${orgNummer}/competitions`);
+        const compsRes = await apiFetch(`/api/organizations/${orgNummer}/competitions`);
         if (compsRes.ok) {
           const comps = await compsRes.json();
           // Competitions API returns raw array
@@ -59,9 +60,9 @@ export default function DashboardPage() {
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Toernooien
               </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {statsLoading ? <Skeleton className="h-8 w-12 inline-block" /> : competitionCount}
-              </p>
+              </div>
             </div>
             <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
               <svg

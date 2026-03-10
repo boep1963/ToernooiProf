@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
-import { navigateTo } from '@/lib/navigation';
 import { apiFetch } from '@/lib/api';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [orgNaam, setOrgNaam] = useState('');
   const [contactPersoon, setContactPersoon] = useState('');
   const [email, setEmail] = useState('');
@@ -55,18 +56,24 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await res.json();
+      const isSuccess = res.ok;
+      let data: { errors?: string[]; error?: string } = {};
+      try {
+        const text = await res.text();
+        if (text) data = JSON.parse(text);
+      } catch {
+        // geen JSON body
+      }
 
-      if (res.ok) {
-        // Redirect to verification page with email
-        navigateTo(`/verificatie?email=${encodeURIComponent(email.trim())}`);
+      if (isSuccess) {
+        router.push(`/verificatie?email=${encodeURIComponent(email.trim())}`);
         return;
+      }
+
+      if (data.errors && Array.isArray(data.errors)) {
+        setFieldErrors(data.errors);
       } else {
-        if (data.errors && Array.isArray(data.errors)) {
-          setFieldErrors(data.errors);
-        } else {
-          setError(data.error || 'Er is een fout opgetreden bij het registreren.');
-        }
+        setError(data.error || 'Er is een fout opgetreden bij het registreren.');
       }
     } catch {
       setError('Er is een fout opgetreden. Probeer het later opnieuw.');

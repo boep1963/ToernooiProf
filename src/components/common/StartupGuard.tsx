@@ -1,6 +1,5 @@
 'use client';
 
-import '@/lib/patchFetch';
 import { useEffect, useState, useRef } from 'react';
 import LoadingScreen from './LoadingScreen';
 import { checkDatabaseConnection } from '@/app/actions/health-check';

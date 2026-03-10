@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import ChunkLoadHandler from '@/components/ChunkLoadHandler';
+import FetchPatchLoader from '@/components/FetchPatchLoader';
 
 export const metadata: Metadata = {
   title: 'ToernooiProf',
@@ -22,6 +23,7 @@ export default function RootLayout({
           }}
         />
         <ChunkLoadHandler />
+        <FetchPatchLoader />
         {children}
       </body>
     </html>

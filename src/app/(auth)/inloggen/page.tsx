@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import logo from '../../../../public/ToernooiProf.png';
@@ -15,19 +15,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 const SHOW_EMAIL_LOGIN = false; // Later mogelijk weer inschakelen
 
-/** BasePath uit huidige URL (usePathname geeft path zónder basePath, dus gebruiken we location). */
-function useBasePath(): string {
-  const [basePath, setBasePath] = useState('');
-  useEffect(() => {
-    const p = typeof window !== 'undefined' ? window.location.pathname : '';
-    const parts = p.split('/').filter(Boolean);
-    setBasePath(parts.length ? '/' + parts[0] : '');
-  }, []);
-  return basePath;
-}
-
 export default function LoginPage() {
-  const basePath = useBasePath();
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
   const [loginCode, setLoginCode] = useState('');
   const [email, setEmail] = useState('');
@@ -318,7 +306,7 @@ export default function LoginPage() {
           )}
 
           <div className="mt-6 text-center">
-            <Link href={basePath ? `${basePath}/registreren` : '/registreren'} className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
+            <Link href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Nog geen account? Registreer hier
             </Link>
           </div>
