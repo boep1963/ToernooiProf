@@ -50,10 +50,11 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[ORG] Creating new organization in database:', orgNummer);
-    const docRef = await db.collection('organizations').add(orgData);
+    const orgId = String(orgNummer);
+    await db.collection('organizations').doc(orgId).set(orgData);
 
     return NextResponse.json({
-      id: docRef.id,
+      id: orgId,
       ...orgData,
       message: 'Organisatie succesvol aangemaakt',
     }, { status: 201 });

@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[REGISTER] Creating new organization:', nextOrgNummer);
-    await db.collection('organizations').add(orgData);
+    await db.collection('organizations').doc(String(nextOrgNummer)).set(orgData);
 
     // Also create table records (matching PHP behavior)
     for (let t = 1; t <= tafels; t++) {

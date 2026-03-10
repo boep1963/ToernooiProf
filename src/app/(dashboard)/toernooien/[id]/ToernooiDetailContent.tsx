@@ -7,6 +7,7 @@ import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS, CAR_SYSTEMEN } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { setLastOpenedTournament } from '@/lib/lastOpenedTournament';
 
 interface TournamentData {
   id: string;
@@ -84,6 +85,12 @@ export default function ToernooiDetailContent({ id }: { id: string }) {
   }, [orgNummer, compNr]);
 
   useEffect(() => { fetchTournament(); }, [fetchTournament]);
+
+  useEffect(() => {
+    if (orgNummer && tournament) {
+      setLastOpenedTournament(orgNummer, compNr);
+    }
+  }, [orgNummer, compNr, tournament]);
 
   if (isLoading) {
     return (

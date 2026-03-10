@@ -178,12 +178,10 @@ function InvoerContent({
     <div className="max-w-xl space-y-4">
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <label className="block text-slate-600 dark:text-slate-400 mb-1">Speler A (te maken: {uitslag.sp1_car_tem})</label>
-          <p className="font-medium">{uitslag.sp_naam_1}</p>
+          <p className="font-medium text-slate-900 dark:text-white">{uitslag.sp_naam_1} ({uitslag.sp1_car_tem})</p>
         </div>
         <div>
-          <label className="block text-slate-600 dark:text-slate-400 mb-1">Speler B (te maken: {uitslag.sp2_car_tem})</label>
-          <p className="font-medium">{uitslag.sp_naam_2}</p>
+          <p className="font-medium text-slate-900 dark:text-white">{uitslag.sp_naam_2} ({uitslag.sp2_car_tem})</p>
         </div>
       </div>
 
@@ -191,12 +189,12 @@ function InvoerContent({
         <form onSubmit={handleCheck} className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 mb-1">Car gemaakt A</label>
+              <label className="block text-slate-600 dark:text-slate-400 mb-1">Car gemaakt</label>
               <input type="number" min={0} value={car1} onChange={(e) => setCar1(e.target.value)} required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800" />
             </div>
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 mb-1">Car gemaakt B</label>
+              <label className="block text-slate-600 dark:text-slate-400 mb-1">Car gemaakt</label>
               <input type="number" min={0} value={car2} onChange={(e) => setCar2(e.target.value)} required
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800" />
             </div>
@@ -207,12 +205,12 @@ function InvoerContent({
             </div>
             <div />
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 mb-1">Hoogste serie A</label>
+              <label className="block text-slate-600 dark:text-slate-400 mb-1">Hoogste serie</label>
               <input type="number" min={0} value={hs1} onChange={(e) => setHs1(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800" />
             </div>
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 mb-1">Hoogste serie B</label>
+              <label className="block text-slate-600 dark:text-slate-400 mb-1">Hoogste serie</label>
               <input type="number" min={0} value={hs2} onChange={(e) => setHs2(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800" />
             </div>
@@ -230,6 +228,12 @@ function InvoerContent({
         </form>
       ) : (
         <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-emerald-800 dark:text-emerald-200">
+            <svg className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">Scorecontroles goedgekeurd</span>
+          </div>
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/60">
             <h3 className="font-semibold mb-3">Controle uitslag</h3>
             <div className="grid grid-cols-3 gap-2 text-sm">

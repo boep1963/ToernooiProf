@@ -1,18 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { apiFetch } from '@/lib/api';
+import { getLastOpenedTournament } from '@/lib/lastOpenedTournament';
+
+interface CompetitionItem {
+  comp_nr: number;
+  comp_naam?: string;
+  t_naam?: string;
+  comp_datum?: string;
+  [key: string]: unknown;
+}
 
 export default function DashboardPage() {
   const { organization, orgNummer } = useAuth();
 
-  // Stats state
-  const [competitionCount, setCompetitionCount] = useState<number>(0);
+  const [competitions, setCompetitions] = useState<CompetitionItem[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Fetch stats
   useEffect(() => {
     if (!orgNummer) return;
 
@@ -22,8 +30,7 @@ export default function DashboardPage() {
         const compsRes = await apiFetch(`/api/organizations/${orgNummer}/competitions`);
         if (compsRes.ok) {
           const comps = await compsRes.json();
-          // Competitions API returns raw array
-          setCompetitionCount(Array.isArray(comps) ? comps.length : 0);
+          setCompetitions(Array.isArray(comps) ? comps : []);
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -34,6 +41,13 @@ export default function DashboardPage() {
 
     fetchStats();
   }, [orgNummer]);
+
+  const competitionCount = competitions.length;
+  const lastOpenedCompNr = orgNummer != null ? getLastOpenedTournament(orgNummer) : null;
+  const lastOpenedCompetition =
+    lastOpenedCompNr != null
+      ? competitions.find((c) => Number(c.comp_nr) === lastOpenedCompNr)
+      : null;
 
   return (
     <div>
@@ -53,7 +67,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
           <div className="flex items-center justify-between">
             <div>
@@ -81,6 +95,30 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {lastOpenedCompetition && (
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Laatst geopend toernooi
+                </p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white mt-1 truncate">
+                  {lastOpenedCompetition.comp_naam ?? lastOpenedCompetition.t_naam ?? `Toernooi ${lastOpenedCompetition.comp_nr}`}
+                </p>
+              </div>
+              <Link
+                href={`/toernooien/${lastOpenedCompetition.comp_nr}`}
+                className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg text-sm transition-colors shadow-sm"
+              >
+                Openen
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

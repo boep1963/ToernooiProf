@@ -33,7 +33,7 @@ export async function POST() {
       verified: true,
     };
 
-    await db.collection('organizations').add(orgData);
+    await db.collection('organizations').doc('1205').set(orgData);
 
     return NextResponse.json({
       message: 'Test organization created successfully',
