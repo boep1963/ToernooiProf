@@ -156,7 +156,7 @@ function WijzigContent({
         body: JSON.stringify({ ...payload, action: 'save' }),
       });
       if (res.ok) {
-        router.push(`/toernooien/${compNr}/planning?poule=${poule}`);
+        router.push(`/toernooien/${compNr}/planning?poule=${poule}&ronde=${ronde}`);
       } else {
         const d = await res.json();
         setFormError(d.error || 'Opslaan mislukt.');
@@ -230,7 +230,7 @@ function WijzigContent({
               className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-medium rounded-lg">
               {saving ? 'Controleren...' : 'Controleer'}
             </button>
-            <Link href={`/toernooien/${compNr}/planning?poule=${poule}`} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+            <Link href={`/toernooien/${compNr}/planning?poule=${poule}&ronde=${ronde}`} className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
               Annuleren
             </Link>
           </div>
@@ -286,6 +286,7 @@ export default function UitslagWijzigPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const compNr = parseInt(id, 10);
   const { orgNummer } = useAuthActions();
+  const searchParams = useSearchParams();
   const [comp, setComp] = useState<{ comp_naam: string; t_ronde?: number; periode?: number } | null>(null);
 
   useEffect(() => {
@@ -297,7 +298,12 @@ export default function UitslagWijzigPage({ params }: { params: Promise<{ id: st
   }, [orgNummer, compNr]);
 
   const compNaam = comp?.comp_naam ?? '';
-  const ronde = comp?.t_ronde ?? comp?.periode ?? 1;
+  const rondeParam = searchParams.get('ronde');
+  const rondeFromUrl = rondeParam !== null && rondeParam !== '' ? parseInt(rondeParam, 10) : NaN;
+  const ronde =
+    !Number.isNaN(rondeFromUrl) && rondeFromUrl >= 1
+      ? rondeFromUrl
+      : (comp?.t_ronde ?? comp?.periode ?? 1);
 
   return (
     <div>

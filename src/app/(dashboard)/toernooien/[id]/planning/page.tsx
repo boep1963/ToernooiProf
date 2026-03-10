@@ -59,6 +59,7 @@ function PlanningContent({
   const searchParams = useSearchParams();
   const compNr = parseInt(id, 10);
   const pouleFromUrl = searchParams.get('poule');
+  const rondeFromUrlParam = searchParams.get('ronde');
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
   const [poules, setPoules] = useState<PouleInfo[]>([]);
@@ -115,13 +116,18 @@ function PlanningContent({
     load();
   }, [orgNummer, compNr]);
 
-  // Sync selectedRonde when competition loads (default to current round)
+  // Sync selectedRonde when competition loads or URL has ronde (default to current round)
   useEffect(() => {
     if (competition) {
-      const r = Number(competition.t_ronde ?? competition.periode) || 1;
-      setSelectedRonde((prev) => (prev > r ? r : prev));
+      const maxR = Number(competition.t_ronde ?? competition.periode) || 1;
+      const urlR = rondeFromUrlParam !== null && rondeFromUrlParam !== '' ? parseInt(rondeFromUrlParam, 10) : NaN;
+      if (!Number.isNaN(urlR) && urlR >= 1 && urlR <= maxR) {
+        setSelectedRonde(urlR);
+      } else {
+        setSelectedRonde((prev) => (prev > maxR ? maxR : prev));
+      }
     }
-  }, [competition]);
+  }, [competition, rondeFromUrlParam]);
 
   // Load poules for selected round
   useEffect(() => {
@@ -386,7 +392,7 @@ function PlanningContent({
                         <td className="py-2 px-2">
                           {u.gespeeld === 0 ? (
                             <Link
-                              href={`/toernooien/${compNr}/planning/invoer?poule=${selectedPoule}&code=${u.sp_partcode}`}
+                              href={`/toernooien/${compNr}/planning/invoer?poule=${selectedPoule}&code=${u.sp_partcode}&ronde=${selectedRonde}`}
                               className="inline-block px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded"
                             >
                               Invoer
@@ -398,7 +404,7 @@ function PlanningContent({
                         <td className="py-2 px-2">
                           {u.gespeeld === 1 ? (
                             <Link
-                              href={`/toernooien/${compNr}/planning/wijzig?poule=${selectedPoule}&code=${u.sp_partcode}`}
+                              href={`/toernooien/${compNr}/planning/wijzig?poule=${selectedPoule}&code=${u.sp_partcode}&ronde=${selectedRonde}`}
                               className="inline-block px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded"
                             >
                               Wijzig
