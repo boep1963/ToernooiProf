@@ -70,12 +70,9 @@ export async function GET() {
       .filter(t => {
         // Alleen openbare toernooien tonen
         if (t.openbaar === 0) return false;
-        // Filter op datum: datum_eind moet vandaag of in de toekomst zijn
-        if (t.datum_eind && t.datum_eind >= today) return true;
-        // Als datum_eind ontbreekt, kijk naar datum_start
-        if (!t.datum_eind && t.datum_start && t.datum_start <= today) return true;
-        // Geen bruikbare datums — niet tonen
-        return false;
+        // Alleen toernooien die vandaag lopen (datum_start <= vandaag <= datum_eind)
+        if (!t.datum_start || !t.datum_eind) return false;
+        return t.datum_start <= today && t.datum_eind >= today;
       });
 
     console.log(`[ACTIVE-TOURNAMENTS] Returning ${tournaments.length} active tournaments (filtered on date: ${today})`);
