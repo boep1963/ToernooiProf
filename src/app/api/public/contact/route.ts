@@ -7,7 +7,7 @@ import { validateApiToken } from '@/lib/validateApiToken';
  * POST /api/public/contact
  *
  * Beveiligd met HMAC-token vanuit de landing page.
- * Slaat een contactbericht op in de emailqueue
+ * Slaat een contactbericht op in de email_queue
  * zodat een Cloud Function het kan verzenden.
  */
 export async function POST(request: NextRequest) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
-    await db.collection('emailqueue').add(emailDoc);
+    await db.collection('email_queue').add(emailDoc);
 
     return cachedJsonResponse({ success: true }, 'no-cache');
   } catch (error) {
