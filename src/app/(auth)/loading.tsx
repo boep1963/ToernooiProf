@@ -1,5 +1,4 @@
-import LoadingScreen from '@/components/LoadingScreen';
-
+/** Geen loading-UI; voorkomt dubbele loaders. */
 export default function AuthLoading() {
-  return <LoadingScreen />;
+  return null;
 }

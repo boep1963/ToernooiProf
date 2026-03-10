@@ -2,6 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+/** Alleen data-URLs of absolute URLs zijn bruikbaar als img src; een losse bestandsnaam (bijv. Logo_1106.jpg) zou relatief worden opgelost en 404 geven (bijv. /toernooien/3/Logo_1106.jpg). */
+function isUsableLogoSrc(src: string | null | undefined): boolean {
+  if (!src || !src.trim()) return false;
+  return src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://');
+}
+
 interface OrganizationLogoProps {
   src?: string | null;
   alt: string;
@@ -15,21 +21,22 @@ export default function OrganizationLogo({
   className = '',
   fallbackSrc = '/toernooiprof/ToernooiProf.png',
 }: OrganizationLogoProps) {
-  const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
+  const usableSrc = isUsableLogoSrc(src) ? src : null;
+  const [imgSrc, setImgSrc] = useState<string>(usableSrc || fallbackSrc);
   const [hasError, setHasError] = useState(false);
   const cacheBusterRef = useRef(0);
 
   useEffect(() => {
-    if (src) {
+    if (usableSrc) {
       cacheBusterRef.current += 1;
-      const isDataUrl = src.startsWith('data:');
-      const url = isDataUrl ? src : `${src}${src.includes('?') ? '&' : '?'}_t=${cacheBusterRef.current}`;
+      const isDataUrl = usableSrc.startsWith('data:');
+      const url = isDataUrl ? usableSrc : `${usableSrc}${usableSrc.includes('?') ? '&' : '?'}_t=${cacheBusterRef.current}`;
       setImgSrc(url);
       setHasError(false);
     } else {
       setImgSrc(fallbackSrc);
     }
-  }, [src, fallbackSrc]);
+  }, [usableSrc, fallbackSrc]);
 
   const handleError = () => {
     if (!hasError) {

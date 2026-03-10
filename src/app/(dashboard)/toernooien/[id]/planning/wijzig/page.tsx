@@ -1,9 +1,8 @@
 'use client';
 
 import React, { use, useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { navigateTo } from '@/lib/navigation';
 import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -17,6 +16,7 @@ function WijzigContent({
   compNaam: string;
   ronde: number;
 }) {
+  const router = useRouter();
   const { orgNummer } = useAuthActions();
   const searchParams = useSearchParams();
   const poule = searchParams.get('poule');
@@ -156,7 +156,7 @@ function WijzigContent({
         body: JSON.stringify({ ...payload, action: 'save' }),
       });
       if (res.ok) {
-        navigateTo(`/toernooien/${compNr}/planning?poule=${poule}`);
+        router.push(`/toernooien/${compNr}/planning?poule=${poule}`);
       } else {
         const d = await res.json();
         setFormError(d.error || 'Opslaan mislukt.');

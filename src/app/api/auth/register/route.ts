@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       org_naam: org_naam.trim(),
       org_wl_naam: org_wl_naam.trim(),
       org_wl_email: org_wl_email.trim(),
-      org_logo: `Logo_${nextOrgNummer}.jpg`,
+      org_logo: '',
       aantal_tafels: tafels,
       date_aangemaakt: new Date().toISOString(),
       date_inlog: new Date().toISOString(),

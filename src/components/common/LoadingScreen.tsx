@@ -14,7 +14,7 @@ export default function LoadingScreen() {
         />
       </div>
       <h1 className="text-xl font-semibold text-slate-700 dark:text-slate-200 animate-pulse">
-        App is aan het laden...
+        Even bezig ...
       </h1>
     </div>
   );

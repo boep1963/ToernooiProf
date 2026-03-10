@@ -10,8 +10,6 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import OrganizationLogo from '@/components/common/OrganizationLogo';
 
-import LoadingScreen from '@/components/common/LoadingScreen';
-
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAuthenticated, isLoading, isVerified, organization, logout } = useAuth();
@@ -31,7 +29,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLoading, isVerified, router]);
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return null;
   }
 
   if (!isAuthenticated || !isVerified) {

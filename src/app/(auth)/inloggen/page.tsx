@@ -202,7 +202,7 @@ export default function LoginPage() {
                 <label htmlFor="loginCode"className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Inlogcode
                 </label>
-                <div className="relative">
+                <div className="relative" suppressHydrationWarning>
                   <input
                     id="loginCode"
                     type={showLoginCode ? 'text' : 'password'}
@@ -262,7 +262,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Wachtwoord
                 </label>
-                <div className="relative">
+                <div className="relative" suppressHydrationWarning>
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
