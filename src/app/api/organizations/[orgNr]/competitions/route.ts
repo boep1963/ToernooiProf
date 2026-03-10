@@ -110,8 +110,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       t_moy_form: Number(body.t_moy_form) || 3,
       t_punten_sys: Number(body.t_punten_sys) || 1,
       punten_sys: Number(body.t_punten_sys) || 1, // routing alias
-      t_min_car: Number(body.t_min_car) || 0,
-      min_car: Number(body.t_min_car) || 0, // routing alias
+      t_min_car: Math.min(99, Math.max(10, Number(body.t_min_car) || 0)),
+      min_car: Math.min(99, Math.max(10, Number(body.t_min_car) || 0)), // routing alias
       t_max_beurten: 0,
       max_beurten: 0, // routing alias
       t_gestart: 0,

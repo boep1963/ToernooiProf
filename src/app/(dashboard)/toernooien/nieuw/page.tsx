@@ -26,7 +26,7 @@ export default function NieuwToernooi() {
     t_punten_sys: 1,
     t_car_sys: 1,        // 1=moyenne-formule, 2=vrije invoer
     t_moy_form: 3,
-    t_min_car: 0,
+    t_min_car: 10,
     openbaar: 0,
   });
 
@@ -42,9 +42,13 @@ export default function NieuwToernooi() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const isNumeric = type === 'number' || numericFields.includes(name);
+    let nextValue: string | number = isNumeric ? Number(value) : value;
+    if (name === 't_min_car' && typeof nextValue === 'number') {
+      nextValue = Math.min(99, Math.max(10, nextValue));
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: isNumeric ? Number(value) : value,
+      [name]: nextValue,
     }));
     if (!isDirty) setIsDirty(true);
     if (fieldErrors[name]) {
@@ -248,7 +252,7 @@ export default function NieuwToernooi() {
             {/* Caramboles-systeem */}
             <div>
               <label htmlFor="t_car_sys" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Aantal te maken caramboles
+                Aantal te maken caramboles (kies methode)
               </label>
               <select
                 id="t_car_sys" name="t_car_sys"
@@ -279,20 +283,18 @@ export default function NieuwToernooi() {
             )}
 
             {/* Min caramboles */}
-            {formData.t_car_sys === 1 && (
-              <div>
-                <label htmlFor="t_min_car" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Minimum aantal caramboles
-                </label>
-                <input
-                  id="t_min_car" name="t_min_car" type="number"
-                  min="0" max="99"
-                  value={formData.t_min_car} onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
-                />
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">0 = geen minimum</p>
-              </div>
-            )}
+            <div>
+              <label htmlFor="t_min_car" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Minimum aantal caramboles
+              </label>
+              <input
+                id="t_min_car" name="t_min_car" type="number"
+                min="10" max="99"
+                value={formData.t_min_car} onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">10 t/m 99</p>
+            </div>
           </div>
         </div>
 
