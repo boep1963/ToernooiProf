@@ -270,6 +270,13 @@ export default function ToernooiStandPage({
     }
   }, [selectedPeriod, selectedPouleNr, competition, fetchStandings]);
 
+  // Bij slechts één poule automatisch kiezen
+  useEffect(() => {
+    if (poules.length === 1 && selectedPouleNr !== String(poules[0].poule_nr)) {
+      setSelectedPouleNr(String(poules[0].poule_nr));
+    }
+  }, [poules]);
+
   const handlePeriodChange = async (period: number) => {
     setSelectedPeriod(period);
     setSelectedPouleNr(''); // Reset poule selection when period changes

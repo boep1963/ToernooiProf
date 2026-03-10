@@ -238,8 +238,8 @@ function InvoerContent({
             <h3 className="font-semibold mb-3">Controle uitslag</h3>
             <div className="grid grid-cols-3 gap-2 text-sm">
               <div className="text-slate-500 dark:text-slate-400">Veld</div>
-              <div className="text-slate-500 dark:text-slate-400">{uitslag.sp_naam_1}</div>
-              <div className="text-slate-500 dark:text-slate-400">{uitslag.sp_naam_2}</div>
+              <div className={`font-medium ${preview.sp1_punt > preview.sp2_punt ? 'text-green-600 dark:text-green-400' : preview.sp1_punt < preview.sp2_punt ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>{uitslag.sp_naam_1}</div>
+              <div className={`font-medium ${preview.sp2_punt > preview.sp1_punt ? 'text-green-600 dark:text-green-400' : preview.sp2_punt < preview.sp1_punt ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>{uitslag.sp_naam_2}</div>
               <div>Car te maken</div><div>{preview.sp1_car_tem}</div><div>{preview.sp2_car_tem}</div>
               <div>Car gemaakt</div><div>{preview.sp1_car_gem}</div><div>{preview.sp2_car_gem}</div>
               <div>Hoogste serie</div><div>{preview.sp1_hs}</div><div>{preview.sp2_hs}</div>
