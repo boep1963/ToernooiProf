@@ -376,12 +376,12 @@ function PlanningContent({
                             <span className="text-slate-400">—</span>
                           )}
                         </td>
-                        <td className="py-2 px-2">{getNaam(u.sp_nummer_1)}</td>
+                        <td className={`py-2 px-2 ${u.gespeeld === 1 ? (u.sp1_punt > u.sp2_punt ? 'tp-controle-win' : u.sp1_punt < u.sp2_punt ? 'tp-controle-loss' : 'tp-controle-draw') : ''}`}>{getNaam(u.sp_nummer_1)}</td>
                         <td className="py-2 px-2 text-center">
                           {u.gespeeld === 1 ? u.sp1_car_gem : u.sp1_car_tem}
                         </td>
                         <td className="py-2 px-2 text-center">–</td>
-                        <td className="py-2 px-2">{getNaam(u.sp_nummer_2)}</td>
+                        <td className={`py-2 px-2 ${u.gespeeld === 1 ? (u.sp2_punt > u.sp1_punt ? 'tp-controle-win' : u.sp2_punt < u.sp1_punt ? 'tp-controle-loss' : 'tp-controle-draw') : ''}`}>{getNaam(u.sp_nummer_2)}</td>
                         <td className="py-2 px-2 text-center">
                           {u.gespeeld === 1 ? u.sp2_car_gem : u.sp2_car_tem}
                         </td>
