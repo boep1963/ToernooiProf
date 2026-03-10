@@ -41,31 +41,44 @@ export async function GET() {
       playerCounts.set(key, (playerCounts.get(key) ?? 0) + 1);
     }
 
-    const tournaments = snapshot.docs.map(doc => {
-      const data = doc.data();
-      const gebruikerNr = Number(data.gebruiker_nr);
-      const tNummer = Number(data.t_nummer);
-      const gebruiker = gebruikerNames.get(gebruikerNr);
-      return {
-        id: doc.id,
-        t_naam: String(data.t_naam ?? ''),
-        t_datum: String(data.t_datum ?? ''),
-        datum_start: String(data.datum_start ?? ''),
-        datum_eind: String(data.datum_eind ?? ''),
-        discipline: Number(data.discipline ?? 1),
-        discipline_naam: DISCIPLINES[Number(data.discipline)] ?? 'Onbekend',
-        t_ronde: Number(data.t_ronde ?? 0),
-        openbaar: Number(data.openbaar ?? 0),
-        gebruiker_nr: gebruikerNr,
-        t_nummer: tNummer,
-        organisatie: gebruiker?.naam ?? 'Onbekend',
-        locatie: gebruiker?.locatie ?? '',
-        aantal_spelers: playerCounts.get(`${gebruikerNr}_${tNummer}`) ?? 0,
-        app: 'toernooiprof' as const,
-      };
-    });
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    console.log(`[ACTIVE-TOURNAMENTS] Returning ${tournaments.length} active tournaments`);
+    const tournaments = snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        const gebruikerNr = Number(data.gebruiker_nr);
+        const tNummer = Number(data.t_nummer);
+        const gebruiker = gebruikerNames.get(gebruikerNr);
+        return {
+          id: doc.id,
+          t_naam: String(data.t_naam ?? ''),
+          t_datum: String(data.t_datum ?? ''),
+          datum_start: String(data.datum_start ?? ''),
+          datum_eind: String(data.datum_eind ?? ''),
+          discipline: Number(data.discipline ?? 1),
+          discipline_naam: DISCIPLINES[Number(data.discipline)] ?? 'Onbekend',
+          t_ronde: Number(data.t_ronde ?? 0),
+          openbaar: Number(data.openbaar ?? 0),
+          gebruiker_nr: gebruikerNr,
+          t_nummer: tNummer,
+          organisatie: gebruiker?.naam ?? 'Onbekend',
+          locatie: gebruiker?.locatie ?? '',
+          aantal_spelers: playerCounts.get(`${gebruikerNr}_${tNummer}`) ?? 0,
+          app: 'toernooiprof' as const,
+        };
+      })
+      .filter(t => {
+        // Alleen openbare toernooien tonen
+        if (t.openbaar === 0) return false;
+        // Filter op datum: datum_eind moet vandaag of in de toekomst zijn
+        if (t.datum_eind && t.datum_eind >= today) return true;
+        // Als datum_eind ontbreekt, kijk naar datum_start
+        if (!t.datum_eind && t.datum_start && t.datum_start <= today) return true;
+        // Geen bruikbare datums — niet tonen
+        return false;
+      });
+
+    console.log(`[ACTIVE-TOURNAMENTS] Returning ${tournaments.length} active tournaments (filtered on date: ${today})`);
 
     return cachedJsonResponse({ tournaments }, 'short');
   } catch (error) {
