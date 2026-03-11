@@ -6,7 +6,7 @@ Identiek
 3. Inloggen
 4. Logo uploaden
 5. Starten met Dashboard en menu’s in linker kolom.
-6. Stand opmaken (Punten of %Punten, ook volgorde punten > moy > hs)
+6. Stand opmaken (Punten of %Punten, volgorde: punten/%punten > % caramboles > moy > hs)
 7. Noodknop: In ClubMatch terug naar vorige periode, in ToernooiProf terug naar vorige
 ronde.
 

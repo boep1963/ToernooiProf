@@ -200,6 +200,7 @@ const helpTopics: HelpTopic[] = [
         <ul className="list-disc list-inside ml-2 space-y-2">
           <li>De stand van een gekozen ronde of de totaalstand van alle ronden.</li>
           <li>De stand op basis van punten of op basis van percentage punten.</li>
+          <li>Bij gelijke punten (of gelijk % punten) geldt als volgorde: percentage caramboles, daarna moyenne, daarna hoogste serie.</li>
         </ul>
         <p>
           Na het maken van uw keuze klikt u op &quot;Vernieuw stand&quot; om de stand te genereren.

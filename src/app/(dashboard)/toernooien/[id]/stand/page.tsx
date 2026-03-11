@@ -640,8 +640,8 @@ export default function ToernooiStandPage({
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               {sortByPercentage
-                ? 'Sortering: % punten > moyenne > hoogste serie'
-                : 'Sortering: punten > moyenne > hoogste serie'
+                ? 'Sortering: % punten > % caramboles > moyenne > hoogste serie'
+                : 'Sortering: punten > % caramboles > moyenne > hoogste serie'
               }
             </p>
           </div>
