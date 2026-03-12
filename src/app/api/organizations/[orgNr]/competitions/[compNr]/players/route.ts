@@ -169,7 +169,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       created_at: new Date().toISOString(),
     };
 
-    const docRef = await db.collection('spelers').add(playerData);
+    const docId = `${orgNummer}_${compNumber}_${sp_nummer}`;
+    await db.collection('spelers').doc(docId).set(playerData);
 
     if (pouleNr >= 1 && pouleNr <= 25) {
       const poulesInPoule = await db.collection('poules')
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    return NextResponse.json({ id: docRef.id, ...playerData, message: 'Speler succesvol toegevoegd.' }, { status: 201 });
+    return NextResponse.json({ id: docId, ...playerData, message: 'Speler succesvol toegevoegd.' }, { status: 201 });
   } catch (error) {
     console.error('[SPELERS] Error adding:', error);
     return NextResponse.json(

@@ -121,12 +121,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     };
 
     console.log('[TOERNOOIEN] Creating:', toernooiData.t_naam);
-    const docRef = await db.collection('toernooien').add(toernooiData);
+    const docId = `${orgNummer}_${newTNummer}`;
+    await db.collection('toernooien').doc(docId).set(toernooiData);
 
     return NextResponse.json({
       success: true,
       competition: {
-        id: docRef.id,
+        id: docId,
         ...toernooiData,
       },
     }, { status: 201 });

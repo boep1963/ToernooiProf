@@ -96,12 +96,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       created_at: new Date().toISOString(),
     };
 
+    const docId = `${orgNumber}_${memberData.spa_nummer}`;
     console.log('[MEMBERS] Creating new member in database:', memberData.spa_nummer);
-    const docRef = await db.collection('members').add(memberData);
+    await db.collection('members').doc(docId).set(memberData);
 
-    console.log('[MEMBERS] Member created with doc ID:', docRef.id);
+    console.log('[MEMBERS] Member created with doc ID:', docId);
     return NextResponse.json({
-      id: docRef.id,
+      id: docId,
       ...memberData,
       message: 'Lid succesvol aangemaakt',
     }, { status: 201 });

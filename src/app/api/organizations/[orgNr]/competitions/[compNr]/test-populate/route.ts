@@ -140,7 +140,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         sp_naam = `Test Speler ${sp_nummer}`;
       }
 
-      await db.collection('spelers').add({
+      await db.collection('spelers').doc(`${orgNummer}_${compNumber}_${sp_nummer}`).set({
         gebruiker_nr: orgNummer,
         t_nummer: compNumber,
         sp_nummer,
