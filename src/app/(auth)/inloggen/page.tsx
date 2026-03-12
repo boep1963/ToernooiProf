@@ -306,6 +306,12 @@ export default function LoginPage() {
             </form>
           )}
 
+          <div className="mt-4 text-center">
+            <Link href="/inlogcode-vergeten" className="text-sm text-orange-600 dark:text-orange-400 hover:underline">
+              Inlogcode vergeten?
+            </Link>
+          </div>
+
           <div className="mt-6 text-center">
             <Link href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Nog geen account? Registreer hier

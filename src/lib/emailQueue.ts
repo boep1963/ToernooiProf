@@ -107,3 +107,30 @@ Het ToernooiProf Team
     type: 'verification',
   };
 }
+
+/**
+ * Generate "inlogcode vergeten" email: send login code to the given email.
+ */
+export function generateForgotLoginCodeEmail(
+  recipientEmail: string,
+  orgNaam: string,
+  loginCode: string
+): Omit<EmailQueueDocument, 'status' | 'created_at'> {
+  return {
+    to: recipientEmail,
+    subject: 'ToernooiProf - Uw inlogcode',
+    body: `
+U heeft uw inlogcode opgevraagd voor ToernooiProf.
+
+Organisatie: ${orgNaam}
+
+Uw inlogcode: ${loginCode}
+
+U kunt met deze code inloggen op ToernooiProf.
+
+Met vriendelijke groet,
+Het ToernooiProf Team
+    `.trim(),
+    type: 'notification',
+  };
+}

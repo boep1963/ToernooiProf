@@ -116,6 +116,23 @@ const resendVerifyByEmail = redis
     })
   : null;
 
+// Forgot login code: 3 per email per 24h, 5 per IP per 15 min
+const forgotLoginCodeByIp = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '15 m'),
+      prefix: 'toernooiprof:auth:forgot-login-code:ip',
+    })
+  : null;
+
+const forgotLoginCodeByEmail = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, '24 h'),
+      prefix: 'toernooiprof:auth:forgot-login-code:email',
+    })
+  : null;
+
 export type RateLimitResult =
   | { allowed: true }
   | { allowed: false; retryAfterSeconds: number; message: string };
@@ -270,6 +287,42 @@ export async function checkResendVerifyLimit(
   const [ipResult, emailResult] = await Promise.all([
     resendVerifyByIp.limit(`ip:${ip}`),
     resendVerifyByEmail.limit(`email:${normalizedEmail}`),
+  ]);
+
+  if (!ipResult.success) {
+    const retry = retryAfterFromReset(ipResult.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  if (!emailResult.success) {
+    const retry = retryAfterFromReset(emailResult.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Check rate limit for forgot login code: per IP and per email.
+ */
+export async function checkForgotLoginCodeLimit(
+  request: NextRequest,
+  email: string
+): Promise<RateLimitResult> {
+  if (!forgotLoginCodeByIp || !forgotLoginCodeByEmail) return { allowed: true };
+
+  const ip = getClientIp(request);
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [ipResult, emailResult] = await Promise.all([
+    forgotLoginCodeByIp.limit(`ip:${ip}`),
+    forgotLoginCodeByEmail.limit(`email:${normalizedEmail}`),
   ]);
 
   if (!ipResult.success) {
