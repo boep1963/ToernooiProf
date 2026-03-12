@@ -166,19 +166,15 @@ export default function ContactPage() {
               <label htmlFor="programma" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Programma <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
+                type="text"
                 id="programma"
-                value={programma}
-                onChange={(e) => setProgramma(e.target.value)}
-                required
-                aria-required="true"
-                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
-              >
-                <option value="">-- Kies een programma --</option>
-                {PROGRAMMA_OPTIES.map((optie) => (
-                  <option key={optie} value={optie}>{optie}</option>
-                ))}
-              </select>
+                value="ToernooiProf"
+                readOnly
+                tabIndex={-1}
+                aria-readonly="true"
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white cursor-not-allowed"
+              />
             </div>
 
             {/* Subject dropdown */}

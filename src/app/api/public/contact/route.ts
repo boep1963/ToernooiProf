@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
     }
 
     const emailDoc = {
-      to: 'info@specialsoftware.nl',
+      to: 'info@email.biljart.app',
       bcc: 'hanseekels@gmail.com, p@de-boer.net',
       subject: `Contactformulier: ${onderwerp}`,
-      body: `Nieuw bericht via het contactformulier op biljart.club\n\nVan: ${naam}\nE-mail: ${email}\nOnderwerp: ${onderwerp}\n\n${bericht}`,
+      body: `Nieuw bericht via het contactformulier op biljart.app\n\nVan: ${naam}\nE-mail: ${email}\nOnderwerp: ${onderwerp}\n\n${bericht}`,
       status: 'pending',
       type: 'contact',
       created_at: new Date().toISOString(),
