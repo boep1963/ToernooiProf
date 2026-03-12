@@ -13,7 +13,7 @@ const ONDERWERP_OPTIES = [
 
 export default function ContactPage() {
   const { organization } = useAuth();
-  const [programma, setProgramma] = useState('');
+  const [programma, setProgramma] = useState('ToernooiProf');
   const [onderwerp, setOnderwerp] = useState('vraag');
   const [bericht, setBericht] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +67,7 @@ export default function ContactPage() {
       if (res.ok) {
         setSuccess('Uw bericht is succesvol verzonden. Wij nemen zo snel mogelijk contact met u op.');
         setBericht('');
-        setProgramma('');
+        setProgramma('ToernooiProf');
         setOnderwerp('vraag');
       } else {
         const data = await res.json();
@@ -169,7 +169,7 @@ export default function ContactPage() {
               <input
                 type="text"
                 id="programma"
-                value="ToernooiProf"
+                value={programma}
                 readOnly
                 tabIndex={-1}
                 aria-readonly="true"
