@@ -316,6 +316,15 @@ export default function LoginPage() {
             {process.env.NEXT_PUBLIC_BUILD_ID && ` (build ${process.env.NEXT_PUBLIC_BUILD_ID})`}
           </div>
         </div>
+
+        <div className="mt-6 text-center">
+          <a
+            href="https://biljart.app"
+            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+          >
+            Terug naar biljart.app homepage
+          </a>
+        </div>
       </div>
 
       {/* Footer credits */}
