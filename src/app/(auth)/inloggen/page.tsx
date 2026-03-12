@@ -122,13 +122,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 relative">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       {/* Theme toggle in top-right corner */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
 
-      <div className="max-w-md w-full space-y-8">
+      <div className="flex-1 flex items-center justify-center px-4 pt-4 pb-6">
+        <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Image
@@ -326,12 +327,15 @@ export default function LoginPage() {
           </a>
         </div>
       </div>
+      </div>
 
-      {/* Footer credits */}
-      <footer className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none">
-        <p className="hidden md:block text-xs text-slate-400 dark:text-slate-500">
+      {/* Footer credits - in flow, geen overlap met knop */}
+      <footer className="py-4 text-center px-4 border-t border-slate-200 dark:border-slate-700/50 flex-shrink-0">
+        <p className="text-xs text-slate-400 dark:text-slate-500 max-w-md mx-auto">
           Deze applicatie is gebaseerd op het werk van Hans Eekels gedurende 1992-2026 (windows en web).
-          <br className="sm:hidden" /> Compleet herschreven samen met Pierre de Boer in 2026.
+          <br className="sm:hidden" />
+          <span className="hidden sm:inline"> </span>
+          Compleet herschreven samen met Pierre de Boer in 2026.
         </p>
       </footer>
     </div>
