@@ -99,6 +99,23 @@ const verifyByEmail = redis
     })
   : null;
 
+// Resend verification: 3 per email per 15 min, 5 per IP per 15 min
+const resendVerifyByIp = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '15 m'),
+      prefix: 'toernooiprof:auth:resend-verify:ip',
+    })
+  : null;
+
+const resendVerifyByEmail = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, '15 m'),
+      prefix: 'toernooiprof:auth:resend-verify:email',
+    })
+  : null;
+
 export type RateLimitResult =
   | { allowed: true }
   | { allowed: false; retryAfterSeconds: number; message: string };
@@ -217,6 +234,42 @@ export async function checkVerifyLimit(
   const [ipResult, emailResult] = await Promise.all([
     verifyByIp.limit(`ip:${ip}`),
     verifyByEmail.limit(`email:${normalizedEmail}`),
+  ]);
+
+  if (!ipResult.success) {
+    const retry = retryAfterFromReset(ipResult.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  if (!emailResult.success) {
+    const retry = retryAfterFromReset(emailResult.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Check rate limit for resend verification code: per IP and per email.
+ */
+export async function checkResendVerifyLimit(
+  request: NextRequest,
+  email: string
+): Promise<RateLimitResult> {
+  if (!resendVerifyByIp || !resendVerifyByEmail) return { allowed: true };
+
+  const ip = getClientIp(request);
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [ipResult, emailResult] = await Promise.all([
+    resendVerifyByIp.limit(`ip:${ip}`),
+    resendVerifyByEmail.limit(`email:${normalizedEmail}`),
   ]);
 
   if (!ipResult.success) {

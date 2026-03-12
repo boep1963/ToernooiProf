@@ -15,6 +15,8 @@ function VerificationPageContent() {
   const [email, setEmail] = useState(emailParam);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const [success, setSuccess] = useState<{
     org_code: string;
     org_naam: string;
@@ -89,6 +91,30 @@ function VerificationPageContent() {
       setError('Er is een fout opgetreden. Probeer het later opnieuw.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!email || resendLoading) return;
+    setResendMessage('');
+    setError('');
+    setResendLoading(true);
+    try {
+      const res = await apiFetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResendMessage(data.message || 'Er is een nieuwe code verzonden. Check uw e-mail.');
+      } else {
+        setError(data.error || 'Versturen mislukt. Probeer het later opnieuw.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden. Probeer het later opnieuw.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -212,6 +238,11 @@ function VerificationPageContent() {
             </p>
           </div>
 
+          {resendMessage && (
+            <div role="status" className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 text-sm border border-green-200 dark:border-green-800">
+              {resendMessage}
+            </div>
+          )}
           {/* Error message */}
           {error && (
             <div role="alert" className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800 flex items-center justify-between">
@@ -251,6 +282,15 @@ function VerificationPageContent() {
           </form>
 
           <div className="mt-6 text-center space-y-2">
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={!email || resendLoading}
+              className="text-sm text-orange-600 dark:text-orange-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center min-h-[44px]"
+            >
+              {resendLoading ? 'Bezig met verzenden...' : 'Verificatiecode opnieuw versturen'}
+            </button>
+            <span className="text-slate-300 dark:text-slate-600 mx-2">|</span>
             <Link href="/registreren" className="text-sm text-orange-600 dark:text-orange-400 hover:underline inline-flex items-center min-h-[44px]">
               Opnieuw registreren
             </Link>
