@@ -58,6 +58,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       moy_form: data.t_moy_form ?? data.moy_form ?? 3,
       min_car: data.t_min_car ?? data.min_car ?? 0,
       max_beurten: data.t_max_beurten ?? data.max_beurten ?? 0,
+      vast_beurten: data.vast_beurten ?? data.t_vast_beurten ?? 0,
       periode: data.t_ronde ?? data.periode ?? 0,
     };
 

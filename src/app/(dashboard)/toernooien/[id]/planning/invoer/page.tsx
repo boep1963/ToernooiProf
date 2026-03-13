@@ -3,6 +3,7 @@
 import React, { use, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 import { useAuthActions } from '@/context/AuthContext';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -11,10 +12,12 @@ function InvoerContent({
   compNr,
   compNaam,
   ronde,
+  vastBeurten,
 }: {
   compNr: number;
   compNaam: string;
   ronde: number;
+  vastBeurten: boolean;
 }) {
   const { orgNummer } = useAuthActions();
   const searchParams = useSearchParams();
@@ -158,6 +161,28 @@ function InvoerContent({
     }
   };
 
+  const handleOpslaanClick = () => {
+    if (!uitslag) return;
+    const incomplete =
+      payload.sp1_car_gem < uitslag.sp1_car_tem || payload.sp2_car_gem < uitslag.sp2_car_tem;
+    if (!vastBeurten && incomplete) {
+      Swal.fire({
+        title: 'Partij is niet uitgespeeld.',
+        showDenyButton: true,
+        denyButtonText: 'Terug naar invoer',
+        confirmButtonText: 'Akkoord Sla onvolledige partij op',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          void handleSave();
+        } else if (result.isDenied) {
+          setPreview(null);
+        }
+      });
+    } else {
+      void handleSave();
+    }
+  };
+
   if (loading && !uitslag) {
     return (
       <div className="py-12 flex flex-col items-center justify-center gap-3">
@@ -255,7 +280,7 @@ function InvoerContent({
             </button>
             <button
               type="button"
-              onClick={handleSave}
+              onClick={handleOpslaanClick}
               disabled={saving}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium rounded-lg"
             >
@@ -272,7 +297,12 @@ export default function UitslagInvoerPage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const compNr = parseInt(id, 10);
   const { orgNummer } = useAuthActions();
-  const [comp, setComp] = useState<{ comp_naam: string; t_ronde?: number; periode?: number } | null>(null);
+  const [comp, setComp] = useState<{
+    comp_naam: string;
+    t_ronde?: number;
+    periode?: number;
+    vast_beurten?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!orgNummer) return;
@@ -294,7 +324,12 @@ export default function UitslagInvoerPage({ params }: { params: Promise<{ id: st
       </div>
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
         <Suspense fallback={<p className="text-slate-500">Laden...</p>}>
-          <InvoerContent compNr={compNr} compNaam={compNaam} ronde={ronde} />
+          <InvoerContent
+          compNr={compNr}
+          compNaam={compNaam}
+          ronde={ronde}
+          vastBeurten={(comp?.vast_beurten ?? 0) === 1}
+        />
         </Suspense>
       </div>
     </div>
