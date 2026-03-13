@@ -60,9 +60,11 @@ const helpTopics: HelpTopic[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
     ),
-    relatedLink: { href: '/leden', label: 'Ga naar Ledenbeheer' },
     content: (
       <div className="space-y-4">
+        <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800">
+          Een apart scherm voor ledenbeheer wordt in een latere versie toegevoegd. Deelnemers voegt u intussen per toernooi toe bij het betreffende toernooi.
+        </p>
         <p>
           Leden moeten eerst ingevoerd worden met een naam en een moyenne per discipline. Elk lid krijgt automatisch een nummer toegewezen.
         </p>
