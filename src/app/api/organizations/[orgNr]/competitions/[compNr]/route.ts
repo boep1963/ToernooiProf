@@ -109,6 +109,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       updated_at: new Date().toISOString(),
     };
 
+    if (body.t_max_beurten !== undefined) {
+      const maxBeurten = Math.min(70, Math.max(0, Number(body.t_max_beurten) ?? 0));
+      updateData.t_max_beurten = maxBeurten;
+      updateData.max_beurten = maxBeurten;
+    }
+
     await doc.ref.update(updateData);
 
     return NextResponse.json({

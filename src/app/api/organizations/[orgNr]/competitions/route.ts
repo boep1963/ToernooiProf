@@ -112,8 +112,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       punten_sys: Number(body.t_punten_sys) || 1, // routing alias
       t_min_car: 3,
       min_car: 3, // routing alias; vast 3 bij aanmaken (moyenneformule: 0,01 × 25 = 3)
-      t_max_beurten: 0,
-      max_beurten: 0, // routing alias
+      t_max_beurten: Math.min(70, Math.max(0, Number(body.t_max_beurten) ?? 0)),
+      max_beurten: Math.min(70, Math.max(0, Number(body.t_max_beurten) ?? 0)), // routing alias
       t_gestart: 0,
       t_ronde: 0,
       openbaar: Number(body.openbaar) || 0,

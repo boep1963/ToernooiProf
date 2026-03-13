@@ -27,6 +27,7 @@ export default function NieuwToernooi() {
     t_car_sys: 1,        // 1=moyenne-formule, 2=vrije invoer
     t_moy_form: 3,
     t_min_car: 3,
+    t_max_beurten: 0,    // 0=geen limiet, 1-70=beurtenlimiet
     openbaar: 0,
   });
 
@@ -38,11 +39,14 @@ export default function NieuwToernooi() {
 
   useUnsavedChangesWarning(isDirty && !success);
 
-  const numericFields = ['discipline', 't_punten_sys', 't_car_sys', 't_moy_form', 'openbaar'];
+  const numericFields = ['discipline', 't_punten_sys', 't_car_sys', 't_moy_form', 't_max_beurten', 'openbaar'];
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const isNumeric = type === 'number' || numericFields.includes(name);
     let nextValue: string | number = isNumeric ? Number(value) : value;
+    if (name === 't_max_beurten' && typeof nextValue === 'number') {
+      nextValue = Math.min(70, Math.max(0, Number.isNaN(nextValue) ? 0 : nextValue));
+    }
     setFormData(prev => ({
       ...prev,
       [name]: nextValue,
@@ -278,6 +282,26 @@ export default function NieuwToernooi() {
                 </select>
               </div>
             )}
+
+            {/* Max. beurten */}
+            <div>
+              <label htmlFor="t_max_beurten" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Max. beurten
+              </label>
+              <input
+                id="t_max_beurten"
+                name="t_max_beurten"
+                type="number"
+                min={0}
+                max={70}
+                value={formData.t_max_beurten}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                0 = geen limiet, 1–70 = maximaal aantal beurten per partij.
+              </p>
+            </div>
 
           </div>
         </div>

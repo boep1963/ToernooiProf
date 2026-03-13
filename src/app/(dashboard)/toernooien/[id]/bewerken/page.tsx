@@ -68,6 +68,7 @@ export default function ToernooiBewerkenPage({
     datum_start: '',
     datum_eind: '',
     openbaar: 0,
+    t_max_beurten: 0,
   });
 
   const fetchTournament = useCallback(async () => {
@@ -84,6 +85,7 @@ export default function ToernooiBewerkenPage({
           datum_start: data.datum_start ?? '',
           datum_eind: data.datum_eind ?? '',
           openbaar: Number(data.openbaar) || 0,
+          t_max_beurten: Math.min(70, Math.max(0, Number(data.t_max_beurten ?? data.max_beurten) ?? 0)),
         });
       } else {
         setError('Toernooi niet gevonden.');
@@ -99,9 +101,13 @@ export default function ToernooiBewerkenPage({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    let nextValue: string | number = type === 'number' ? Number(value) : value;
+    if (name === 't_max_beurten' && typeof nextValue === 'number') {
+      nextValue = Math.min(70, Math.max(0, Number.isNaN(nextValue) ? 0 : nextValue));
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: nextValue,
     }));
     if (fieldErrors[name]) {
       setFieldErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
@@ -272,7 +278,7 @@ export default function ToernooiBewerkenPage({
           </div>
         </div>
 
-        {/* Read-only fields set at creation */}
+        {/* Discipline & Spelinstellingen: meeste alleen-lezen, Max. beurten bewerkbaar */}
         {tournament && (
           <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -284,7 +290,7 @@ export default function ToernooiBewerkenPage({
               </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Deze instellingen zijn vastgelegd bij het aanmaken en kunnen niet worden gewijzigd.
+              Deze instellingen zijn vastgelegd bij het aanmaken; alleen Max. beurten kunt u hier nog wijzigen (0 = geen limiet, 1–70).
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
@@ -295,15 +301,30 @@ export default function ToernooiBewerkenPage({
                   ? (MOYENNE_FORMULE_LABELS[tournament.t_moy_form ?? tournament.moy_form ?? 3] || 'Onbekend')
                   : 'N.v.t.'],
                 ['Min. caramboles', String(tournament.t_min_car ?? tournament.min_car ?? 0)],
-                ['Max. beurten', tournament.t_max_beurten === 0 ? 'Geen limiet' : String(tournament.t_max_beurten)],
               ].map(([label, value]) => (
-                <div key={label}>
+                <div key={String(label)}>
                   <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</label>
                   <div className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
                     {value}
                   </div>
                 </div>
               ))}
+              <div>
+                <label htmlFor="t_max_beurten" className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  Max. beurten
+                </label>
+                <input
+                  id="t_max_beurten"
+                  name="t_max_beurten"
+                  type="number"
+                  min={0}
+                  max={70}
+                  value={formData.t_max_beurten}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">0 = geen limiet</p>
+              </div>
             </div>
           </div>
         )}
