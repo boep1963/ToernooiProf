@@ -73,6 +73,8 @@ function PlanningContent({
   const [testGenerateLoading, setTestGenerateLoading] = useState(false);
   const [testGenerateSuccess, setTestGenerateSuccess] = useState('');
   const [naamFilter, setNaamFilter] = useState('');
+  const [wissenPartcode, setWissenPartcode] = useState<string | null>(null);
+  const [wissenSuccess, setWissenSuccess] = useState('');
 
   const huidigeRonde = competition?.t_ronde ?? competition?.periode ?? 1;
   const spelersMap = new Map(spelers.map((s) => [s.sp_nummer, s.sp_naam]));
@@ -226,6 +228,48 @@ function PlanningContent({
     }
   };
 
+  const refetchUitslagen = () => {
+    if (!orgNummer || selectedPoule === null) return;
+    fetch(
+      `/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen?ronde_nr=${selectedRonde}&poule_nr=${selectedPoule}`
+    )
+      .then((r) => r.json())
+      .then((data) => setUitslagen(data.uitslagen || []))
+      .catch(() => {});
+  };
+
+  const handleWissenUitslag = async (u: UitslagItem) => {
+    if (!orgNummer || selectedPoule === null) return;
+    if (!confirm('Uitslag wissen? De partij blijft staan; alleen de ingevoerde scores worden gewist.')) return;
+    setWissenPartcode(u.sp_partcode);
+    setWissenSuccess('');
+    setError('');
+    try {
+      const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/uitslagen`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'clear',
+          ronde_nr: selectedRonde,
+          poule_nr: selectedPoule,
+          sp_partcode: u.sp_partcode,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setWissenSuccess(data.message ?? 'Uitslag gewist.');
+        refetchUitslagen();
+        setTimeout(() => setWissenSuccess(''), 3000);
+      } else {
+        setError(data.error ?? 'Fout bij wissen uitslag.');
+      }
+    } catch {
+      setError('Er is een fout opgetreden.');
+    } finally {
+      setWissenPartcode(null);
+    }
+  };
+
   return (
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={huidigeRonde} />
@@ -319,6 +363,11 @@ function PlanningContent({
                 {testGenerateSuccess}
               </div>
             )}
+            {wissenSuccess && (
+              <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-sm border border-green-200 dark:border-green-800">
+                {wissenSuccess}
+              </div>
+            )}
 
             {isLoadingUitslagen ? (
               <div className="space-y-3">
@@ -374,6 +423,7 @@ function PlanningContent({
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Koppel</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Invoer</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Wijzig</th>
+                      <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Wissen</th>
                       <th className="text-left py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Speler A</th>
                       <th className="text-center py-3 px-2 font-semibold text-slate-700 dark:text-slate-300">Car</th>
                       <th className="text-center py-3 px-2">—</th>
@@ -409,6 +459,21 @@ function PlanningContent({
                             >
                               Wijzig
                             </Link>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-2">
+                          {u.gespeeld === 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => handleWissenUitslag(u)}
+                              disabled={wissenPartcode === u.sp_partcode}
+                              className="inline-block px-2 py-1 bg-slate-500 hover:bg-slate-600 disabled:opacity-50 text-white text-xs font-medium rounded"
+                              title="Uitslag wissen (partij blijft staan)"
+                            >
+                              {wissenPartcode === u.sp_partcode ? '...' : 'Wissen'}
+                            </button>
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}

@@ -324,6 +324,10 @@ export default function ToernooiSpelersPage({
     (a.sp_naam || '').localeCompare(b.sp_naam || '', 'nl')
   );
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Kleuren per poule (1-25) voor licht en donker thema
   const pouleColorClasses: string[] = [
     'text-blue-600 dark:text-blue-400',
@@ -376,6 +380,7 @@ export default function ToernooiSpelersPage({
 
   return (
     <div>
+      <div className="print:hidden">
       <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={periode} tGestart={tournament.t_gestart} playerCount={spelers.length} />
 
       <div className="mb-4">
@@ -427,6 +432,40 @@ export default function ToernooiSpelersPage({
         </div>
       )}
 
+      </div>
+
+      {/* Print-only: spelerslijst in light mode voor PDF */}
+      <div id="print-area" className="hidden print:block p-0 m-0" style={{ backgroundColor: '#fff', color: '#111' }}>
+        <h1 className="text-xl font-bold mb-4" style={{ color: '#111' }}>{compNaam || 'Spelerslijst'}</h1>
+        {sortedSpelers.length === 0 ? (
+          <p style={{ color: '#333' }}>Er zijn nog geen spelers toegevoegd aan dit toernooi.</p>
+        ) : (
+          <table className="w-full border-collapse" style={{ backgroundColor: '#fff', color: '#111' }}>
+            <thead>
+              <tr>
+                <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Nr</th>
+                <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Naam</th>
+                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Moyenne</th>
+                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Caramboles</th>
+                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Poule</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedSpelers.map((speler) => (
+                <tr key={speler.id}>
+                  <td className="border border-gray-300 px-2 py-2 text-sm tabular-nums" style={{ color: '#111' }}>{speler.sp_nummer}</td>
+                  <td className="border border-gray-300 px-2 py-2 text-sm" style={{ color: '#111' }}>{speler.sp_naam}</td>
+                  <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{formatDecimal(speler.sp_startmoy)}</td>
+                  <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{speler.sp_startcar}</td>
+                  <td className="border border-gray-300 px-2 py-2 text-right tabular-nums" style={{ color: '#111' }}>{Number(speler.poule_nr) > 0 ? `Poule ${Number(speler.poule_nr)}` : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="print:hidden">
       {/* Add player form */}
       {showAddForm && !isStarted && (
         <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
@@ -523,17 +562,28 @@ export default function ToernooiSpelersPage({
         </div>
       )}
 
-      {/* Add button */}
-      {!showAddForm && !isStarted && (
+      {/* Add button + Print */}
+      {!showAddForm && (
         <div className="mb-4 flex flex-wrap items-center gap-3">
+          {!isStarted && (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Speler toevoegen
+            </button>
+          )}
           <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Speler toevoegen
+            Print / PDF
           </button>
           {canShowTestPopulate && (
             <button
@@ -721,6 +771,8 @@ export default function ToernooiSpelersPage({
           </div>
         </div>
       )}
+
+      </div>
 
       {/* Test-populate modal (TEST_-toernooi + super admin) */}
       {showTestPopulateModal && (

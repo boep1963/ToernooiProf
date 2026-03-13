@@ -154,7 +154,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Ongeldige parameters' }, { status: 400 });
     }
     const body = await request.json();
-    const action = body.action === 'preview' ? 'preview' : 'save';
+    const action = body.action === 'preview' ? 'preview' : body.action === 'clear' ? 'clear' : 'save';
 
     const { ronde_nr, poule_nr, sp_partcode } = body;
     if (ronde_nr == null || poule_nr == null || !sp_partcode) {
@@ -205,6 +205,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const uitslagDoc = snapshot.docs[0];
     const uitslagData = uitslagDoc.data() ?? {};
+
+    if (action === 'clear') {
+      await uitslagDoc.ref.update({
+        sp1_car_gem: 0,
+        sp2_car_gem: 0,
+        brt: 0,
+        sp1_hs: 0,
+        sp2_hs: 0,
+        sp1_punt: 0,
+        sp2_punt: 0,
+        gespeeld: 0,
+        updated_at: new Date().toISOString(),
+      });
+      return NextResponse.json({ ok: true, message: 'Uitslag gewist. Partij blijft staan.' });
+    }
 
     const sp1CarTem = Number(uitslagData.sp1_car_tem) || 0;
     const sp2CarTem = Number(uitslagData.sp2_car_tem) || 0;

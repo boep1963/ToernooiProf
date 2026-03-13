@@ -140,7 +140,7 @@ const helpTopics: HelpTopic[] = [
         <div>
           <h4 className="font-semibold mb-2">Deelnemer verwijderen</h4>
           <p>
-            Deelnemers kunt u altijd verwijderen. Let op: als het toernooi al is gestart worden de actieve partijen in de planning beïnvloed.
+            Deelnemers kunt u alleen verwijderen zolang het toernooi nog niet is gestart. Zodra het toernooi is begonnen, is de spelerslijst alleen-lezen en kunnen spelers niet meer worden toegevoegd, gewijzigd of verwijderd.
           </p>
         </div>
         <div>
