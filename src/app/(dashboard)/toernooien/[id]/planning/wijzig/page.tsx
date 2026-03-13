@@ -59,6 +59,7 @@ function WijzigContent({
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [formError, setFormError] = useState('');
+  const [showNietUitgespeeldModal, setShowNietUitgespeeldModal] = useState(false);
 
   useEffect(() => {
     if (!orgNummer || !poule || !code) return;
@@ -147,6 +148,7 @@ function WijzigContent({
 
   const handleSave = async () => {
     if (!orgNummer || !preview) return;
+    setShowNietUitgespeeldModal(false);
     setSaving(true);
     setFormError('');
     try {
@@ -165,6 +167,16 @@ function WijzigContent({
       setFormError('Fout bij opslaan.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const isNietUitgespeeld = preview != null && (preview.sp1_car_gem < preview.sp1_car_tem || preview.sp2_car_gem < preview.sp2_car_tem);
+
+  const onOpslaanClick = () => {
+    if (isNietUitgespeeld) {
+      setShowNietUitgespeeldModal(true);
+    } else {
+      handleSave();
     }
   };
 
@@ -269,12 +281,43 @@ function WijzigContent({
             </button>
             <button
               type="button"
-              onClick={handleSave}
+              onClick={onOpslaanClick}
               disabled={saving}
               className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-medium rounded-lg"
             >
               {saving ? 'Opslaan...' : 'Opslaan'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {showNietUitgespeeldModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="niet-uitgespeeld-title-wijzig">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h2 id="niet-uitgespeeld-title-wijzig" className="text-lg font-semibold text-amber-700 dark:text-amber-300 mb-2">
+              Partij is niet uitgespeeld
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
+              Niet beide spelers hebben hun te maken caramboles gehaald. U kunt teruggaan naar de invoer om de scores aan te passen, of de partij toch opslaan.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => { setShowNietUitgespeeldModal(false); setPreview(null); }}
+                disabled={saving}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium"
+              >
+                Terug naar invoer
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-medium rounded-lg"
+              >
+                {saving ? 'Opslaan...' : 'Partij toch opslaan'}
+              </button>
+            </div>
           </div>
         </div>
       )}
