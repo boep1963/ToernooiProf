@@ -77,6 +77,17 @@ export default function ToernooiSpelersPage({
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [isClearAllLoading, setIsClearAllLoading] = useState(false);
 
+  // Print modal: ronde + poules
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printRonde, setPrintRonde] = useState(1);
+  const [printPouleNrs, setPrintPouleNrs] = useState<number[]>([]);
+  const [availableRounds, setAvailableRounds] = useState<number[]>([]);
+  const [availablePoules, setAvailablePoules] = useState<{ poule_nr: number }[]>([]);
+  const [printSpelers, setPrintSpelers] = useState<SpelerData[] | null>(null);
+  const [printTitleRonde, setPrintTitleRonde] = useState<number>(1);
+  const [printTitlePoules, setPrintTitlePoules] = useState<number[]>([]);
+  const [isLoadingPrintModal, setIsLoadingPrintModal] = useState(false);
+
   const fetchData = useCallback(async () => {
     if (!orgNummer || isNaN(compNr)) return;
     setIsLoading(true);
@@ -108,6 +119,55 @@ export default function ToernooiSpelersPage({
   }, [orgNummer, compNr]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // When opening print modal: load rounds and poules, set defaults
+  useEffect(() => {
+    if (!showPrintModal || !orgNummer || isNaN(compNr) || !tournament) return;
+    setPrintSpelers(null);
+    const isStarted = (tournament.t_gestart ?? 0) === 1;
+    if (!isStarted) {
+      setAvailableRounds([1]);
+      setPrintRonde(1);
+      const distinctPoules = Array.from(new Set(spelers.map(s => s.poule_nr).filter((nr): nr is number => nr != null && nr > 0))).sort((a, b) => a - b);
+      setAvailablePoules(distinctPoules.map(poule_nr => ({ poule_nr })));
+      setPrintPouleNrs(distinctPoules.length > 0 ? distinctPoules : []);
+      return;
+    }
+    setIsLoadingPrintModal(true);
+    fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules`)
+      .then(r => r.json())
+      .then((data: { poules?: { ronde_nr: number; poule_nr: number }[] }) => {
+        const poules = data.poules || [];
+        const rounds = Array.from(new Set(poules.map((p: { ronde_nr: number }) => p.ronde_nr))).sort((a, b) => a - b);
+        setAvailableRounds(rounds.length > 0 ? rounds : [1]);
+        setPrintRonde(rounds.length > 0 ? rounds[0] : 1);
+        // availablePoules/printPouleNrs filled by the printRonde effect below
+      })
+      .catch(() => {
+        setAvailableRounds([1]);
+        setAvailablePoules([]);
+        setPrintPouleNrs([]);
+      })
+      .finally(() => setIsLoadingPrintModal(false));
+  }, [showPrintModal, orgNummer, compNr, tournament?.t_gestart]);
+
+  // When printRonde changes (toernooi gestart), refetch poules for that round
+  useEffect(() => {
+    if (!showPrintModal || !orgNummer || isNaN(compNr) || !tournament || (tournament.t_gestart ?? 0) !== 1) return;
+    setIsLoadingPrintModal(true);
+    fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules?ronde_nr=${printRonde}`)
+      .then(r => r.json())
+      .then((data: { poules?: { poule_nr: number }[] }) => {
+        const poules = (data.poules || []).map((p: { poule_nr: number }) => ({ poule_nr: p.poule_nr }));
+        setAvailablePoules(poules);
+        setPrintPouleNrs(poules.map(p => p.poule_nr));
+      })
+      .catch(() => {
+        setAvailablePoules([]);
+        setPrintPouleNrs([]);
+      })
+      .finally(() => setIsLoadingPrintModal(false));
+  }, [printRonde, showPrintModal, orgNummer, compNr, tournament?.t_gestart]);
 
   const tCarSys = tournament?.t_car_sys ?? 1;
   const tMoyForm = tournament?.t_moy_form ?? tournament?.moy_form ?? 3;
@@ -324,9 +384,49 @@ export default function ToernooiSpelersPage({
     (a.sp_naam || '').localeCompare(b.sp_naam || '', 'nl')
   );
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrintFromModal = async () => {
+    if (!orgNummer || isNaN(compNr) || !tournament) return;
+    const isStarted = (tournament.t_gestart ?? 0) === 1;
+    let list: SpelerData[];
+    if (!isStarted) {
+      if (printPouleNrs.length === 0) {
+        list = [...spelers];
+      } else {
+        list = spelers.filter(s => s.poule_nr != null && printPouleNrs.includes(s.poule_nr));
+      }
+      list = list.sort((a, b) => (a.poule_nr ?? 0) - (b.poule_nr ?? 0) || (a.sp_naam || '').localeCompare(b.sp_naam || '', 'nl'));
+    } else {
+      const merged: SpelerData[] = [];
+      for (const pouleNr of printPouleNrs.sort((a, b) => a - b)) {
+        const res = await fetch(`/api/organizations/${orgNummer}/competitions/${compNr}/poules/rn${printRonde}_pn${pouleNr}/players`);
+        const data = await res.json().catch(() => ({ players: [] }));
+        const players = data.players || [];
+        for (const p of players) {
+          merged.push({
+            id: `print_${pouleNr}_${p.spc_nummer ?? p.sp_nummer}`,
+            sp_nummer: p.spc_nummer ?? p.sp_nummer ?? 0,
+            sp_naam: p.naam ?? p.sp_naam ?? `Speler ${p.spc_nummer ?? p.sp_nummer}`,
+            sp_startmoy: p.moyenne_start ?? p.sp_startmoy ?? 0,
+            sp_startcar: p.caramboles_start ?? p.sp_startcar ?? 0,
+            poule_nr: pouleNr,
+          });
+        }
+      }
+      list = merged;
+    }
+    setPrintTitleRonde(printRonde);
+    setPrintTitlePoules([...printPouleNrs].sort((a, b) => a - b));
+    setPrintSpelers(list);
+    setShowPrintModal(false);
+    setTimeout(() => window.print(), 100);
   };
+
+  const handleOpenPrintModal = () => setShowPrintModal(true);
+  const togglePrintPoule = (pouleNr: number) => {
+    setPrintPouleNrs(prev => prev.includes(pouleNr) ? prev.filter(n => n !== pouleNr) : [...prev, pouleNr].sort((a, b) => a - b));
+  };
+  const selectAllPrintPoules = () => setPrintPouleNrs(availablePoules.map(p => p.poule_nr));
+  const deselectAllPrintPoules = () => setPrintPouleNrs([]);
 
   // Kleuren per poule (1-25) voor licht en donker thema
   const pouleColorClasses: string[] = [
@@ -436,33 +536,43 @@ export default function ToernooiSpelersPage({
 
       {/* Print-only: spelerslijst in light mode voor PDF */}
       <div id="print-area" className="hidden print:block p-0 m-0" style={{ backgroundColor: '#fff', color: '#111' }}>
-        <h1 className="text-xl font-bold mb-4" style={{ color: '#111' }}>{compNaam || 'Spelerslijst'}</h1>
-        {sortedSpelers.length === 0 ? (
-          <p style={{ color: '#333' }}>Er zijn nog geen spelers toegevoegd aan dit toernooi.</p>
-        ) : (
-          <table className="w-full border-collapse" style={{ backgroundColor: '#fff', color: '#111' }}>
-            <thead>
-              <tr>
-                <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Nr</th>
-                <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Naam</th>
-                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Moyenne</th>
-                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Caramboles</th>
-                <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Poule</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedSpelers.map((speler) => (
-                <tr key={speler.id}>
-                  <td className="border border-gray-300 px-2 py-2 text-sm tabular-nums" style={{ color: '#111' }}>{speler.sp_nummer}</td>
-                  <td className="border border-gray-300 px-2 py-2 text-sm" style={{ color: '#111' }}>{speler.sp_naam}</td>
-                  <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{formatDecimal(speler.sp_startmoy)}</td>
-                  <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{speler.sp_startcar}</td>
-                  <td className="border border-gray-300 px-2 py-2 text-right tabular-nums" style={{ color: '#111' }}>{Number(speler.poule_nr) > 0 ? `Poule ${Number(speler.poule_nr)}` : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <h1 className="text-xl font-bold mb-1" style={{ color: '#111' }}>{compNaam || 'Spelerslijst'}</h1>
+        {printSpelers !== null && (
+          <p className="text-sm mb-4" style={{ color: '#333' }}>
+            Ronde {printTitleRonde}{printTitlePoules.length > 0 ? ` · Poules ${printTitlePoules.join(', ')}` : ''}
+          </p>
         )}
+        {(() => {
+          const toPrint = printSpelers ?? sortedSpelers;
+          return toPrint.length === 0 ? (
+            <p style={{ color: '#333' }}>
+              {printSpelers !== null ? 'Geen spelers voor gekozen ronde en poules.' : 'Er zijn nog geen spelers toegevoegd aan dit toernooi.'}
+            </p>
+          ) : (
+            <table className="w-full border-collapse" style={{ backgroundColor: '#fff', color: '#111' }}>
+              <thead>
+                <tr>
+                  <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Nr</th>
+                  <th className="text-left border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Naam</th>
+                  <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Moyenne</th>
+                  <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Caramboles</th>
+                  <th className="text-right border border-gray-300 px-2 py-2 text-xs font-semibold uppercase" style={{ backgroundColor: '#f5f5f5', color: '#111' }}>Poule</th>
+                </tr>
+              </thead>
+              <tbody>
+                {toPrint.map((speler) => (
+                  <tr key={speler.id}>
+                    <td className="border border-gray-300 px-2 py-2 text-sm tabular-nums" style={{ color: '#111' }}>{speler.sp_nummer}</td>
+                    <td className="border border-gray-300 px-2 py-2 text-sm" style={{ color: '#111' }}>{speler.sp_naam}</td>
+                    <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{formatDecimal(speler.sp_startmoy)}</td>
+                    <td className="border border-gray-300 px-2 py-2 text-sm text-right tabular-nums" style={{ color: '#111' }}>{speler.sp_startcar}</td>
+                    <td className="border border-gray-300 px-2 py-2 text-right tabular-nums" style={{ color: '#111' }}>{Number(speler.poule_nr) > 0 ? `Poule ${Number(speler.poule_nr)}` : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
 
       <div className="print:hidden">
@@ -577,7 +687,7 @@ export default function ToernooiSpelersPage({
             </button>
           )}
           <button
-            onClick={handlePrint}
+            onClick={handleOpenPrintModal}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -900,6 +1010,99 @@ export default function ToernooiSpelersPage({
                 {isClearAllLoading ? 'Bezig...' : 'Ja, alle verwijderen'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print modal: kies ronde en poule(s) */}
+      {showPrintModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="print-modal-title">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 id="print-modal-title" className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Spelers printen
+            </h3>
+            {isLoadingPrintModal ? (
+              <div className="py-8 flex justify-center">
+                <LoadingSpinner size="md" label="Ronden en poules laden..." />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label htmlFor="print-ronde" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Ronde
+                    </label>
+                    <select
+                      id="print-ronde"
+                      value={printRonde}
+                      onChange={(e) => setPrintRonde(parseInt(e.target.value, 10))}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    >
+                      {availableRounds.map((r) => (
+                        <option key={r} value={r}>Ronde {r}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {availablePoules.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Poules
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={selectAllPrintPoules}
+                            className="text-xs px-2 py-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-600 rounded"
+                          >
+                            Alle
+                          </button>
+                          <button
+                            type="button"
+                            onClick={deselectAllPrintPoules}
+                            className="text-xs px-2 py-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-300 dark:border-slate-600 rounded"
+                          >
+                            Geen
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {availablePoules.map(({ poule_nr }) => (
+                          <label key={poule_nr} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={printPouleNrs.includes(poule_nr)}
+                              onChange={() => togglePrintPoule(poule_nr)}
+                              className="rounded border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400"
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">Poule {poule_nr}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!isStarted && availablePoules.length === 0 && spelers.length > 0 && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Geen poule-indeling; alle spelers worden geprint.
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 justify-end">
+                  <button
+                    onClick={() => setShowPrintModal(false)}
+                    className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-600"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    onClick={handlePrintFromModal}
+                    className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    Print / PDF
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
