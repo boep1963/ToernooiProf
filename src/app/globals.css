@@ -82,11 +82,16 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
-/* ========== Print / PDF: witte achtergrond en nette afdruk ========== */
+/* ========== Print / PDF: witte achtergrond, compact lettertype voor A4 portrait ========== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 1.5cm;
+    margin: 1.2cm;
+  }
+
+  /* Kleinere basislettergrootte zodat meer regels op een A4 passen (stand, spelers, uitslagen, ronden) */
+  html {
+    font-size: 10px !important;
   }
 
   html,
@@ -157,13 +162,16 @@ a {
     background: #fff !important;
     color: #111 !important;
     border: 1px solid #333 !important;
-    padding: 6px 8px !important;
+    padding: 3px 5px !important;
+    font-size: 0.9rem !important;
   }
 
   main thead th {
     background: #f5f5f5 !important;
     font-weight: bold;
     border: 1px solid #333 !important;
+    padding: 3px 5px !important;
+    font-size: 0.85rem !important;
   }
 
   main thead {
@@ -175,10 +183,11 @@ a {
     page-break-after: auto;
   }
 
-  /* Print-specifieke containers (leden e.d.) */
+  /* Print-specifieke containers (spelerslijst e.d.) – compact voor A4 */
   #print-area,
   #print-header {
     visibility: visible !important;
+    font-size: 10px !important;
   }
 
   #print-area,
@@ -189,12 +198,46 @@ a {
     background-color: #fff !important;
   }
 
+  #print-area h1,
+  #print-header h1 {
+    font-size: 1.4rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  #print-area h2,
+  #print-header h2 {
+    font-size: 1.15rem !important;
+  }
+
   #print-area th,
   #print-area td {
     border: 1px solid #333 !important;
+    padding: 2px 4px !important;
+    font-size: 0.9rem !important;
   }
 
   #print-area thead th {
     background: #f5f5f5 !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Overige print-zichtbare blokken (bv. ronden-overview) */
+  #print-target-overview,
+  #print-target-overview * {
+    font-size: inherit !important;
+  }
+
+  /* Print-headers (stand, uitslagen per speler): compacte titels */
+  .hidden.print\:block h1 {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .hidden.print\:block h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .hidden.print\:block .text-sm {
+    font-size: 0.85rem !important;
   }
 }

@@ -9,6 +9,7 @@ import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface CompetitionData {
   comp_naam?: string;
@@ -75,6 +76,7 @@ function PlanningContent({
   const [naamFilter, setNaamFilter] = useState('');
   const [wissenPartcode, setWissenPartcode] = useState<string | null>(null);
   const [wissenSuccess, setWissenSuccess] = useState('');
+  const [wissenConfirm, setWissenConfirm] = useState<UitslagItem | null>(null);
 
   const huidigeRonde = competition?.t_ronde ?? competition?.periode ?? 1;
   const spelersMap = new Map(spelers.map((s) => [s.sp_nummer, s.sp_naam]));
@@ -238,9 +240,14 @@ function PlanningContent({
       .catch(() => {});
   };
 
-  const handleWissenUitslag = async (u: UitslagItem) => {
+  const handleWissenUitslagClick = (u: UitslagItem) => {
     if (!orgNummer || selectedPoule === null) return;
-    if (!confirm('Uitslag wissen? De partij blijft staan; alleen de ingevoerde scores worden gewist.')) return;
+    setWissenConfirm(u);
+  };
+
+  const handleWissenUitslagConfirm = async () => {
+    const u = wissenConfirm;
+    if (!u || !orgNummer || selectedPoule === null) return;
     setWissenPartcode(u.sp_partcode);
     setWissenSuccess('');
     setError('');
@@ -267,6 +274,7 @@ function PlanningContent({
       setError('Er is een fout opgetreden.');
     } finally {
       setWissenPartcode(null);
+      setWissenConfirm(null);
     }
   };
 
@@ -467,7 +475,7 @@ function PlanningContent({
                           {u.gespeeld === 1 ? (
                             <button
                               type="button"
-                              onClick={() => handleWissenUitslag(u)}
+                              onClick={() => handleWissenUitslagClick(u)}
                               disabled={wissenPartcode === u.sp_partcode}
                               className="inline-block px-2 py-1 bg-slate-500 hover:bg-slate-600 disabled:opacity-50 text-white text-xs font-medium rounded"
                               title="Uitslag wissen (partij blijft staan)"
@@ -499,6 +507,17 @@ function PlanningContent({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={wissenConfirm !== null}
+        title="Uitslag wissen?"
+        description="De partij blijft staan; alleen de ingevoerde scores worden gewist."
+        cancelLabel="Annuleren"
+        confirmLabel="OK"
+        onCancel={() => setWissenConfirm(null)}
+        onConfirm={handleWissenUitslagConfirm}
+        loading={wissenPartcode === wissenConfirm?.sp_partcode}
+      />
     </div>
   );
 }
