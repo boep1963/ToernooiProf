@@ -14,6 +14,7 @@ export type IssueType = 'bug' | 'feature';
 export interface AdminIssue {
   id: string;
   title: string;
+  description: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
       return {
         id: doc.id,
         title: String(d.title ?? ''),
+        description: String(d.description ?? ''),
         type: (d.type as IssueType) || 'bug',
         images: Array.isArray(d.images) ? (d.images as string[]) : [],
         status: (d.status as IssueStatus) || 'not_started',
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest) {
     const validStatuses: IssueStatus[] = ['not_started', 'in_progress', 'done'];
     const issueStatus = validStatuses.includes(status) ? status : 'not_started';
 
+    const description = (formData.get('description') as string)?.trim() ?? '';
     const hans_tested = parseBool(formData.get('hans_tested'));
     const pierre_tested = parseBool(formData.get('pierre_tested'));
 
@@ -146,6 +149,7 @@ export async function POST(request: NextRequest) {
 
     const data: Record<string, unknown> = {
       title,
+      description,
       type,
       images: imageDataUrls,
       status: issueStatus,
@@ -160,6 +164,7 @@ export async function POST(request: NextRequest) {
     const issue: AdminIssue = {
       id: docRef.id,
       title,
+      description,
       type,
       images: imageDataUrls,
       status: issueStatus,

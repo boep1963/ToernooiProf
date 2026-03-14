@@ -10,6 +10,7 @@ type IssueType = 'bug' | 'feature';
 interface AdminIssue {
   id: string;
   title: string;
+  description: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -206,6 +207,9 @@ export default function AdminIssuesKanbanPage() {
                     }`}
                   >
                     <div className="font-medium text-slate-900 dark:text-white text-sm mb-1">{issue.title}</div>
+                    {issue.description ? (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">{issue.description}</p>
+                    ) : null}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300">
                         {TYPE_LABELS[issue.type]}

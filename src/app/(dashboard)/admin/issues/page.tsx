@@ -10,6 +10,7 @@ type IssueType = 'bug' | 'feature';
 interface AdminIssue {
   id: string;
   title: string;
+  description: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -41,6 +42,7 @@ export default function AdminIssuesPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [formTitle, setFormTitle] = useState('');
+  const [formDescription, setFormDescription] = useState('');
   const [formType, setFormType] = useState<IssueType>('bug');
   const [formStatus, setFormStatus] = useState<IssueStatus>('not_started');
   const [formHansTested, setFormHansTested] = useState(false);
@@ -50,6 +52,7 @@ export default function AdminIssuesPage() {
 
   const [editIssue, setEditIssue] = useState<AdminIssue | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editType, setEditType] = useState<IssueType>('bug');
   const [editStatus, setEditStatus] = useState<IssueStatus>('not_started');
   const [editHansTested, setEditHansTested] = useState(false);
@@ -89,6 +92,7 @@ export default function AdminIssuesPage() {
     try {
       const formData = new FormData();
       formData.set('title', formTitle.trim());
+      formData.set('description', formDescription.trim());
       formData.set('type', formType);
       formData.set('status', formStatus);
       formData.set('hans_tested', formHansTested ? '1' : '0');
@@ -100,6 +104,7 @@ export default function AdminIssuesPage() {
       if (!res.ok) throw new Error(data.error || 'Fout bij aanmaken');
       setSuccess('Issue toegevoegd.');
       setFormTitle('');
+      setFormDescription('');
       setFormType('bug');
       setFormStatus('not_started');
       setFormHansTested(false);
@@ -116,6 +121,7 @@ export default function AdminIssuesPage() {
   const openEdit = (issue: AdminIssue) => {
     setEditIssue(issue);
     setEditTitle(issue.title);
+    setEditDescription(issue.description ?? '');
     setEditType(issue.type);
     setEditStatus(issue.status);
     setEditHansTested(issue.hans_tested);
@@ -135,6 +141,7 @@ export default function AdminIssuesPage() {
       if (hasNewFiles) {
         const formData = new FormData();
         formData.set('title', editTitle.trim());
+        formData.set('description', editDescription.trim());
         formData.set('type', editType);
         formData.set('status', editStatus);
         formData.set('hans_tested', editHansTested ? '1' : '0');
@@ -153,6 +160,7 @@ export default function AdminIssuesPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: editTitle.trim(),
+            description: editDescription.trim(),
             type: editType,
             status: editStatus,
             hans_tested: editHansTested,
@@ -252,6 +260,16 @@ export default function AdminIssuesPage() {
               required
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Omschrijving</label>
+            <textarea
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-y"
+              placeholder="Optioneel: beschrijf het issue of de wens..."
+            />
+          </div>
           <div className="flex flex-wrap gap-6">
             <div>
               <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type</span>
@@ -324,6 +342,7 @@ export default function AdminIssuesPage() {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Titel</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Omschrijving</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Type</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Status</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Gereed</th>
@@ -336,6 +355,9 @@ export default function AdminIssuesPage() {
                 {issues.map((issue) => (
                   <tr key={issue.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                     <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{issue.title}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={issue.description || undefined}>
+                      {issue.description || '-'}
+                    </td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{TYPE_LABELS[issue.type]}</td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{STATUS_LABELS[issue.status]}</td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
@@ -406,6 +428,16 @@ export default function AdminIssuesPage() {
                   onChange={(e) => setEditTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Omschrijving</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-y"
+                  placeholder="Optioneel: beschrijf het issue of de wens..."
                 />
               </div>
               <div className="flex gap-6">

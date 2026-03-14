@@ -40,6 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const issue: AdminIssue = {
       id: snap.id,
       title: String(d.title ?? ''),
+      description: String(d.description ?? ''),
       type: (d.type as IssueType) || 'bug',
       images: Array.isArray(d.images) ? (d.images as string[]) : [],
       status: (d.status as IssueStatus) || 'not_started',
@@ -87,6 +88,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       const title = (formData.get('title') as string)?.trim();
+      const description = (formData.get('description') as string)?.trim() ?? '';
       const type = (formData.get('type') as string) || undefined;
       const status = (formData.get('status') as string) || undefined;
       const hans_tested = formData.get('hans_tested');
@@ -108,6 +110,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
       updates = {
         ...(title !== undefined && title !== null && { title }),
+        description,
         ...(type !== undefined && type !== null && { type }),
         ...(status !== undefined && status !== null && { status }),
         ...(hans_tested !== undefined && hans_tested !== null && { hans_tested: parseBool(hans_tested) }),
@@ -145,6 +148,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const issue: AdminIssue = {
       id: updated.id,
       title: String(d.title ?? ''),
+      description: String(d.description ?? ''),
       type: (d.type as IssueType) || 'bug',
       images: Array.isArray(d.images) ? (d.images as string[]) : [],
       status: (d.status as IssueStatus) || 'not_started',
