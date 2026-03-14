@@ -63,6 +63,15 @@ export default function AdminIssuesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printStatuses, setPrintStatuses] = useState<Record<IssueStatus, boolean>>({
+    not_started: true,
+    in_progress: true,
+    done: true,
+  });
+  const [printType, setPrintType] = useState<'bug' | 'feature' | 'both'>('both');
+  const [printFilterResult, setPrintFilterResult] = useState<AdminIssue[] | null>(null);
+
   const fetchIssues = async () => {
     try {
       setLoading(true);
@@ -82,6 +91,67 @@ export default function AdminIssuesPage() {
     if (!isSuperAdmin) return;
     fetchIssues();
   }, [isSuperAdmin]);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        @page { size: A4 portrait; margin: 1.2cm; }
+        body { font-size: 10px !important; }
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-header, #print-header * { visibility: visible; }
+        #print-area {
+          position: absolute;
+          left: 0;
+          top: 3.5cm;
+          width: 100%;
+          color: black !important;
+          font-size: 10px !important;
+        }
+        #print-header {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          margin-bottom: 0.5cm;
+          border-bottom: 2px solid #333;
+          padding-bottom: 0.3cm;
+          color: black !important;
+          font-size: 10px !important;
+        }
+        #print-area table { border-collapse: collapse; width: 100%; }
+        #print-area th, #print-area td {
+          border: 1px solid #333 !important;
+          padding: 3px 5px !important;
+          color: black !important;
+          background: white !important;
+          font-size: inherit !important;
+        }
+        #print-area th { background: #f0f0f0 !important; font-weight: bold; }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (printFilterResult === null) return;
+    const onAfterPrint = () => setPrintFilterResult(null);
+    window.addEventListener('afterprint', onAfterPrint);
+    window.print();
+    return () => window.removeEventListener('afterprint', onAfterPrint);
+  }, [printFilterResult]);
+
+  const handlePrintFromModal = () => {
+    const filtered = issues.filter(
+      (i) => printStatuses[i.status] && (printType === 'both' || i.type === printType)
+    );
+    setPrintFilterResult(filtered);
+    setShowPrintModal(false);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,13 +296,25 @@ export default function AdminIssuesPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Beheer issues</h1>
-        <Link
-          href="/admin/issues/kanban"
-          className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
-        >
-          Kanban-bord
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPrintModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print
+          </button>
+          <Link
+            href="/admin/issues/kanban"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+          >
+            Kanban-bord
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -525,6 +607,101 @@ export default function AdminIssuesPage() {
           </div>
         </div>
       )}
+
+      {/* Print filter modal */}
+      {showPrintModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-sm w-full p-6">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Print issues</h2>
+            <div className="space-y-4">
+              <div>
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Status</span>
+                <div className="flex flex-col gap-2">
+                  {(['not_started', 'in_progress', 'done'] as const).map((s) => (
+                    <label key={s} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={printStatuses[s]}
+                        onChange={(e) => setPrintStatuses((prev) => ({ ...prev, [s]: e.target.checked }))}
+                        className="rounded text-green-600"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{STATUS_LABELS[s]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type</span>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="printType" checked={printType === 'both'} onChange={() => setPrintType('both')} className="text-green-600" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Beide</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="printType" checked={printType === 'bug'} onChange={() => setPrintType('bug')} className="text-green-600" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Alleen bugs</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="printType" checked={printType === 'feature'} onChange={() => setPrintType('feature')} className="text-green-600" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Alleen features</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintFromModal}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
+              >
+                Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print-only area: hidden on screen, visible in @media print */}
+      <div id="print-area" className="hidden print:block">
+        <div id="print-header" className="mb-2 border-b border-black pb-1 text-sm font-semibold">
+          Issues overzicht – {new Date().toLocaleDateString('nl-NL')}
+        </div>
+        {printFilterResult !== null && printFilterResult.length > 0 && (
+          <table>
+            <thead>
+              <tr>
+                <th>Titel</th>
+                <th>Omschrijving</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Gereed-datum</th>
+                <th>Hans getest</th>
+                <th>Pierre getest</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printFilterResult.map((issue) => (
+                <tr key={issue.id}>
+                  <td>{issue.title}</td>
+                  <td>{(issue.description || '-').slice(0, 80)}{{(issue.description || '').length > 80 ? '…' : ''}</td>
+                  <td>{TYPE_LABELS[issue.type]}</td>
+                  <td>{STATUS_LABELS[issue.status]}</td>
+                  <td>{issue.completedAt ? new Date(issue.completedAt).toLocaleDateString('nl-NL') : '-'}</td>
+                  <td>{issue.hans_tested ? 'Ja' : 'Nee'}</td>
+                  <td>{issue.pierre_tested ? 'Ja' : 'Nee'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

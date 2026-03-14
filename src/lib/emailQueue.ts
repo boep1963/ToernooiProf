@@ -12,11 +12,16 @@ import db from '@/lib/db';
 /** BCC-adressen voor alle uitgaande mail (o.a. voor archief). */
 export const BCC_EMAILS = 'hanseekels@gmail.com, p@de-boer.net';
 
+/** Eerste adres uit BCC; gebruikt als ontvanger voor notificaties (bijv. nieuwe issues). */
+export function getNotificationToEmail(): string {
+  return BCC_EMAILS.split(',')[0].trim();
+}
+
 export interface EmailQueueDocument {
   to: string;
   subject: string;
   body: string;
-  type: 'registration' | 'verification' | 'notification' | 'other';
+  type: 'registration' | 'verification' | 'notification' | 'new_issue' | 'other';
   status: 'pending' | 'sent' | 'failed';
   created_at: string;
   org_nummer?: number;
@@ -132,5 +137,33 @@ Met vriendelijke groet,
 Het ToernooiProf Team
     `.trim(),
     type: 'notification',
+  };
+}
+
+/**
+ * Generate "nieuw issue" notification email (bug or feature created in admin).
+ */
+export function generateNewIssueEmail(
+  appName: string,
+  title: string,
+  issueType: 'bug' | 'feature',
+  description?: string
+): Omit<EmailQueueDocument, 'status' | 'created_at'> {
+  const typeLabel = issueType === 'bug' ? 'bug' : 'feature';
+  const now = new Date().toLocaleString('nl-NL');
+  return {
+    to: getNotificationToEmail(),
+    subject: `[${appName}] Nieuw ${typeLabel}: ${title}`,
+    body: `
+Er is een nieuw issue aangemaakt in ${appName}.
+
+Type: ${typeLabel === 'bug' ? 'Bug' : 'Feature'}
+Titel: ${title}
+Datum: ${now}
+${description ? `\nOmschrijving:\n${description}\n` : ''}
+
+Deze e-mail is automatisch gegenereerd door het admin-issues systeem.
+    `.trim(),
+    type: 'new_issue',
   };
 }

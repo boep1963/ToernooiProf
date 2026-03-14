@@ -7,6 +7,7 @@ import {
   SUPPORTED_FORMATS,
   MAX_IMAGES_PER_ISSUE,
 } from '@/lib/issueImageUtils';
+import { addEmailToQueue, generateNewIssueEmail } from '@/lib/emailQueue';
 
 export type IssueStatus = 'not_started' | 'in_progress' | 'done';
 export type IssueType = 'bug' | 'feature';
@@ -174,6 +175,13 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       updatedAt: now,
     };
+
+    try {
+      const email = generateNewIssueEmail('ToernooiProf', title, type, description || undefined);
+      await addEmailToQueue(email);
+    } catch (queueError) {
+      console.error('[ADMIN ISSUES] E-mail queue error (issue created):', queueError);
+    }
 
     return NextResponse.json({ success: true, issue });
   } catch (error) {
