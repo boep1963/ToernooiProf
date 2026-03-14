@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
-import { useAuthActions } from '@/context/AuthContext';
+import { useAuth, useAuthActions } from '@/context/AuthContext';
+import PrintLogo from '@/components/common/PrintLogo';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { DISCIPLINES, MOYENNE_MULTIPLIERS, CAR_SYSTEMEN } from '@/types';
 import { calculateCaramboles } from '@/lib/billiards';
@@ -45,6 +46,7 @@ export default function ToernooiSpelersPage({
 }) {
   const { id } = use(params);
   const { orgNummer } = useAuthActions();
+  const { organization } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
   const compNr = parseInt(id, 10);
 
@@ -536,6 +538,7 @@ export default function ToernooiSpelersPage({
 
       {/* Print-only: spelerslijst in light mode voor PDF */}
       <div id="print-area" className="hidden print:block p-0 m-0" style={{ backgroundColor: '#fff', color: '#111' }}>
+        <PrintLogo logoUrl={organization?.org_logo} />
         <h1 className="text-xl font-bold mb-1" style={{ color: '#111' }}>{compNaam || 'Spelerslijst'}</h1>
         {printSpelers !== null && (
           <p className="text-sm mb-4" style={{ color: '#333' }}>

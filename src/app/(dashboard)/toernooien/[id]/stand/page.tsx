@@ -6,6 +6,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
+import PrintLogo from '@/components/common/PrintLogo';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -352,6 +353,7 @@ export default function ToernooiStandPage({
 
       {/* Print-only header */}
       <div className="hidden print:block mb-6">
+        <PrintLogo logoUrl={organization?.org_logo} />
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ToernooiProf'} - {competition.t_naam ?? competition.comp_naam}</h1>
         <div className="text-sm mb-2">
           {DISCIPLINES[competition.discipline]}{getPuntenSysLabel(competition.t_punten_sys ?? competition.punten_sys ?? 1) ? ` | ${getPuntenSysLabel(competition.t_punten_sys ?? competition.punten_sys ?? 1)}` : ''} | {selectedPeriod === 0 ? 'Totaal (alle rondes)' : `Ronde ${selectedPeriod}`}

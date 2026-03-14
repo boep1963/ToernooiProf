@@ -4,7 +4,8 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useAuthActions } from '@/context/AuthContext';
+import { useAuth, useAuthActions } from '@/context/AuthContext';
+import PrintLogo from '@/components/common/PrintLogo';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -56,6 +57,7 @@ function PlanningContent({
   id: string;
 }) {
   const { orgNummer } = useAuthActions();
+  const { organization } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
   const searchParams = useSearchParams();
   const compNr = parseInt(id, 10);
@@ -282,7 +284,14 @@ function PlanningContent({
     <div>
       <CompetitionSubNav compNr={compNr} compNaam={compNaam} periode={huidigeRonde} />
 
-      <div className="mb-4">
+      {/* Print-only header met logo */}
+      <div className="hidden print:block mb-6">
+        <PrintLogo logoUrl={organization?.org_logo} />
+        <h1 className="text-2xl font-bold text-slate-900">Planning – {compNaam}</h1>
+        <div className="border-b-2 border-gray-300 mt-2 mb-4" />
+      </div>
+
+      <div className="mb-4 print:hidden">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Planning – {compNaam}
         </h1>

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthActions } from '@/context/AuthContext';
+import { useAuth, useAuthActions } from '@/context/AuthContext';
+import PrintLogo from '@/components/common/PrintLogo';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -30,6 +31,7 @@ export default function ToernooirondenPage({
   const { id } = use(params);
   const router = useRouter();
   const { orgNummer } = useAuthActions();
+  const { organization } = useAuth();
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -276,6 +278,12 @@ export default function ToernooirondenPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Print-only header met logo en titel */}
+      <div className="hidden print:block mb-6">
+        <PrintLogo logoUrl={organization?.org_logo} />
+        <h1 className="text-2xl font-bold">Rondenbeheer – {competition?.comp_naam ?? competition?.t_naam ?? 'Toernooi'}</h1>
+        <div className="border-b-2 border-gray-300 mt-2 mb-4" />
+      </div>
       {competition && (
         <CompetitionSubNav
           compNr={competition.comp_nr}

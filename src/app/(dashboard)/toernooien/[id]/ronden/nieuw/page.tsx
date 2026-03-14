@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthActions } from '@/context/AuthContext';
+import { useAuth, useAuthActions } from '@/context/AuthContext';
+import PrintLogo from '@/components/common/PrintLogo';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPlayerName } from '@/lib/billiards';
@@ -39,6 +40,7 @@ export default function NieuweRondePage({
   const { id } = use(params);
   const router = useRouter();
   const { orgNummer } = useAuthActions();
+  const { organization } = useAuth();
   const compNr = parseInt(id, 10);
 
   const [competition, setCompetition] = useState<CompetitionData | null>(null);
@@ -391,6 +393,7 @@ export default function NieuweRondePage({
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800" id="print-target-overview">
+          <PrintLogo logoUrl={organization?.org_logo} />
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               Voorlopige indeling ronde {targetRound}

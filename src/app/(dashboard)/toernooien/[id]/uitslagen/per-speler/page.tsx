@@ -6,6 +6,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { DISCIPLINES } from '@/types';
+import PrintLogo from '@/components/common/PrintLogo';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatDate } from '@/lib/dateUtils';
@@ -394,6 +395,7 @@ export default function PlayerResultsPage({
 
       {/* Print-only header */}
       <div className="hidden print:block mb-6">
+        <PrintLogo logoUrl={organization?.org_logo} />
         <h1 className="text-2xl font-bold mb-2">{orgNaam || 'ToernooiProf'} - {competition.comp_naam}</h1>
         <h2 className="text-xl mb-2">Uitslagen per speler: {selectedPlayer && formatPlayerName(selectedPlayer)}</h2>
         <div className="text-sm mb-2">

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import PrintLogo from '@/components/common/PrintLogo';
 
 type IssueStatus = 'not_started' | 'in_progress' | 'done';
 type IssueType = 'bug' | 'feature';
@@ -695,6 +696,7 @@ export default function AdminIssuesPage() {
       {/* Print-only area: hidden on screen, visible in @media print */}
       <div id="print-area" className="hidden print:block">
         <div id="print-header" className="mb-2 border-b border-black pb-1 text-sm font-semibold">
+          <PrintLogo />
           Issues overzicht – {new Date().toLocaleDateString('nl-NL')}
         </div>
         {printFilterResult !== null && printFilterResult.length > 0 && (
