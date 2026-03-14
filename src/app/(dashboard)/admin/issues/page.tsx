@@ -72,6 +72,12 @@ export default function AdminIssuesPage() {
   const [printType, setPrintType] = useState<'bug' | 'feature' | 'both'>('both');
   const [printFilterResult, setPrintFilterResult] = useState<AdminIssue[] | null>(null);
 
+  const [listStatusFilter, setListStatusFilter] = useState<IssueStatus | ''>('');
+
+  const filteredIssues = listStatusFilter
+    ? issues.filter((i) => i.status === listStatusFilter)
+    : issues;
+
   const fetchIssues = async () => {
     try {
       setLoading(true);
@@ -411,13 +417,31 @@ export default function AdminIssuesPage() {
 
       {/* Issues list */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Issues</h2>
+          <div className="flex items-center gap-2">
+            <label htmlFor="list-status-filter" className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+              Filter op status:
+            </label>
+            <select
+              id="list-status-filter"
+              value={listStatusFilter}
+              onChange={(e) => setListStatusFilter((e.target.value || '') as IssueStatus | '')}
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm min-w-[180px]"
+            >
+              <option value="">Alle statussen</option>
+              {(['not_started', 'in_progress', 'done'] as const).map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+          </div>
         </div>
         {loading ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">Laden...</div>
-        ) : issues.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 dark:text-slate-400">Nog geen issues.</div>
+        ) : filteredIssues.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+            {issues.length === 0 ? 'Nog geen issues.' : 'Geen issues met deze status.'}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -434,7 +458,7 @@ export default function AdminIssuesPage() {
                 </tr>
               </thead>
               <tbody>
-                {issues.map((issue) => (
+                {filteredIssues.map((issue) => (
                   <tr key={issue.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                     <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{issue.title}</td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={issue.description || undefined}>
