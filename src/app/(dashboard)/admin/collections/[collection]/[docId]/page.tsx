@@ -38,6 +38,10 @@ export default function DocumentDetailPage({
   const [replyMessage, setReplyMessage] = useState('');
   const [replying, setReplying] = useState(false);
   const [replySuccess, setReplySuccess] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoDeleting, setLogoDeleting] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [logoSuccess, setLogoSuccess] = useState<string | null>(null);
 
   // Fetch document
   useEffect(() => {
@@ -174,6 +178,60 @@ export default function DocumentDetailPage({
 
   const isContactMessage = collection === 'contact_messages';
   const contactEmail = isContactMessage ? editedData?.org_email : null;
+
+  const isOrganization = collection === 'organizations';
+  const orgNrForLogo = isOrganization ? (editedData?.org_nummer != null ? String(editedData.org_nummer) : docId) : null;
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !orgNrForLogo) return;
+    setLogoError(null);
+    setLogoSuccess(null);
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const res = await fetch(`/api/admin/organizations/${orgNrForLogo}/logo`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLogoError(data.error || 'Fout bij uploaden logo.');
+        return;
+      }
+      setLogoSuccess(data.message || 'Logo geüpload.');
+      if (data.logoUrl) {
+        setEditedData((prev) => ({ ...prev, org_logo: data.logoUrl }));
+      }
+    } catch {
+      setLogoError('Fout bij uploaden logo.');
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleLogoDelete = async () => {
+    if (!orgNrForLogo) return;
+    setLogoError(null);
+    setLogoSuccess(null);
+    setLogoDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgNrForLogo}/logo`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        setLogoError(data.error || 'Fout bij verwijderen logo.');
+        return;
+      }
+      setLogoSuccess(data.message || 'Logo verwijderd.');
+      setEditedData((prev) => ({ ...prev, org_logo: '' }));
+    } catch {
+      setLogoError('Fout bij verwijderen logo.');
+    } finally {
+      setLogoDeleting(false);
+    }
+  };
 
   const detectFieldType = (value: any): string => {
     if (value === null || value === undefined) return 'null';
@@ -381,6 +439,60 @@ export default function DocumentDetailPage({
               Nogmaals beantwoorden
             </button>
           )}
+        </div>
+      )}
+
+      {/* Organization logo upload (admin only, when viewing an organization document) */}
+      {isOrganization && orgNrForLogo && editedData && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Organisatielogo</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Upload of verwijder een logo voor organisatie <strong className="text-slate-900 dark:text-white">{editedData.org_naam || orgNrForLogo}</strong> (org_nr: {orgNrForLogo}).
+          </p>
+          {logoError && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800">
+              {logoError}
+            </div>
+          )}
+          {logoSuccess && (
+            <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800">
+              {logoSuccess}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-4">
+            {editedData.org_logo ? (
+              <div className="flex items-center gap-4">
+                <img
+                  src={editedData.org_logo}
+                  alt="Logo"
+                  className="h-16 w-auto max-w-[200px] object-contain bg-slate-100 dark:bg-slate-700 rounded-lg p-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleLogoDelete}
+                  disabled={logoDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+                >
+                  {logoDeleting ? 'Bezig...' : 'Logo verwijderen'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Geen logo geüpload.</p>
+            )}
+            <label className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              {logoUploading ? 'Uploaden...' : 'Logo uploaden'}
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                onChange={handleLogoUpload}
+                disabled={logoUploading}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
       )}
 

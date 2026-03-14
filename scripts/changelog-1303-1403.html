@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overzicht wijzigingen ToernooiProf – 13 en 14 maart 2026</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      line-height: 1.5;
+      color: #1a1a1a;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-size: 11pt;
+    }
+    @media print {
+      body { padding: 1.5rem; font-size: 10pt; }
+      .page-break { page-break-before: always; }
+      a { color: #1a1a1a; text-decoration: none; }
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem 0;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 0.95rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 1.25rem 0 0.5rem 0;
+      color: #1e40af;
+    }
+    .commit {
+      margin-bottom: 1.25rem;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      border-radius: 0 6px 6px 0;
+    }
+    .commit-date { font-weight: 600; color: #475569; font-size: 0.9rem; }
+    .commit-hash { font-family: ui-monospace, monospace; font-size: 0.85rem; color: #64748b; }
+    .commit-msg { margin: 0.35rem 0 0.5rem 0; font-weight: 600; }
+    .commit-desc { margin: 0; color: #475569; font-size: 0.95rem; }
+    .files {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .files span { margin-right: 0.5rem; }
+    .files .added { color: #15803d; }
+    .files .modified { color: #b45309; }
+    .files .deleted { color: #b91c1c; }
+    ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+    li { margin: 0.2rem 0; }
+    footer { margin-top: 2rem; font-size: 0.85rem; color: #64748b; }
+  </style>
+</head>
+<body>
+  <h1>Overzicht wijzigingen ToernooiProf</h1>
+  <p class="subtitle">Commits van 13 en 14 maart 2026</p>
+
+  <h2>Vrijdag 14 maart 2026</h2>
+
+  <div class="commit">
+    <div class="commit-date">14 maart 2026</div>
+    <span class="commit-hash">2526b6e</span>
+    <p class="commit-msg">Printstijlen voor A4 en bevestigingsdialoog bij wissen uitslag</p>
+    <p class="commit-desc">Aanpassingen voor afdruk: marges, lettergroottes en padding voor betere leesbaarheid in de printweergave. Er is een bevestigingsdialoog toegevoegd bij het wissen van een uitslag om per ongeluk wissen te voorkomen.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> planning/page.tsx, globals.css ·
+      <span class="added">Nieuw:</span> ConfirmDialog.tsx
+    </div>
+  </div>
+
+  <h2>Donderdag 13 maart 2026</h2>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026 (avond)</div>
+    <span class="commit-hash">42341ed</span>
+    <p class="commit-msg">Logica wedstrijdstatus planning: alleen "niet gespeeld" als beide spelers geen doel bereikt hebben</p>
+    <p class="commit-desc">De status van een wedstrijd wordt nu alleen als "niet gespeeld" beschouwd als beide spelers nog geen doel hebben bereikt. De interface toont voor elk scenario de juiste feedback.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> planning/invoer/page.tsx, planning/wijzig/page.tsx
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026</div>
+    <span class="commit-hash">e645bf7</span>
+    <p class="commit-msg">Sessiecookie maxAge naar 12 uur</p>
+    <p class="commit-desc">Bij alle authenticatieroutes is de maximale leeftijd van de sessiecookie ingesteld op 12 uur, voor betere beveiliging en sessiebeheer.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> api/auth/login-code, login, register, verify (routes)
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026</div>
+    <span class="commit-hash">0877db6</span>
+    <p class="commit-msg">Printmodal voor spelerslijst met ronde- en poulekeuze</p>
+    <p class="commit-desc">Modal toegevoegd om de spelerslijst te printen met keuze voor ronde en poule. Beschikbare ronden en poules worden opgehaald op basis van de toernooistatus. De printlogica voor de spelerslijst is uitgebreid op basis van geselecteerde poules en ronden.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> toernooien/[id]/spelers/page.tsx
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026</div>
+    <span class="commit-hash">93f6fe6</span>
+    <p class="commit-msg">Veld "max. beurten" bij aanmaken en bewerken toernooi</p>
+    <p class="commit-desc">Nieuw veld t_max_beurten in de formulieren voor aanmaken en bewerken van toernooien, met validatie: 0 = geen limiet, 1–70 = maximaal aantal beurten. API-routes zijn bijgewerkt om t_max_beurten correct te verwerken.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> toernooien/nieuw, toernooien/[id]/bewerken, api/organizations/.../competitions (routes)
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026</div>
+    <span class="commit-hash">82acbf0</span>
+    <p class="commit-msg">Modal waarschuwing bij niet-opgeslagen wedstrijd</p>
+    <p class="commit-desc">Modal toegevoegd op de pagina’s voor invoer en wijziging van de planning die waarschuwt wanneer de gebruiker weg navigeert met niet-opgeslagen wedstrijdgegevens.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> planning/invoer/page.tsx, planning/wijzig/page.tsx
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026</div>
+    <span class="commit-hash">659947f</span>
+    <p class="commit-msg">Helpsectie verbeterd, uitslag wissen en printoptie spelerslijst</p>
+    <p class="commit-desc">Verbeteringen in de helpsectie, functionaliteit om een uitslag te wissen toegevoegd, en een printoptie voor de spelerslijst.</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> help/page.tsx, planning/page.tsx, spelers/page.tsx, api uitslagen-route
+    </div>
+  </div>
+
+  <div class="commit">
+    <div class="commit-date">13 maart 2026 (ochtend)</div>
+    <span class="commit-hash">6ade2ef</span>
+    <p class="commit-msg">Ledenbeheer aangepast en caching aantal organisaties</p>
+    <p class="commit-desc">Aanpassingen in het ledenbeheer en caching toegevoegd voor het aantal organisaties (o.a. in de healthcheck-API).</p>
+    <div class="files">
+      <span class="modified">Aangepast:</span> help/page.tsx, api/health/route.ts
+    </div>
+  </div>
+
+  <footer>
+    Gegenereerd op 14 maart 2026 · ToernooiProf
+  </footer>
+</body>
+</html>
