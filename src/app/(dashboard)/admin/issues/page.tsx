@@ -690,7 +690,7 @@ export default function AdminIssuesPage() {
               {printFilterResult.map((issue) => (
                 <tr key={issue.id}>
                   <td>{issue.title}</td>
-                  <td>{(issue.description || '-').slice(0, 80)}{{(issue.description || '').length > 80 ? '…' : ''}</td>
+                  <td>{(issue.description || '-').slice(0, 80)}{(issue.description || '').length > 80 ? '…' : ''}</td>
                   <td>{TYPE_LABELS[issue.type]}</td>
                   <td>{STATUS_LABELS[issue.status]}</td>
                   <td>{issue.completedAt ? new Date(issue.completedAt).toLocaleDateString('nl-NL') : '-'}</td>
