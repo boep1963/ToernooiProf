@@ -123,6 +123,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+      <style>{`
+        @media (max-height: 640px) {
+          [data-login-compact-hide="subtitle"] { display: none !important; }
+          [data-login-compact-hide="version"] { display: none !important; }
+        }
+      `}</style>
       {/* Theme toggle in top-right corner */}
       <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
@@ -144,7 +150,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             ToernooiProf
           </h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-slate-600 dark:text-slate-400" data-login-compact-hide="subtitle">
             Biljart Toernooi Beheer
           </p>
         </div>
@@ -318,7 +324,7 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400 dark:text-slate-500" suppressHydrationWarning>
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400 dark:text-slate-500" data-login-compact-hide="version" suppressHydrationWarning>
             Versie {process.env.NEXT_PUBLIC_APP_VERSION ?? '–'}
             {process.env.NEXT_PUBLIC_BUILD_ID && ` (build ${process.env.NEXT_PUBLIC_BUILD_ID})`}
           </div>
