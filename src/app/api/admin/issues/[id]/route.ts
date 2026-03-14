@@ -6,6 +6,7 @@ import {
   processIssueImageToStorage,
   MAX_IMAGES_PER_ISSUE,
 } from '@/lib/issueImageUtils';
+import { addEmailToQueue, generateIssueDoneEmail } from '@/lib/emailQueue';
 import type { AdminIssue, IssueStatus, IssueType } from '../../route';
 
 interface RouteParams {
@@ -142,6 +143,24 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     await docRef.update(merged);
+
+    const oldStatus = (snap.data() as Record<string, unknown>).status as IssueStatus | undefined;
+    const newStatus = merged.status as IssueStatus;
+    if (oldStatus !== 'done' && newStatus === 'done') {
+      try {
+        const completedAt = (merged.completedAt as string) || now;
+        const email = generateIssueDoneEmail(
+          'ToernooiProf',
+          String(merged.title ?? ''),
+          (merged.type as IssueType) || 'bug',
+          completedAt,
+          merged.description != null ? String(merged.description) : undefined
+        );
+        await addEmailToQueue(email);
+      } catch (queueError) {
+        console.error('[ADMIN ISSUES] E-mail queue error (issue gereed):', queueError);
+      }
+    }
 
     const updated = await docRef.get();
     const d = updated.data() as Record<string, unknown>;

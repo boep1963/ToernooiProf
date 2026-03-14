@@ -21,7 +21,7 @@ export interface EmailQueueDocument {
   to: string;
   subject: string;
   body: string;
-  type: 'registration' | 'verification' | 'notification' | 'new_issue' | 'other';
+  type: 'registration' | 'verification' | 'notification' | 'new_issue' | 'issue_done' | 'other';
   status: 'pending' | 'sent' | 'failed';
   created_at: string;
   org_nummer?: number;
@@ -165,5 +165,35 @@ ${description ? `\nOmschrijving:\n${description}\n` : ''}
 Deze e-mail is automatisch gegenereerd door het admin-issues systeem.
     `.trim(),
     type: 'new_issue',
+  };
+}
+
+/**
+ * Generate "issue gereed" notification email (status changed to done).
+ * BCC wordt door addEmailToQueue gezet (hanseekels@gmail.com, p@de-boer.net).
+ */
+export function generateIssueDoneEmail(
+  appName: string,
+  title: string,
+  issueType: 'bug' | 'feature',
+  completedAt: string,
+  description?: string
+): Omit<EmailQueueDocument, 'status' | 'created_at'> {
+  const typeLabel = issueType === 'bug' ? 'Bug' : 'Feature';
+  const completedDate = new Date(completedAt).toLocaleString('nl-NL');
+  return {
+    to: getNotificationToEmail(),
+    subject: `[${appName}] Issue gereed: ${title}`,
+    body: `
+Een issue is als gereed gemarkeerd in ${appName}.
+
+Type: ${typeLabel}
+Titel: ${title}
+Gereed op: ${completedDate}
+${description ? `\nOmschrijving:\n${description}\n` : ''}
+
+Deze e-mail is automatisch gegenereerd door het admin-issues systeem.
+    `.trim(),
+    type: 'issue_done',
   };
 }
