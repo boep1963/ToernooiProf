@@ -81,23 +81,50 @@ function getBucketName(): string {
   if (process.env.BACKUP_BUCKET_NAME) {
     return process.env.BACKUP_BUCKET_NAME;
   }
-  if (process.env.FIREBASE_STORAGE_BUCKET) {
-    return process.env.FIREBASE_STORAGE_BUCKET;
-  }
-  if (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
-    return process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-  }
-  if (process.env.FIREBASE_CONFIG) {
-    try {
-      const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG) as { storageBucket?: string };
-      if (firebaseConfig.storageBucket) {
-        return firebaseConfig.storageBucket;
-      }
-    } catch {
-      // Ignore invalid FIREBASE_CONFIG and use final fallback.
-    }
-  }
+  // Gebruik standaard de dedicated backup-bucket om historische backups zichtbaar te houden.
   return 'backuptoernooiprof';
+}
+
+function getBackupKeepCount(): number {
+  const raw = process.env.BACKUP_KEEP_COUNT;
+  if (!raw) return 5;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 5;
+  // Bescherm tegen extreme waarden
+  return Math.min(parsed, 1000);
+}
+
+async function getCollectionsToBackup(): Promise<string[]> {
+  try {
+    const namespaceDoc = getAdminDb().doc(FIRESTORE_PREFIX);
+    const subcollections = await namespaceDoc.listCollections();
+    const names = subcollections.map((c) => c.id).filter((name) => !!name && !name.startsWith('_'));
+    if (names.length > 0) {
+      return names.sort((a, b) => a.localeCompare(b));
+    }
+  } catch (error) {
+    console.warn('[Backup] Failed to discover collections dynamically, using fallback list:', error);
+  }
+
+  // Fallback-list voor omgevingen waar listCollections() niet beschikbaar is.
+  return [
+    'organizations',
+    'competitions',
+    'members',
+    'competition_players',
+    'matches',
+    'results',
+    'tables',
+    'device_config',
+    'score_helpers',
+    'score_helpers_tablet',
+    'email_queue',
+    'gebruikers',
+    'toernooien',
+    'spelers',
+    'poules',
+    'uitslagen',
+  ];
 }
 
 /**
@@ -139,20 +166,7 @@ export async function createBackup(): Promise<{
     const bucketName = getBucketName();
     const bucket = storage.bucket(bucketName);
 
-    // List of collections to back up
-    const collectionsToBackup = [
-      'organizations',
-      'competitions',
-      'members',
-      'competition_players',
-      'matches',
-      'results',
-      'tables',
-      'device_config',
-      'score_helpers',
-      'score_helpers_tablet',
-      'email_queue',
-    ];
+    const collectionsToBackup = await getCollectionsToBackup();
 
     let totalDocuments = 0;
     const backupedCollections: string[] = [];
@@ -162,24 +176,20 @@ export async function createBackup(): Promise<{
       try {
         const documents = await exportCollection(collectionName);
 
-        if (documents.length > 0) {
-          // Write collection to Cloud Storage
-          const fileName = `${backupName}/${collectionName}.json`;
-          const file = bucket.file(fileName);
+        // Schrijf ook lege collecties weg voor een complete snapshot.
+        const fileName = `${backupName}/${collectionName}.json`;
+        const file = bucket.file(fileName);
 
-          await file.save(JSON.stringify(documents, null, 2), {
-            contentType: 'application/json',
-            metadata: {
-              cacheControl: 'no-cache',
-            },
-          });
+        await file.save(JSON.stringify(documents, null, 2), {
+          contentType: 'application/json',
+          metadata: {
+            cacheControl: 'no-cache',
+          },
+        });
 
-          totalDocuments += documents.length;
-          backupedCollections.push(collectionName);
-          console.log(`[Backup] Exported ${collectionName}: ${documents.length} documents`);
-        } else {
-          console.log(`[Backup] Skipped ${collectionName}: 0 documents`);
-        }
+        totalDocuments += documents.length;
+        backupedCollections.push(collectionName);
+        console.log(`[Backup] Exported ${collectionName}: ${documents.length} documents`);
       } catch (err) {
         console.error(`[Backup] Error exporting collection ${collectionName}:`, err);
         // Continue with other collections even if one fails
@@ -201,8 +211,8 @@ export async function createBackup(): Promise<{
 
     console.log(`[Backup] Metadata saved: ${totalDocuments} documents in ${backupedCollections.length} collections`);
 
-    // Clean up old backups (keep only last 5)
-    await cleanupOldBackups(bucket);
+    // Clean up old backups (keep configurable amount)
+    await cleanupOldBackups(bucket, getBackupKeepCount());
 
     const durationSec = (Date.now() - startTime) / 1000;
     console.log(`[Backup] Completed in ${durationSec.toFixed(2)}s`);
