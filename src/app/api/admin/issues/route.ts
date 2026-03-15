@@ -16,6 +16,7 @@ export interface AdminIssue {
   id: string;
   title: string;
   description: string;
+  opmerkingen: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -24,6 +25,8 @@ export interface AdminIssue {
   pierre_tested: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Naam van de contactpersoon die het issue heeft aangemaakt (super admin). */
+  createdBy?: string;
 }
 
 function parseBool(value: unknown): boolean {
@@ -53,6 +56,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         title: String(d.title ?? ''),
         description: String(d.description ?? ''),
+        opmerkingen: String(d.opmerkingen ?? ''),
         type: (d.type as IssueType) || 'bug',
         images: Array.isArray(d.images) ? (d.images as string[]) : [],
         status: (d.status as IssueStatus) || 'not_started',
@@ -61,6 +65,7 @@ export async function GET(request: NextRequest) {
         pierre_tested: parseBool(d.pierre_tested),
         createdAt: String(d.createdAt ?? ''),
         updatedAt: String(d.updatedAt ?? ''),
+        createdBy: d.createdBy != null ? String(d.createdBy) : undefined,
       };
     });
 
@@ -88,6 +93,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authResult = await validateSuperAdmin(request);
   if (authResult instanceof NextResponse) return authResult;
+  const createdBy = authResult.orgContactName || authResult.orgEmail;
 
   try {
     const formData = await request.formData();
@@ -112,6 +118,7 @@ export async function POST(request: NextRequest) {
     const issueStatus = validStatuses.includes(status) ? status : 'not_started';
 
     const description = (formData.get('description') as string)?.trim() ?? '';
+    const opmerkingen = (formData.get('opmerkingen') as string)?.trim() ?? '';
     const hans_tested = parseBool(formData.get('hans_tested'));
     const pierre_tested = parseBool(formData.get('pierre_tested'));
 
@@ -151,6 +158,7 @@ export async function POST(request: NextRequest) {
     const data: Record<string, unknown> = {
       title,
       description,
+      opmerkingen,
       type,
       images: imageDataUrls,
       status: issueStatus,
@@ -159,6 +167,7 @@ export async function POST(request: NextRequest) {
       pierre_tested,
       createdAt: now,
       updatedAt: now,
+      createdBy,
     };
 
     const docRef = await db.collection('admin_issues').add(data);
@@ -166,6 +175,7 @@ export async function POST(request: NextRequest) {
       id: docRef.id,
       title,
       description,
+      opmerkingen,
       type,
       images: imageDataUrls,
       status: issueStatus,
@@ -174,6 +184,7 @@ export async function POST(request: NextRequest) {
       pierre_tested,
       createdAt: now,
       updatedAt: now,
+      createdBy,
     };
 
     try {

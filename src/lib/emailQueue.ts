@@ -21,7 +21,7 @@ export interface EmailQueueDocument {
   to: string;
   subject: string;
   body: string;
-  type: 'registration' | 'verification' | 'notification' | 'new_issue' | 'issue_done' | 'other';
+  type: 'registration' | 'verification' | 'notification' | 'new_issue' | 'issue_done' | 'issue_updated' | 'other';
   status: 'pending' | 'sent' | 'failed';
   created_at: string;
   org_nummer?: number;
@@ -195,5 +195,34 @@ ${description ? `\nOmschrijving:\n${description}\n` : ''}
 Deze e-mail is automatisch gegenereerd door het admin-issues systeem.
     `.trim(),
     type: 'issue_done',
+  };
+}
+
+/**
+ * Generate "issue bijgewerkt" notification email.
+ * Gaat naar Hans en Pierre via BCC (addEmailToQueue zet BCC_EMAILS).
+ */
+export function generateIssueUpdatedEmail(
+  appName: string,
+  title: string,
+  issueId: string,
+  updatedAt: string
+): Omit<EmailQueueDocument, 'status' | 'created_at'> {
+  const updatedDate = new Date(updatedAt).toLocaleString('nl-NL');
+  return {
+    to: getNotificationToEmail(),
+    subject: `[${appName}] Geüpdatet: ${title}. Wellicht actie nodig`,
+    body: `
+Een issue is bijgewerkt in ${appName}.
+
+Titel: ${title}
+Issue-ID: ${issueId}
+Bijgewerkt op: ${updatedDate}
+
+Wellicht actie nodig.
+
+Deze e-mail is automatisch gegenereerd door het admin-issues systeem.
+    `.trim(),
+    type: 'issue_updated',
   };
 }

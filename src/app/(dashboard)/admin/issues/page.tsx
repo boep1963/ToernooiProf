@@ -12,6 +12,7 @@ interface AdminIssue {
   id: string;
   title: string;
   description: string;
+  opmerkingen: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -20,6 +21,7 @@ interface AdminIssue {
   pierre_tested: boolean;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
 }
 
 const STATUS_LABELS: Record<IssueStatus, string> = {
@@ -44,6 +46,7 @@ export default function AdminIssuesPage() {
 
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formOpmerkingen, setFormOpmerkingen] = useState('');
   const [formType, setFormType] = useState<IssueType>('bug');
   const [formStatus, setFormStatus] = useState<IssueStatus>('not_started');
   const [formHansTested, setFormHansTested] = useState(false);
@@ -54,6 +57,7 @@ export default function AdminIssuesPage() {
   const [editIssue, setEditIssue] = useState<AdminIssue | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editOpmerkingen, setEditOpmerkingen] = useState('');
   const [editType, setEditType] = useState<IssueType>('bug');
   const [editStatus, setEditStatus] = useState<IssueStatus>('not_started');
   const [editHansTested, setEditHansTested] = useState(false);
@@ -170,6 +174,7 @@ export default function AdminIssuesPage() {
       const formData = new FormData();
       formData.set('title', formTitle.trim());
       formData.set('description', formDescription.trim());
+      formData.set('opmerkingen', formOpmerkingen.trim());
       formData.set('type', formType);
       formData.set('status', formStatus);
       formData.set('hans_tested', formHansTested ? '1' : '0');
@@ -182,6 +187,7 @@ export default function AdminIssuesPage() {
       setSuccess('Issue toegevoegd.');
       setFormTitle('');
       setFormDescription('');
+      setFormOpmerkingen('');
       setFormType('bug');
       setFormStatus('not_started');
       setFormHansTested(false);
@@ -199,6 +205,7 @@ export default function AdminIssuesPage() {
     setEditIssue(issue);
     setEditTitle(issue.title);
     setEditDescription(issue.description ?? '');
+    setEditOpmerkingen(issue.opmerkingen ?? '');
     setEditType(issue.type);
     setEditStatus(issue.status);
     setEditHansTested(issue.hans_tested);
@@ -219,6 +226,7 @@ export default function AdminIssuesPage() {
         const formData = new FormData();
         formData.set('title', editTitle.trim());
         formData.set('description', editDescription.trim());
+        formData.set('opmerkingen', editOpmerkingen.trim());
         formData.set('type', editType);
         formData.set('status', editStatus);
         formData.set('hans_tested', editHansTested ? '1' : '0');
@@ -238,6 +246,7 @@ export default function AdminIssuesPage() {
           body: JSON.stringify({
             title: editTitle.trim(),
             description: editDescription.trim(),
+            opmerkingen: editOpmerkingen.trim(),
             type: editType,
             status: editStatus,
             hans_tested: editHansTested,
@@ -359,6 +368,16 @@ export default function AdminIssuesPage() {
               placeholder="Optioneel: beschrijf het issue of de wens..."
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opmerkingen</label>
+            <textarea
+              value={formOpmerkingen}
+              onChange={(e) => setFormOpmerkingen(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-y"
+              placeholder="Optioneel: opmerkingen of notities..."
+            />
+          </div>
           <div className="flex flex-wrap gap-6">
             <div>
               <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type</span>
@@ -450,9 +469,12 @@ export default function AdminIssuesPage() {
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Titel</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Omschrijving</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Opmerkingen</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Type</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Status</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Gereed</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Aangemaakt door</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Aangemaakt op</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Afgemeld op</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Hans / Pierre</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Afb.</th>
                   <th className="text-right py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Acties</th>
@@ -465,10 +487,19 @@ export default function AdminIssuesPage() {
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={issue.description || undefined}>
                       {issue.description || '-'}
                     </td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[160px] truncate" title={issue.opmerkingen || undefined}>
+                      {issue.opmerkingen || '-'}
+                    </td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{TYPE_LABELS[issue.type]}</td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{STATUS_LABELS[issue.status]}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
-                      {issue.completedAt ? new Date(issue.completedAt).toLocaleDateString('nl-NL') : '-'}
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[140px] truncate" title={issue.createdBy || undefined}>
+                      {issue.createdBy || '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                      {issue.createdAt ? new Date(issue.createdAt).toLocaleString('nl-NL') : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                      {issue.completedAt ? new Date(issue.completedAt).toLocaleString('nl-NL') : '-'}
                     </td>
                     <td className="py-3 px-4 text-sm">
                       <span className={issue.hans_tested ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}>H</span>
@@ -527,6 +558,11 @@ export default function AdminIssuesPage() {
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Issue bewerken</h2>
             </div>
             <form onSubmit={handleEditSave} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 gap-2 rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3 text-sm">
+                <div><span className="font-medium text-slate-600 dark:text-slate-400">Aangemaakt door:</span> <span className="text-slate-700 dark:text-slate-300">{editIssue.createdBy || '–'}</span></div>
+                <div><span className="font-medium text-slate-600 dark:text-slate-400">Aangemaakt op:</span> <span className="text-slate-700 dark:text-slate-300">{editIssue.createdAt ? new Date(editIssue.createdAt).toLocaleString('nl-NL') : '–'}</span></div>
+                <div><span className="font-medium text-slate-600 dark:text-slate-400">Afgemeld op:</span> <span className="text-slate-700 dark:text-slate-300">{editIssue.completedAt ? new Date(editIssue.completedAt).toLocaleString('nl-NL') : '–'}</span></div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Titel *</label>
                 <input
@@ -545,6 +581,16 @@ export default function AdminIssuesPage() {
                   rows={3}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-y"
                   placeholder="Optioneel: beschrijf het issue of de wens..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opmerkingen</label>
+                <textarea
+                  value={editOpmerkingen}
+                  onChange={(e) => setEditOpmerkingen(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-y"
+                  placeholder="Optioneel: opmerkingen of notities..."
                 />
               </div>
               <div className="flex gap-6">
@@ -705,9 +751,12 @@ export default function AdminIssuesPage() {
               <tr>
                 <th>Titel</th>
                 <th>Omschrijving</th>
+                <th>Opmerkingen</th>
                 <th>Type</th>
                 <th>Status</th>
-                <th>Gereed-datum</th>
+                <th>Aangemaakt door</th>
+                <th>Aangemaakt op</th>
+                <th>Afgemeld op</th>
                 <th>Hans getest</th>
                 <th>Pierre getest</th>
               </tr>
@@ -717,9 +766,12 @@ export default function AdminIssuesPage() {
                 <tr key={issue.id}>
                   <td>{issue.title}</td>
                   <td>{(issue.description || '-').slice(0, 80)}{(issue.description || '').length > 80 ? '…' : ''}</td>
+                  <td>{(issue.opmerkingen ?? '-').slice(0, 80)}{(issue.opmerkingen ?? '').length > 80 ? '…' : ''}</td>
                   <td>{TYPE_LABELS[issue.type]}</td>
                   <td>{STATUS_LABELS[issue.status]}</td>
-                  <td>{issue.completedAt ? new Date(issue.completedAt).toLocaleDateString('nl-NL') : '-'}</td>
+                  <td>{issue.createdBy || '-'}</td>
+                  <td>{issue.createdAt ? new Date(issue.createdAt).toLocaleString('nl-NL') : '-'}</td>
+                  <td>{issue.completedAt ? new Date(issue.completedAt).toLocaleString('nl-NL') : '-'}</td>
                   <td>{issue.hans_tested ? 'Ja' : 'Nee'}</td>
                   <td>{issue.pierre_tested ? 'Ja' : 'Nee'}</td>
                 </tr>

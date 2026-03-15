@@ -20,12 +20,12 @@ import { isSuperAdmin } from '@/lib/admin-shared';
  * Reads the session cookie, looks up the organization's email from Firestore,
  * and checks it against the ADMIN_EMAILS whitelist.
  *
- * Returns { isSuperAdmin: true, orgNummer } on success,
+ * Returns { isSuperAdmin: true, orgNummer, orgEmail, orgContactName } on success,
  * or a 401/403 NextResponse if not authenticated or not a super admin.
  */
 export async function validateSuperAdmin(
   request: NextRequest
-): Promise<{ isSuperAdmin: true; orgNummer: number } | NextResponse> {
+): Promise<{ isSuperAdmin: true; orgNummer: number; orgEmail: string; orgContactName: string } | NextResponse> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
@@ -59,6 +59,7 @@ export async function validateSuperAdmin(
 
   const orgData = orgSnapshot.docs[0].data();
   const orgEmail = String(orgData?.org_wl_email || '');
+  const orgContactName = String(orgData?.org_wl_naam || '');
 
   if (!isSuperAdmin(orgEmail)) {
     return NextResponse.json(
@@ -67,5 +68,5 @@ export async function validateSuperAdmin(
     );
   }
 
-  return { isSuperAdmin: true, orgNummer: session.orgNummer };
+  return { isSuperAdmin: true, orgNummer: session.orgNummer, orgEmail, orgContactName };
 }

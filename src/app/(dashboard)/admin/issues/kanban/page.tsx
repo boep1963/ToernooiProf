@@ -11,6 +11,7 @@ interface AdminIssue {
   id: string;
   title: string;
   description: string;
+  opmerkingen: string;
   type: IssueType;
   images: string[];
   status: IssueStatus;
@@ -19,6 +20,7 @@ interface AdminIssue {
   pierre_tested: boolean;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
 }
 
 const STATUS_LABELS: Record<IssueStatus, string> = {
@@ -210,17 +212,23 @@ export default function AdminIssuesKanbanPage() {
                     {issue.description ? (
                       <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">{issue.description}</p>
                     ) : null}
+                    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5 mb-2">
+                      {(issue.createdBy || issue.createdAt) && (
+                        <>
+                          {issue.createdBy && <div>Aangemaakt door: {issue.createdBy}</div>}
+                          {issue.createdAt && <div>Aangemaakt op: {new Date(issue.createdAt).toLocaleString('nl-NL')}</div>}
+                        </>
+                      )}
+                      {issue.status === 'done' && issue.completedAt && (
+                        <div>Afgemeld op: {new Date(issue.completedAt).toLocaleString('nl-NL')}</div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300">
                         {TYPE_LABELS[issue.type]}
                       </span>
                       {issue.hans_tested && <span className="text-xs text-green-600 dark:text-green-400">H</span>}
                       {issue.pierre_tested && <span className="text-xs text-green-600 dark:text-green-400">P</span>}
-                      {issue.status === 'done' && issue.completedAt && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {new Date(issue.completedAt).toLocaleDateString('nl-NL')}
-                        </span>
-                      )}
                     </div>
                     {issue.images.length > 0 && (
                       <div className="flex gap-1 mt-2">

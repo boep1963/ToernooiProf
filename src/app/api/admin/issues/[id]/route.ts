@@ -6,7 +6,7 @@ import {
   processIssueImageToStorage,
   MAX_IMAGES_PER_ISSUE,
 } from '@/lib/issueImageUtils';
-import { addEmailToQueue, generateIssueDoneEmail } from '@/lib/emailQueue';
+import { addEmailToQueue, generateIssueDoneEmail, generateIssueUpdatedEmail } from '@/lib/emailQueue';
 import { logMutationAudit } from '@/lib/mutationAudit';
 import type { AdminIssue, IssueStatus, IssueType } from '../../route';
 
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       id: snap.id,
       title: String(d.title ?? ''),
       description: String(d.description ?? ''),
+      opmerkingen: String(d.opmerkingen ?? ''),
       type: (d.type as IssueType) || 'bug',
       images: Array.isArray(d.images) ? (d.images as string[]) : [],
       status: (d.status as IssueStatus) || 'not_started',
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       pierre_tested: parseBool(d.pierre_tested),
       createdAt: String(d.createdAt ?? ''),
       updatedAt: String(d.updatedAt ?? ''),
+      createdBy: d.createdBy != null ? String(d.createdBy) : undefined,
     };
 
     return NextResponse.json({ success: true, issue });
@@ -91,6 +93,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       const formData = await request.formData();
       const title = (formData.get('title') as string)?.trim();
       const description = (formData.get('description') as string)?.trim() ?? '';
+      const opmerkingen = (formData.get('opmerkingen') as string)?.trim() ?? '';
       const type = (formData.get('type') as string) || undefined;
       const status = (formData.get('status') as string) || undefined;
       const hans_tested = formData.get('hans_tested');
@@ -113,6 +116,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       updates = {
         ...(title !== undefined && title !== null && { title }),
         description,
+        opmerkingen,
         ...(type !== undefined && type !== null && { type }),
         ...(status !== undefined && status !== null && { status }),
         ...(hans_tested !== undefined && hans_tested !== null && { hans_tested: parseBool(hans_tested) }),
@@ -123,6 +127,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       const body = await request.json();
       updates = { ...body };
       delete (updates as Record<string, unknown>).id;
+      delete (updates as Record<string, unknown>).createdBy;
 
       const newStatus = updates.status as IssueStatus | undefined;
       if (newStatus !== undefined) {
@@ -142,6 +147,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     } else if (merged.status !== 'done') {
       merged.completedAt = null;
     }
+    if (merged.opmerkingen === undefined) merged.opmerkingen = '';
 
     await docRef.update(merged);
 
@@ -163,12 +169,25 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    try {
+      const email = generateIssueUpdatedEmail(
+        'ToernooiProf',
+        String(merged.title ?? ''),
+        id,
+        (merged.updatedAt as string) || now
+      );
+      await addEmailToQueue(email);
+    } catch (queueError) {
+      console.error('[ADMIN ISSUES] E-mail queue error (issue bijgewerkt):', queueError);
+    }
+
     const updated = await docRef.get();
     const d = updated.data() as Record<string, unknown>;
     const issue: AdminIssue = {
       id: updated.id,
       title: String(d.title ?? ''),
       description: String(d.description ?? ''),
+      opmerkingen: String(d.opmerkingen ?? ''),
       type: (d.type as IssueType) || 'bug',
       images: Array.isArray(d.images) ? (d.images as string[]) : [],
       status: (d.status as IssueStatus) || 'not_started',
@@ -177,6 +196,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       pierre_tested: parseBool(d.pierre_tested),
       createdAt: String(d.createdAt ?? ''),
       updatedAt: String(d.updatedAt ?? ''),
+      createdBy: d.createdBy != null ? String(d.createdBy) : undefined,
     };
 
     return NextResponse.json({ success: true, issue });
