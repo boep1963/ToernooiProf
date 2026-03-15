@@ -37,8 +37,10 @@ env:
     availability: [BUILD, RUNTIME]
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
+    availability: [RUNTIME]
   - variable: SESSION_SECRET
     secret: SESSION_SECRET
+    availability: [RUNTIME]
 
 # Optional: override build/run (defaults work for Next.js)
 # Elke build krijgt een unieke NEXT_PUBLIC_BUILD_ID (timestamp), getoond rechtsonder in het dashboard.

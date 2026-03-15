@@ -9,7 +9,6 @@ import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { setLastOpenedTournament } from '@/lib/lastOpenedTournament';
 
-
 interface TournamentData {
   id: string;
   t_nummer: number;
