@@ -4,6 +4,7 @@ import { validateOrgAccess } from '@/lib/auth-helper';
 import { getAdminAuth } from '@/lib/firebase-admin';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
 import { BCC_EMAILS } from '@/lib/emailQueue';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 interface RouteParams {
   params: Promise<{ orgNr: string }>;
@@ -178,34 +179,105 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .get();
 
     if (orgSnapshot.empty) {
+      logMutationAudit({
+        action: 'delete_organization',
+        orgNummer,
+        resourceType: 'organizations',
+        resourceId: String(orgNummer),
+        success: false,
+        actor: `org_${orgNummer}`,
+        details: { reason: 'not_found' },
+      });
       return NextResponse.json(
         { error: 'Organisatie niet gevonden.' },
         { status: 404 }
       );
     }
 
-    // Delete members
-    const membersSnapshot = await db.collection('members')
-      .where('spa_org', '==', orgNummer)
-      .get();
-    for (const doc of membersSnapshot.docs) {
-      await doc.ref.delete();
+    const deletedCounts: Record<string, number> = {};
+
+    async function deleteByFields(
+      collectionName: string,
+      fieldNames: string[],
+      value: number
+    ): Promise<number> {
+      const uniqueDocs = new Map<string, { ref: { delete: () => Promise<void> } }>();
+
+      for (const fieldName of fieldNames) {
+        const snapshot = await db.collection(collectionName)
+          .where(fieldName, '==', value)
+          .get();
+        for (const doc of snapshot.docs) {
+          if (!uniqueDocs.has(doc.id)) {
+            uniqueDocs.set(doc.id, { ref: doc.ref });
+          }
+        }
+      }
+
+      for (const doc of uniqueDocs.values()) {
+        await doc.ref.delete();
+      }
+
+      return uniqueDocs.size;
     }
 
-    // Delete competitions
-    const compsSnapshot = await db.collection('competitions')
-      .where('org_nummer', '==', orgNummer)
-      .get();
-    for (const doc of compsSnapshot.docs) {
-      await doc.ref.delete();
+    const cascadeTargets: Array<{ collection: string; fields: string[] }> = [
+      // ClubMatch-collecties
+      { collection: 'members', fields: ['spa_org', 'org_nummer', 'gebruiker_nr'] },
+      { collection: 'competitions', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'competition_players', fields: ['spc_org', 'org_nummer', 'gebruiker_nr'] },
+      { collection: 'results', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'matches', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'poule_players', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'tables', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'device_config', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'score_helpers', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'score_helpers_tablet', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'email_queue', fields: ['org_nummer', 'gebruiker_nr'] },
+      // ToernooiProf-collecties
+      { collection: 'toernooien', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'spelers', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'uitslagen', fields: ['org_nummer', 'gebruiker_nr'] },
+      { collection: 'poules', fields: ['org_nummer', 'gebruiker_nr'] },
+    ];
+
+    for (const target of cascadeTargets) {
+      const count = await deleteByFields(target.collection, target.fields, orgNummer);
+      deletedCounts[target.collection] = count;
     }
 
     // Delete organization
     await orgSnapshot.docs[0].ref.delete();
+    logMutationAudit({
+      action: 'delete_organization',
+      orgNummer,
+      resourceType: 'organizations',
+      resourceId: String(orgNummer),
+      success: true,
+      actor: `org_${orgNummer}`,
+      details: { deleted: deletedCounts },
+    });
 
-    console.log('[ORG] Organization and related data deleted');
-    return NextResponse.json({ success: true });
+    console.log('[ORG] Organization and related data deleted', {
+      orgNummer,
+      deletedCounts,
+    });
+    return NextResponse.json({
+      success: true,
+      deleted: deletedCounts,
+    });
   } catch (error) {
+    const parsedOrg = Number.parseInt((await params).orgNr, 10);
+    const orgNummerForAudit = Number.isFinite(parsedOrg) ? parsedOrg : 0;
+    logMutationAudit({
+      action: 'delete_organization',
+      orgNummer: orgNummerForAudit,
+      resourceType: 'organizations',
+      resourceId: orgNummerForAudit > 0 ? String(orgNummerForAudit) : undefined,
+      success: false,
+      actor: orgNummerForAudit > 0 ? `org_${orgNummerForAudit}` : 'unknown',
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
     console.error('[ORG] Error deleting organization:', error);
     return NextResponse.json(
       { error: 'Fout bij verwijderen organisatie.' },
