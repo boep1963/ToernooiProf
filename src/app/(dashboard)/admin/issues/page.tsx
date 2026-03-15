@@ -463,61 +463,30 @@ export default function AdminIssuesPage() {
             {issues.length === 0 ? 'Nog geen issues.' : 'Geen issues met deze status.'}
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-0">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Titel</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Omschrijving</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Opmerkingen</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Type</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Status</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Aangemaakt door</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Aangemaakt op</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Afgemeld op</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Hans / Pierre</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Afb.</th>
                   <th className="text-right py-3 px-4 text-xs font-semibold text-slate-600 dark:text-slate-400">Acties</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredIssues.map((issue) => (
                   <tr key={issue.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                    <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white">{issue.title}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={issue.description || undefined}>
-                      {issue.description || '-'}
+                    <td className="py-3 px-4 text-sm font-medium text-slate-900 dark:text-white min-w-0">
+                      <span className="line-clamp-2" title={issue.title}>{issue.title}</span>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[160px] truncate" title={issue.opmerkingen || undefined}>
-                      {issue.opmerkingen || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{TYPE_LABELS[issue.type]}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{STATUS_LABELS[issue.status]}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-[140px] truncate" title={issue.createdBy || undefined}>
-                      {issue.createdBy || '-'}
-                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{TYPE_LABELS[issue.type]}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{STATUS_LABELS[issue.status]}</td>
                     <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                       {issue.createdAt ? new Date(issue.createdAt).toLocaleString('nl-NL') : '-'}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                      {issue.completedAt ? new Date(issue.completedAt).toLocaleString('nl-NL') : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className={issue.hans_tested ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}>H</span>
-                      <span className="mx-1 text-slate-400">/</span>
-                      <span className={issue.pierre_tested ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}>P</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {issue.images.length > 0 ? (
-                        <div className="flex gap-1">
-                          {issue.images.slice(0, 3).map((src, i) => (
-                            <img key={i} src={src} alt="" className="h-8 w-8 object-cover rounded" />
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-xs">-</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
                       {deleteConfirm === issue.id ? (
                         <div className="flex justify-end gap-2">
                           <button
@@ -547,6 +516,10 @@ export default function AdminIssuesPage() {
               </tbody>
             </table>
           </div>
+          <p className="p-3 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
+            Alleen essentiële velden. Klik op Bewerken voor omschrijving, opmerkingen, aangemaakt door, afgemeld op, getest-status en afbeeldingen.
+          </p>
+          </>
         )}
       </div>
 
