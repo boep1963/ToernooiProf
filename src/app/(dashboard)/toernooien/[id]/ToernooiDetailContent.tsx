@@ -8,7 +8,7 @@ import { DISCIPLINES, MOYENNE_MULTIPLIERS, CAR_SYSTEMEN } from '@/types';
 import CompetitionSubNav from '@/components/CompetitionSubNav';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { setLastOpenedTournament } from '@/lib/lastOpenedTournament';
-
+//dummycomment for testing
 interface TournamentData {
   id: string;
   t_nummer: number;
