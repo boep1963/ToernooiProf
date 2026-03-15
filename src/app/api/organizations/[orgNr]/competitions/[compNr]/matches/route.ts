@@ -154,23 +154,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     let playersSnapshot: any;
     let effectivePeriode = periode;
+    let resolvedPouleData: Record<string, unknown> | null = null;
 
     if (pouleId) {
       console.log(`[MATCHES] Generating matches for poule ${pouleId}...`);
       const pouleGuard = await assertPouleOwnership(orgNummer, compNumber, String(pouleId));
       if (pouleGuard instanceof NextResponse) return pouleGuard;
+      resolvedPouleData = pouleGuard.pouleData;
+      effectivePeriode = Number(resolvedPouleData?.ronde_nr) || periode;
       // Get players from poule_players
       playersSnapshot = await db.collection('poule_players')
         .where('poule_id', '==', pouleId)
         .where('org_nummer', '==', orgNummer)
         .where('comp_nr', '==', compNumber)
         .get();
-      
-      // Get poule details to know the ronde_nr
-      const pouleDoc = await db.collection('poules').doc(pouleId).get();
-      if (pouleDoc.exists) {
-        effectivePeriode = (pouleDoc.data()?.ronde_nr as number) || periode;
-      }
     } else {
       console.log('[MATCHES] Generating matches for all players in competition...');
       playersSnapshot = await queryWithOrgComp(
@@ -369,8 +366,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // ToernooiProf compatibility: mirror generated matches to tp_uitslagen for planning/result entry.
     if (pouleId && createdMatches.length > 0) {
-      const pouleDoc = await db.collection('poules').doc(String(pouleId)).get();
-      const pouleData = (pouleDoc.data() ?? {}) as Record<string, unknown>;
+      const pouleData = (resolvedPouleData ?? {}) as Record<string, unknown>;
       const tpRonde = Number(pouleData.ronde_nr) || effectivePeriode;
       const tpPoule = Number(pouleData.poule_nr) || 1;
 

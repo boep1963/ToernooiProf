@@ -18,7 +18,34 @@ export async function assertPouleOwnership(
 
   const pouleDoc = await db.collection('poules').doc(pouleId).get();
   if (!pouleDoc.exists) {
-    return guardError('Poule niet gevonden.', 404);
+    // ToernooiProf gebruikt soms synthetische ids zoals rn1_pn2 i.p.v. document-id.
+    const fallbackMatch = pouleId.match(/^rn(\d+)_pn(\d+)$/);
+    if (!fallbackMatch) {
+      return guardError('Poule niet gevonden.', 404);
+    }
+
+    const rondeNr = Number(fallbackMatch[1]);
+    const pouleNr = Number(fallbackMatch[2]);
+    if (!Number.isInteger(rondeNr) || !Number.isInteger(pouleNr) || rondeNr < 1 || pouleNr < 1) {
+      return guardError('Ongeldige poule-id.', 400);
+    }
+
+    const fallbackSnap = await db.collection('poules')
+      .where('gebruiker_nr', '==', orgNummer)
+      .where('t_nummer', '==', compNumber)
+      .where('ronde_nr', '==', rondeNr)
+      .where('poule_nr', '==', pouleNr)
+      .limit(1)
+      .get();
+
+    if (fallbackSnap.empty) {
+      return guardError('Poule niet gevonden.', 404);
+    }
+
+    return {
+      ok: true,
+      pouleData: (fallbackSnap.docs[0].data() ?? {}) as Record<string, unknown>,
+    };
   }
 
   const pouleData = (pouleDoc.data() ?? {}) as Record<string, unknown>;
