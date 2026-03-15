@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import standingsCache from '@/lib/standingsCache';
+import { checkSensitiveMutationLimit, rateLimit429 } from '@/lib/rateLimit';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; id: string }>;
@@ -13,6 +15,9 @@ interface RouteParams {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const limitResult = await checkSensitiveMutationLimit(request);
+    if (!limitResult.allowed) return rateLimit429(limitResult);
+
     const { orgNr, compNr, id } = await params;
 
     // Validate session and org access
@@ -54,6 +59,14 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Delete the result
     await resultDoc.ref.delete();
+    logMutationAudit({
+      action: 'delete_result',
+      orgNummer,
+      compNumber,
+      resourceType: 'results',
+      resourceId: id,
+      success: true,
+    });
 
     // Invalidate standings cache for this competition
     standingsCache.invalidateCompetition(orgNummer, compNumber);

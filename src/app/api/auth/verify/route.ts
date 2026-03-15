@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { addEmailToQueue, generateVerificationConfirmationEmail } from '@/lib/emailQueue';
 import { checkVerifyLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
 import { logAuthEvent } from '@/lib/authLog';
+import { buildSessionCookieOptions, encodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 /**
  * POST /api/auth/verify
@@ -135,13 +136,7 @@ export async function POST(request: NextRequest) {
       loginTime: new Date().toISOString(),
       verified: true,
     };
-    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 12, // 12 uur
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, encodeSessionCookie(sessionData), buildSessionCookieOptions());
 
     void logAuthEvent({
       endpoint: 'verify',

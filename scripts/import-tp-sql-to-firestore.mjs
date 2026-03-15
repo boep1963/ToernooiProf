@@ -303,7 +303,12 @@ function importPoules(sql, db) {
 
 function importUitslagen(sql, db) {
   const records = parseInserts(sql, 'tp_uitslagen');
-  return batchWrite(db, 'uitslagen', records, r => String(r.uitslag_id));
+  return batchWrite(
+    db,
+    'uitslagen',
+    records,
+    r => `${r.gebruiker_nr}_${r.t_nummer}_${r.uitslag_id}`
+  );
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────────

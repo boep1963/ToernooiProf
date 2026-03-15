@@ -3,6 +3,9 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { getPoulePlayers, addPlayerToPoule } from '@/lib/tournamentUtils';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
+import { assertPouleOwnership } from '@/lib/securityGuards';
+import { checkSensitiveMutationLimit, rateLimit429 } from '@/lib/rateLimit';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string; pouleId: string }>;
@@ -20,7 +23,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const orgNummer = authResult.orgNummer;
     const compNumber = parseInt(compNr, 10);
-    let players: any[] = await getPoulePlayers(pouleId);
+    if (isNaN(compNumber)) {
+      return NextResponse.json({ error: 'Ongeldige competitie.' }, { status: 400 });
+    }
+    const ownership = await assertPouleOwnership(orgNummer, compNumber, pouleId);
+    if (ownership instanceof NextResponse) return ownership;
+    let players: any[] = await getPoulePlayers(pouleId, orgNummer, compNumber);
 
     // Fallback: ToernooiProf gebruikt poules-collectie (tp_poules) - elke doc = één speler in poule
     if (players.length === 0) {
@@ -102,6 +110,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const orgNummer = authResult.orgNummer;
     const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json({ error: 'Ongeldige competitie.' }, { status: 400 });
+    }
+    const ownership = await assertPouleOwnership(orgNummer, compNumber, pouleId);
+    if (ownership instanceof NextResponse) return ownership;
     const body = await request.json();
     
     const { spc_nummer, ronde_nr, moyenne_start, caramboles_start } = body;
@@ -139,12 +152,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const limitResult = await checkSensitiveMutationLimit(request);
+    if (!limitResult.allowed) return rateLimit429(limitResult);
+
     const { orgNr, compNr, pouleId } = await params;
     const authResult = validateOrgAccess(request, orgNr);
     if (authResult instanceof NextResponse) return authResult;
+    const orgNummer = authResult.orgNummer;
+    const compNumber = parseInt(compNr, 10);
+    if (isNaN(compNumber)) {
+      return NextResponse.json({ error: 'Ongeldige competitie.' }, { status: 400 });
+    }
+    const ownership = await assertPouleOwnership(orgNummer, compNumber, pouleId);
+    if (ownership instanceof NextResponse) return ownership;
 
     const snapshot = await db.collection('poule_players')
       .where('poule_id', '==', pouleId)
+      .where('org_nummer', '==', orgNummer)
+      .where('comp_nr', '==', compNumber)
       .get();
     
     const batch = db.batch();
@@ -153,6 +178,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
     
     await batch.commit();
+    logMutationAudit({
+      action: 'delete_poule_players',
+      orgNummer,
+      compNumber,
+      resourceType: 'poule_players',
+      resourceId: pouleId,
+      success: true,
+      details: { deleted: snapshot.size },
+    });
 
     return NextResponse.json({ message: 'Alle spelers verwijderd uit poule' });
   } catch (error) {

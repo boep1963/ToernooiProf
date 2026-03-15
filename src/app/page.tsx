@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { decodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export default async function Home() {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('toernooiprof-session');
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
   if (sessionCookie?.value) {
-    try {
-      const session = JSON.parse(sessionCookie.value);
-      if (session?.orgNummer) {
-        redirect('/dashboard');
-      }
-    } catch {
-      // Ongeldige sessie, ga naar login
+    const session = decodeSessionCookie(sessionCookie.value);
+    if (session?.orgNummer) {
+      redirect('/dashboard');
     }
   }
   redirect('/inloggen');

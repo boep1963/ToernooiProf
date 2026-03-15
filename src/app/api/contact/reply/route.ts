@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { BCC_EMAILS } from '@/lib/emailQueue';
-import { cookies } from 'next/headers';
+import { decodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 // Helper to get authenticated org from session cookie
 async function getAuthOrg(request: NextRequest): Promise<{ orgNummer: number; orgName: string } | null> {
-  const sessionCookie = request.cookies.get('toernooiprof-session');
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   if (!sessionCookie) return null;
-  try {
-    const session = JSON.parse(sessionCookie.value);
-    return { orgNummer: session.orgNummer, orgName: session.orgNaam || '' };
-  } catch {
-    return null;
-  }
+  const session = decodeSessionCookie(sessionCookie.value);
+  if (!session) return null;
+  return { orgNummer: session.orgNummer, orgName: session.orgNaam || '' };
 }
 
 /**

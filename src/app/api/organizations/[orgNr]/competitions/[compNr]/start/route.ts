@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd } from '@/lib/billiards';
 import { calculateCaramboles } from '@/lib/billiards';
+import { buildUitslagDocId } from '@/lib/uitslagenIds';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -267,7 +268,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             tafel_nr: 0,
           };
 
-          const docRef = db.collection('uitslagen').doc(String(uitslagId));
+          const docRef = db.collection('uitslagen').doc(buildUitslagDocId(orgNummer, compNumber, uitslagId));
           batch.set(docRef, uitslagDoc);
           uitslagId++;
           batchCount++;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
 import { isValidAdminCollection } from '@/lib/admin-collections';
+import { sanitizeAdminDocumentUpdate } from '@/lib/adminUpdatePolicy';
 
 /**
  * GET /api/admin/collections/[collection]/[docId]
@@ -83,7 +84,7 @@ export async function PUT(
       );
     }
 
-    if (!body.data || typeof body.data !== 'object') {
+    if (!body.data || typeof body.data !== 'object' || Array.isArray(body.data)) {
       return NextResponse.json(
         { error: 'Ongeldige data in verzoek.' },
         { status: 400 }
@@ -102,8 +103,14 @@ export async function PUT(
       );
     }
 
-    // Update document
-    await docRef.update(body.data);
+    const currentData = (doc.data() ?? {}) as Record<string, unknown>;
+    const sanitized = sanitizeAdminDocumentUpdate(currentData, body.data);
+    if (!sanitized.ok) {
+      return NextResponse.json({ error: sanitized.error }, { status: 400 });
+    }
+
+    // Update document with sanitized data only
+    await docRef.update(sanitized.data);
 
     return NextResponse.json({
       success: true,

@@ -2,22 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { formatDecimal } from '@/lib/formatUtils';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
+import { validateOrgAccess } from '@/lib/auth-helper';
+import { parseEnumNumber, parseNumberArray, parseStrictPositiveInt } from '@/lib/requestValidation';
+import { assertCompetitionExists } from '@/lib/securityGuards';
+import { checkSensitiveMutationLimit, rateLimit429 } from '@/lib/rateLimit';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ orgNr: string; compNr: string }> }
 ) {
   try {
-    const { orgNr, compNr } = await context.params;
-    const org_nummer = parseInt(orgNr, 10);
-    const comp_nr = parseInt(compNr, 10);
+    const limitResult = await checkSensitiveMutationLimit(request);
+    if (!limitResult.allowed) return rateLimit429(limitResult);
 
-    if (isNaN(org_nummer) || isNaN(comp_nr)) {
+    const { orgNr, compNr } = await context.params;
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const org_nummer = authResult.orgNummer;
+    const comp_nr = parseStrictPositiveInt(compNr);
+
+    if (!comp_nr) {
       return NextResponse.json(
         { error: 'Ongeldige organisatie of competitie nummer.' },
         { status: 400 }
       );
     }
+
+    const competitionGuard = await assertCompetitionExists(org_nummer, comp_nr);
+    if (competitionGuard instanceof NextResponse) return competitionGuard;
 
     // 1. Get competition data
     const competitionsSnapshot = await db
@@ -139,27 +152,34 @@ export async function POST(
 ) {
   try {
     const { orgNr, compNr } = await context.params;
-    const org_nummer = parseInt(orgNr, 10);
-    const comp_nr = parseInt(compNr, 10);
+    const authResult = validateOrgAccess(request, orgNr);
+    if (authResult instanceof NextResponse) return authResult;
+    const org_nummer = authResult.orgNummer;
+    const comp_nr = parseStrictPositiveInt(compNr);
 
-    if (isNaN(org_nummer) || isNaN(comp_nr)) {
+    if (!comp_nr) {
       return NextResponse.json(
         { error: 'Ongeldige organisatie of competitie nummer.' },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
-    const { playerIds, period, discipline } = body;
+    const competitionGuard = await assertCompetitionExists(org_nummer, comp_nr);
+    if (competitionGuard instanceof NextResponse) return competitionGuard;
 
-    if (!Array.isArray(playerIds) || playerIds.length === 0) {
+    const body = await request.json();
+    const playerIds = parseNumberArray(body?.playerIds, 1000);
+    const period = parseEnumNumber(body?.period, [1, 2, 3, 4, 5, 6] as const);
+    const discipline = parseEnumNumber(body?.discipline, [1, 2, 3, 4, 5] as const);
+
+    if (!playerIds) {
       return NextResponse.json(
         { error: 'Geen spelers geselecteerd.' },
         { status: 400 }
       );
     }
 
-    if (![1, 2, 3, 4, 5, 6].includes(period)) {
+    if (!period) {
       return NextResponse.json(
         { error: 'Ongeldige periode.' },
         { status: 400 }
@@ -248,6 +268,16 @@ export async function POST(
         updated++;
       }
     }
+
+    logMutationAudit({
+      action: 'doorkoppelen',
+      orgNummer: org_nummer,
+      compNumber: comp_nr,
+      resourceType: 'members',
+      resourceId: `${org_nummer}_${comp_nr}`,
+      success: true,
+      details: { updated, period, discipline },
+    });
 
     return NextResponse.json(
       { message: 'Moyennes succesvol doorgekoppeld', updated },

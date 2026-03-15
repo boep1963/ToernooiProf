@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateSuperAdmin } from '@/lib/admin';
+import { checkCreateOrganizationLimit, rateLimit429 } from '@/lib/rateLimit';
+import { parseStrictPositiveInt } from '@/lib/requestValidation';
 
 /**
  * POST /api/organizations
@@ -7,10 +10,18 @@ import db from '@/lib/db';
  */
 export async function POST(request: NextRequest) {
   try {
+    const adminAccess = await validateSuperAdmin(request);
+    if (adminAccess instanceof NextResponse) return adminAccess;
+
+    const limitResult = await checkCreateOrganizationLimit(request);
+    if (!limitResult.allowed) {
+      return rateLimit429(limitResult);
+    }
+
     const body = await request.json();
 
-    const orgNummer = body.org_nummer;
-    if (!orgNummer || typeof orgNummer !== 'number') {
+    const orgNummer = parseStrictPositiveInt(body?.org_nummer);
+    if (!orgNummer) {
       return NextResponse.json(
         { error: 'org_nummer is verplicht en moet een nummer zijn.' },
         { status: 400 }

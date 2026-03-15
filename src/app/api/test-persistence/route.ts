@@ -1,11 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { validateSuperAdmin } from '@/lib/admin';
 
 const TEST_COLLECTION = 'test_persistence';
 const TEST_DOC_ID = 'restart_test_doc';
 
-export async function GET() {
+async function ensureAllowed(request: NextRequest): Promise<NextResponse | null> {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Endpoint niet beschikbaar in productie.' }, { status: 404 });
+  }
+  const adminAccess = await validateSuperAdmin(request);
+  if (adminAccess instanceof NextResponse) return adminAccess;
+  return null;
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const accessError = await ensureAllowed(request);
+    if (accessError) return accessError;
+
     // Try to read the test document
     const docRef = db.collection(TEST_COLLECTION).doc(TEST_DOC_ID);
     const doc = await docRef.get();
@@ -36,8 +49,11 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const accessError = await ensureAllowed(request);
+    if (accessError) return accessError;
+
     const testData = {
       test_name: 'RESTART_TEST_12345',
       timestamp: new Date().toISOString(),
@@ -67,8 +83,11 @@ export async function POST() {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
+    const accessError = await ensureAllowed(request);
+    if (accessError) return accessError;
+
     // Delete test document
     const docRef = db.collection(TEST_COLLECTION).doc(TEST_DOC_ID);
     await docRef.delete();

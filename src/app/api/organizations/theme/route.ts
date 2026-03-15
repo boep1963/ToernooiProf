@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { decodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function PATCH(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get('toernooiprof-session');
+    const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
 
     if (!sessionCookie?.value) {
       return NextResponse.json(
@@ -12,17 +13,8 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: 'Ongeldige sessie.' },
-        { status: 401 }
-      );
-    }
-
-    if (!session.orgNummer) {
+    const session = decodeSessionCookie(sessionCookie.value);
+    if (!session?.orgNummer) {
       return NextResponse.json(
         { error: 'Ongeldige sessie.' },
         { status: 401 }

@@ -5,6 +5,11 @@ import { scheduleRoundRobinEven, scheduleRoundRobinOdd, generateMatchCode, forma
 import { queryWithOrgComp } from '@/lib/firestoreUtils';
 import { batchEnrichPlayerNames } from '@/lib/batchEnrichment';
 import { cachedJsonResponse } from '@/lib/cacheHeaders';
+import { assertPouleOwnership } from '@/lib/securityGuards';
+import { parseBoolean } from '@/lib/requestValidation';
+import { buildUitslagDocId } from '@/lib/uitslagenIds';
+import { checkSensitiveMutationLimit, rateLimit429 } from '@/lib/rateLimit';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -95,6 +100,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const limitResult = await checkSensitiveMutationLimit(request);
+    if (!limitResult.allowed) return rateLimit429(limitResult);
+
     const { orgNr, compNr } = await params;
 
     // Validate session and org access
@@ -142,16 +150,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json().catch(() => ({}));
     const pouleId = body.poule_id;
-    const forceRegenerate = body.force === true;
+    const forceRegenerate = parseBoolean(body.force);
 
     let playersSnapshot: any;
     let effectivePeriode = periode;
 
     if (pouleId) {
       console.log(`[MATCHES] Generating matches for poule ${pouleId}...`);
+      const pouleGuard = await assertPouleOwnership(orgNummer, compNumber, String(pouleId));
+      if (pouleGuard instanceof NextResponse) return pouleGuard;
       // Get players from poule_players
       playersSnapshot = await db.collection('poule_players')
         .where('poule_id', '==', pouleId)
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
         .get();
       
       // Get poule details to know the ronde_nr
@@ -387,6 +399,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const volgnrBySpeler = new Map<number, number>();
       const poulePlayersSnap = await db.collection('poule_players')
         .where('poule_id', '==', String(pouleId))
+        .where('org_nummer', '==', orgNummer)
+        .where('comp_nr', '==', compNumber)
         .get();
       poulePlayersSnap.docs.forEach((doc, idx) => {
         const d = (doc.data() ?? {}) as Record<string, unknown>;
@@ -404,7 +418,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         const sp1Nr = Number(match.nummer_A) || 0;
         const sp2Nr = Number(match.nummer_B) || 0;
 
-        await db.collection('uitslagen').doc(String(nextUitslagId)).set({
+        const uitslagDocId = buildUitslagDocId(orgNummer, compNumber, nextUitslagId);
+        await db.collection('uitslagen').doc(uitslagDocId).set({
           uitslag_id: nextUitslagId,
           gebruiker_nr: orgNummer,
           t_nummer: compNumber,
@@ -432,6 +447,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         nextUitslagId++;
       }
     }
+
+    logMutationAudit({
+      action: 'generate_matches',
+      orgNummer,
+      compNumber,
+      resourceType: 'matches',
+      resourceId: pouleId ? String(pouleId) : `${orgNummer}_${compNumber}`,
+      success: true,
+      details: {
+        count: createdMatches.length,
+        rounds: roundsMatches.length,
+        players: playerNumbers.length,
+        poule_id: pouleId || null,
+      },
+    });
 
     return NextResponse.json({
       matches: createdMatches,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeOrgNummer } from './orgNumberUtils';
+import { decodeSessionCookie, SESSION_COOKIE_NAME } from './session';
 
 /**
  * Validates that the authenticated user's organization matches the requested orgNr.
@@ -9,7 +10,7 @@ export function validateOrgAccess(
   request: NextRequest,
   requestedOrgNr: string | number
 ): { orgNummer: number } | NextResponse {
-  const sessionCookie = request.cookies.get('toernooiprof-session');
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
 
   if (!sessionCookie?.value) {
     return NextResponse.json(
@@ -18,17 +19,8 @@ export function validateOrgAccess(
     );
   }
 
-  let session: { orgNummer?: number };
-  try {
-    session = JSON.parse(sessionCookie.value);
-  } catch {
-    return NextResponse.json(
-      { error: 'Ongeldige sessie.' },
-      { status: 401 }
-    );
-  }
-
-  if (!session.orgNummer) {
+  const session = decodeSessionCookie(sessionCookie.value);
+  if (!session?.orgNummer) {
     return NextResponse.json(
       { error: 'Niet ingelogd.' },
       { status: 401 }

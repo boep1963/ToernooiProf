@@ -133,6 +133,24 @@ const forgotLoginCodeByEmail = redis
     })
   : null;
 
+// Sensitive data mutations: 20 per IP per 15 min
+const sensitiveMutationByIp = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, '15 m'),
+      prefix: 'toernooiprof:api:mutation:ip',
+    })
+  : null;
+
+// Organization creation (admin endpoint): 3 per IP per hour
+const createOrganizationByIp = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(3, '1 h'),
+      prefix: 'toernooiprof:api:create-organization:ip',
+    })
+  : null;
+
 export type RateLimitResult =
   | { allowed: true }
   | { allowed: false; retryAfterSeconds: number; message: string };
@@ -355,4 +373,34 @@ export function rateLimit429(result: { retryAfterSeconds: number; message: strin
       headers: { 'Retry-After': String(result.retryAfterSeconds) },
     }
   );
+}
+
+export async function checkSensitiveMutationLimit(request: NextRequest): Promise<RateLimitResult> {
+  if (!sensitiveMutationByIp) return { allowed: true };
+  const ip = getClientIp(request);
+  const result = await sensitiveMutationByIp.limit(`ip:${ip}`);
+  if (!result.success) {
+    const retry = retryAfterFromReset(result.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  return { allowed: true };
+}
+
+export async function checkCreateOrganizationLimit(request: NextRequest): Promise<RateLimitResult> {
+  if (!createOrganizationByIp) return { allowed: true };
+  const ip = getClientIp(request);
+  const result = await createOrganizationByIp.limit(`ip:${ip}`);
+  if (!result.success) {
+    const retry = retryAfterFromReset(result.reset);
+    return {
+      allowed: false,
+      retryAfterSeconds: retry,
+      message: RATE_LIMIT_MESSAGE.replace('X', String(Math.ceil(retry / 60))),
+    };
+  }
+  return { allowed: true };
 }

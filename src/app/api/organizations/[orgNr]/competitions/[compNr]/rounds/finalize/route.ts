@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateOrgAccess } from '@/lib/auth-helper';
 import { scheduleRoundRobinEven, scheduleRoundRobinOdd } from '@/lib/billiards';
+import { buildUitslagDocId } from '@/lib/uitslagenIds';
 
 interface RouteParams {
   params: Promise<{ orgNr: string; compNr: string }>;
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           const [sp1, sp2] = matches[k];
           const sp1Data = withVolg.find((s) => s.sp_nummer === sp1);
           const sp2Data = withVolg.find((s) => s.sp_nummer === sp2);
-          await db.collection('uitslagen').doc(String(nextUitslagId)).set({
+          await db.collection('uitslagen').doc(buildUitslagDocId(orgNummer, compNumber, nextUitslagId)).set({
             uitslag_id: nextUitslagId,
             gebruiker_nr: orgNummer,
             t_nummer: compNumber,

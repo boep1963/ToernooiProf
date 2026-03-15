@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { addEmailToQueue, generateRegistrationEmail } from '@/lib/emailQueue';
 import { checkRegisterLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
 import { logAuthEvent } from '@/lib/authLog';
+import { buildSessionCookieOptions, encodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 /**
  * Generate a random string of uppercase letters (excluding I and O for readability)
@@ -193,13 +194,7 @@ export async function POST(request: NextRequest) {
       orgNaam: org_naam.trim(),
       loginTime: new Date().toISOString(),
     };
-    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 12, // 12 uur
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, encodeSessionCookie(sessionData), buildSessionCookieOptions());
 
     void logAuthEvent({
       endpoint: 'register',

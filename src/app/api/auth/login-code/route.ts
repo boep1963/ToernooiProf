@@ -8,6 +8,7 @@ import {
 } from '@/lib/rateLimit';
 import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile';
 import { logAuthEvent } from '@/lib/authLog';
+import { buildSessionCookieOptions, encodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,13 +93,7 @@ export async function POST(request: NextRequest) {
       orgNaam: orgData?.org_naam,
       loginTime: new Date().toISOString(),
     };
-    response.cookies.set('toernooiprof-session', JSON.stringify(sessionData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 12, // 12 uur
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, encodeSessionCookie(sessionData), buildSessionCookieOptions());
 
     console.log('[AUTH] Login successful for org:', orgData?.org_nummer);
     void logAuthEvent({

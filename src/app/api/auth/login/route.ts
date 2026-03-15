@@ -4,6 +4,7 @@ import { getAdminAuth } from '@/lib/firebase-admin';
 import { checkLoginLimit, getClientIp, getUserAgent, rateLimit429 } from '@/lib/rateLimit';
 import { isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile';
 import { logAuthEvent } from '@/lib/authLog';
+import { buildSessionCookieOptions, encodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -104,17 +105,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Set session cookie
-    response.cookies.set('toernooiprof-session', JSON.stringify({
+    response.cookies.set(SESSION_COOKIE_NAME, encodeSessionCookie({
       orgNummer: orgData?.org_nummer,
       orgNaam: orgData?.org_naam,
       loginTime: new Date().toISOString(),
-    }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 12, // 12 uur
-      path: '/',
-    });
+    }), buildSessionCookieOptions());
 
     console.log('[AUTH] Firebase Auth login successful for org:', orgData?.org_nummer, '(email:', email, ')');
     void logAuthEvent({

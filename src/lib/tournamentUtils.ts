@@ -22,10 +22,20 @@ export async function getPoules(orgNr: number, compNr: number, rondeNr: number):
 /**
  * Get all players assigned to a specific poule
  */
-export async function getPoulePlayers(pouleId: string): Promise<PoulePlayer[]> {
-  const snapshot = await db.collection('poule_players')
-    .where('poule_id', '==', pouleId)
-    .get();
+export async function getPoulePlayers(
+  pouleId: string,
+  orgNummer?: number,
+  compNumber?: number
+): Promise<PoulePlayer[]> {
+  let query: FirebaseFirestore.Query = db.collection('poule_players')
+    .where('poule_id', '==', pouleId);
+  if (typeof orgNummer === 'number') {
+    query = query.where('org_nummer', '==', orgNummer);
+  }
+  if (typeof compNumber === 'number') {
+    query = query.where('comp_nr', '==', compNumber);
+  }
+  const snapshot = await query.get();
 
   return snapshot.docs.map(doc => ({
     id: doc.id,

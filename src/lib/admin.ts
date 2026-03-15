@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '@/lib/db';
+import { decodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
 // Re-export client-safe helpers so existing server-side imports keep working
 export { ADMIN_EMAILS, isSuperAdmin } from '@/lib/admin-shared';
@@ -26,7 +27,7 @@ export async function validateSuperAdmin(
   request: NextRequest
 ): Promise<{ isSuperAdmin: true; orgNummer: number } | NextResponse> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('toernooiprof-session');
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
   if (!sessionCookie?.value) {
     return NextResponse.json(
@@ -35,17 +36,8 @@ export async function validateSuperAdmin(
     );
   }
 
-  let session: { orgNummer?: number };
-  try {
-    session = JSON.parse(sessionCookie.value);
-  } catch {
-    return NextResponse.json(
-      { error: 'Ongeldige sessie.' },
-      { status: 401 }
-    );
-  }
-
-  if (!session.orgNummer) {
+  const session = decodeSessionCookie(sessionCookie.value);
+  if (!session?.orgNummer) {
     return NextResponse.json(
       { error: 'Niet ingelogd.' },
       { status: 401 }
