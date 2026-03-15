@@ -29,9 +29,14 @@ export interface BackupListItem {
 
 export type BackupErrorCode = 'CONFIG' | 'NOT_FOUND' | 'PERMISSION' | 'UNKNOWN';
 export type BackupAuthMode = 'service-account' | 'application-default';
+interface BackupStorageTarget {
+  bucketName: string;
+  objectPrefix: string;
+}
 
 export interface BackupAccessDiagnostics {
   bucketName: string;
+  objectPrefix: string;
   keepCount: number;
   authMode: BackupAuthMode;
   hasServiceAccountKey: boolean;
@@ -90,12 +95,40 @@ function getStorageClient(): Storage {
 /**
  * Get the backup bucket name from environment or use default
  */
-function getBucketName(): string {
-  if (process.env.BACKUP_BUCKET_NAME) {
-    return process.env.BACKUP_BUCKET_NAME;
+function getBackupStorageTarget(): BackupStorageTarget {
+  const raw = process.env.BACKUP_BUCKET_NAME?.trim() || '';
+  const normalized = raw.startsWith('gs://') ? raw.slice(5) : raw;
+  const [bucketFromEnv = '', ...rest] = normalized.split('/').filter(Boolean);
+
+  if (bucketFromEnv) {
+    return {
+      bucketName: bucketFromEnv,
+      objectPrefix: rest.join('/'),
+    };
   }
-  // Gebruik standaard de dedicated backup-bucket om historische backups zichtbaar te houden.
-  return 'backuptoernooiprof';
+
+  const firebaseBucket = process.env.FIREBASE_STORAGE_BUCKET?.trim()
+    || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim()
+    || '';
+  if (firebaseBucket) {
+    return {
+      bucketName: firebaseBucket,
+      objectPrefix: process.env.BACKUP_PATH_PREFIX?.trim() || 'backuptoernooiprof',
+    };
+  }
+
+  // Fallback: dedicated backup bucket zonder extra prefix.
+  return { bucketName: 'backuptoernooiprof', objectPrefix: '' };
+}
+
+function withObjectPrefix(target: BackupStorageTarget, relativePath: string): string {
+  const cleanRelative = relativePath.replace(/^\/+/, '');
+  if (!target.objectPrefix) return cleanRelative;
+  return `${target.objectPrefix.replace(/\/+$/, '')}/${cleanRelative}`;
+}
+
+function getBackupFilesPrefix(target: BackupStorageTarget): string {
+  return withObjectPrefix(target, 'backup-');
 }
 
 function getBackupKeepCount(): number {
@@ -163,8 +196,8 @@ export async function diagnoseBackupAccess(): Promise<BackupAccessDiagnostics> {
     }
   }
 
-  const bucketName = getBucketName();
-  const bucket = storage.bucket(bucketName);
+  const target = getBackupStorageTarget();
+  const bucket = storage.bucket(target.bucketName);
   let bucketExists = false;
   let canList = false;
   let listErrorCode: number | string | undefined;
@@ -180,7 +213,7 @@ export async function diagnoseBackupAccess(): Promise<BackupAccessDiagnostics> {
   }
 
   try {
-    await bucket.getFiles({ prefix: 'backup-', maxResults: 1 });
+    await bucket.getFiles({ prefix: getBackupFilesPrefix(target), maxResults: 1 });
     canList = true;
   } catch (error) {
     const err = error as { code?: number | string; message?: string };
@@ -189,7 +222,8 @@ export async function diagnoseBackupAccess(): Promise<BackupAccessDiagnostics> {
   }
 
   return {
-    bucketName,
+    bucketName: target.bucketName,
+    objectPrefix: target.objectPrefix,
     keepCount: getBackupKeepCount(),
     authMode,
     hasServiceAccountKey,
@@ -237,8 +271,8 @@ export async function createBackup(): Promise<{
 
   try {
     const storage = getStorageClient();
-    const bucketName = getBucketName();
-    const bucket = storage.bucket(bucketName);
+    const target = getBackupStorageTarget();
+    const bucket = storage.bucket(target.bucketName);
 
     const collectionsToBackup = await getCollectionsToBackup();
 
@@ -251,7 +285,7 @@ export async function createBackup(): Promise<{
         const documents = await exportCollection(collectionName);
 
         // Schrijf ook lege collecties weg voor een complete snapshot.
-        const fileName = `${backupName}/${collectionName}.json`;
+        const fileName = withObjectPrefix(target, `${backupName}/${collectionName}.json`);
         const file = bucket.file(fileName);
 
         await file.save(JSON.stringify(documents, null, 2), {
@@ -278,7 +312,7 @@ export async function createBackup(): Promise<{
       durationMs: Date.now() - startTime,
     };
 
-    const metadataFile = bucket.file(`${backupName}/_metadata.json`);
+    const metadataFile = bucket.file(withObjectPrefix(target, `${backupName}/_metadata.json`));
     await metadataFile.save(JSON.stringify(metadata, null, 2), {
       contentType: 'application/json',
     });
@@ -322,12 +356,13 @@ async function cleanupOldBackups(bucket: any, maxBackups: number = 5): Promise<v
     console.log('[Backup] Checking for old backups to clean up...');
 
     // List all backup directories
-    const [files] = await bucket.getFiles({ prefix: 'backup-' });
+    const target = getBackupStorageTarget();
+    const [files] = await bucket.getFiles({ prefix: getBackupFilesPrefix(target) });
 
     // Extract unique backup names (directories)
     const backupDirs = new Set<string>();
     for (const file of files) {
-      const match = file.name.match(/^(backup-[^/]+)\//);
+      const match = file.name.match(/(?:^|\/)(backup-[^/]+)\//);
       if (match) {
         backupDirs.add(match[1]);
       }
@@ -345,7 +380,7 @@ async function cleanupOldBackups(bucket: any, maxBackups: number = 5): Promise<v
 
       for (const backupName of backupsToDelete) {
         // Delete all files in this backup directory
-        const [backupFiles] = await bucket.getFiles({ prefix: `${backupName}/` });
+        const [backupFiles] = await bucket.getFiles({ prefix: withObjectPrefix(target, `${backupName}/`) });
 
         for (const file of backupFiles) {
           await file.delete();
@@ -369,16 +404,16 @@ async function cleanupOldBackups(bucket: any, maxBackups: number = 5): Promise<v
 export async function listBackups(): Promise<BackupListItem[]> {
   try {
     const storage = getStorageClient();
-    const bucketName = getBucketName();
-    const bucket = storage.bucket(bucketName);
+    const target = getBackupStorageTarget();
+    const bucket = storage.bucket(target.bucketName);
 
-    const [files] = await bucket.getFiles({ prefix: 'backup-' });
+    const [files] = await bucket.getFiles({ prefix: getBackupFilesPrefix(target) });
 
     // Extract unique backup directories
     const backupMap = new Map<string, BackupListItem>();
 
     for (const file of files) {
-      const match = file.name.match(/^(backup-[^/]+)\//);
+      const match = file.name.match(/(?:^|\/)(backup-[^/]+)\//);
       if (match) {
         const backupName = match[1];
         const timestamp = backupName.replace('backup-', '');
@@ -434,11 +469,11 @@ export async function restoreBackup(backupName: string): Promise<{
 
   try {
     const storage = getStorageClient();
-    const bucketName = getBucketName();
-    const bucket = storage.bucket(bucketName);
+    const target = getBackupStorageTarget();
+    const bucket = storage.bucket(target.bucketName);
 
     // List all files in the backup directory
-    const [files] = await bucket.getFiles({ prefix: `${backupName}/` });
+    const [files] = await bucket.getFiles({ prefix: withObjectPrefix(target, `${backupName}/`) });
 
     const jsonFiles = files.filter(f =>
       f.name.endsWith('.json') && !f.name.endsWith('/_metadata.json')

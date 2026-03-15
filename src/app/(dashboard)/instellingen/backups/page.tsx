@@ -22,6 +22,7 @@ interface Backup {
 
 interface BackupDiagnostics {
   bucketName: string;
+  objectPrefix: string;
   keepCount: number;
   authMode: 'service-account' | 'application-default';
   hasServiceAccountKey: boolean;
@@ -275,6 +276,7 @@ export default function BackupsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
             <p className="text-violet-900 dark:text-violet-200">Bucket: <span className="font-mono">{diagnostics.bucketName}</span></p>
+            <p className="text-violet-900 dark:text-violet-200">Prefix: <span className="font-mono">{diagnostics.objectPrefix || '(root)'}</span></p>
             <p className="text-violet-900 dark:text-violet-200">Retentie: {diagnostics.keepCount}</p>
             <p className="text-violet-900 dark:text-violet-200">Auth mode: {diagnostics.authMode}</p>
             <p className="text-violet-900 dark:text-violet-200">Service key aanwezig: {diagnostics.hasServiceAccountKey ? 'ja' : 'nee'}</p>
