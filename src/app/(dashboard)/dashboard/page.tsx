@@ -29,6 +29,29 @@ interface OrgDetail extends OrgListItem {
   nieuwsbrief?: number;
 }
 
+interface OrphanCollectionResult {
+  totalDocs: number;
+  orphanDocs: number;
+  orphanTournamentNumbers: number[];
+  sampleDocIds: string[];
+}
+
+interface OrphanScanResult {
+  orgNummer: number;
+  toernooienFound: number;
+  existingTournamentNumbers: number[];
+  totalOrphanDocs: number;
+  orphanTournamentNumbers: number[];
+  byCollection: Record<string, OrphanCollectionResult>;
+}
+
+interface OrphanDeleteResult {
+  orgNummer: number;
+  deletedTotal: number;
+  deletedByCollection: Record<string, number>;
+  deletedOrphanTournamentNumbers: number[];
+}
+
 export default function DashboardPage() {
   const { organization, orgNummer } = useAuth();
   const [showAdminOrgSearch, setShowAdminOrgSearch] = useState<boolean | null>(null);
@@ -42,6 +65,12 @@ export default function DashboardPage() {
   const [lastOrgSearchTerm, setLastOrgSearchTerm] = useState<string | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<OrgDetail | null>(null);
   const [orgDetailLoading, setOrgDetailLoading] = useState(false);
+  const [orphanOrgNummer, setOrphanOrgNummer] = useState('');
+  const [orphanLoading, setOrphanLoading] = useState(false);
+  const [orphanDeleting, setOrphanDeleting] = useState(false);
+  const [orphanError, setOrphanError] = useState<string | null>(null);
+  const [orphanScanResult, setOrphanScanResult] = useState<OrphanScanResult | null>(null);
+  const [orphanDeleteResult, setOrphanDeleteResult] = useState<OrphanDeleteResult | null>(null);
 
   useEffect(() => {
     if (!orgNummer) {
@@ -127,6 +156,79 @@ export default function DashboardPage() {
       setSelectedOrg(null);
     } finally {
       setOrgDetailLoading(false);
+    }
+  };
+
+  const handleOrphanScan = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const orgNr = orphanOrgNummer.trim();
+    if (!orgNr) {
+      setOrphanError('Vul een org_nummer in.');
+      return;
+    }
+
+    setOrphanLoading(true);
+    setOrphanDeleting(false);
+    setOrphanError(null);
+    setOrphanDeleteResult(null);
+
+    try {
+      const res = await apiFetch(`/api/admin/organizations/${encodeURIComponent(orgNr)}/orphans`);
+      const data = await res.json();
+      if (!res.ok || data.success !== true) {
+        throw new Error(data.error || `Uitlezen mislukt (${res.status})`);
+      }
+      setOrphanScanResult({
+        orgNummer: Number(data.orgNummer),
+        toernooienFound: Number(data.toernooienFound) || 0,
+        existingTournamentNumbers: Array.isArray(data.existingTournamentNumbers) ? data.existingTournamentNumbers : [],
+        totalOrphanDocs: Number(data.totalOrphanDocs) || 0,
+        orphanTournamentNumbers: Array.isArray(data.orphanTournamentNumbers) ? data.orphanTournamentNumbers : [],
+        byCollection: (data.byCollection ?? {}) as Record<string, OrphanCollectionResult>,
+      });
+    } catch (error) {
+      setOrphanScanResult(null);
+      setOrphanError(error instanceof Error ? error.message : 'Uitlezen mislukt.');
+    } finally {
+      setOrphanLoading(false);
+    }
+  };
+
+  const handleDeleteOrphans = async () => {
+    const orgNr = orphanOrgNummer.trim();
+    if (!orgNr || !orphanScanResult || orphanScanResult.totalOrphanDocs <= 0) return;
+
+    const confirmed = window.confirm(
+      `Weet je zeker dat je ${orphanScanResult.totalOrphanDocs} orphaned documenten wilt verwijderen voor org ${orgNr}?`
+    );
+    if (!confirmed) return;
+
+    setOrphanDeleting(true);
+    setOrphanError(null);
+    setOrphanDeleteResult(null);
+    try {
+      const res = await apiFetch(`/api/admin/organizations/${encodeURIComponent(orgNr)}/orphans`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.success !== true) {
+        throw new Error(data.error || `Verwijderen mislukt (${res.status})`);
+      }
+
+      setOrphanDeleteResult({
+        orgNummer: Number(data.orgNummer),
+        deletedTotal: Number(data.deletedTotal) || 0,
+        deletedByCollection: (data.deletedByCollection ?? {}) as Record<string, number>,
+        deletedOrphanTournamentNumbers: Array.isArray(data.deletedOrphanTournamentNumbers) ? data.deletedOrphanTournamentNumbers : [],
+      });
+
+      await handleOrphanScan();
+    } catch (error) {
+      setOrphanError(error instanceof Error ? error.message : 'Verwijderen mislukt.');
+    } finally {
+      setOrphanDeleting(false);
     }
   };
 
@@ -291,6 +393,83 @@ export default function DashboardPage() {
               </dl>
             </div>
           )}
+
+          <div className="mt-6 border border-violet-200 dark:border-violet-800 rounded-lg p-4 bg-violet-50 dark:bg-violet-900/20">
+            <h3 className="font-semibold text-violet-900 dark:text-violet-200 mb-3">
+              Orphaned toernooi-documenten (superadmin)
+            </h3>
+            <form onSubmit={handleOrphanScan} className="flex flex-wrap gap-2 items-center mb-3">
+              <input
+                type="number"
+                min={1}
+                value={orphanOrgNummer}
+                onChange={(e) => setOrphanOrgNummer(e.target.value)}
+                placeholder="org_nummer (bijv. 1110)"
+                className="w-56 px-3 py-2 border border-violet-300 dark:border-violet-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              />
+              <button
+                type="submit"
+                disabled={orphanLoading || orphanDeleting}
+                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-lg text-sm"
+              >
+                {orphanLoading ? 'Uitlezen...' : 'Uitlezen'}
+              </button>
+              <button
+                type="button"
+                disabled={orphanDeleting || orphanLoading || !orphanScanResult || orphanScanResult.totalOrphanDocs === 0}
+                onClick={handleDeleteOrphans}
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg text-sm"
+              >
+                {orphanDeleting ? 'Verwijderen...' : 'Verwijder orphaned documenten'}
+              </button>
+            </form>
+
+            {orphanError && (
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">{orphanError}</p>
+            )}
+
+            {orphanScanResult && (
+              <div className="text-sm text-violet-900 dark:text-violet-200 space-y-2">
+                <p>
+                  Gevonden: <strong>{orphanScanResult.totalOrphanDocs}</strong> orphaned docs voor org{' '}
+                  <strong>{orphanScanResult.orgNummer}</strong> (toernooien aanwezig: {orphanScanResult.toernooienFound})
+                </p>
+                {orphanScanResult.orphanTournamentNumbers.length > 0 && (
+                  <p>
+                    Orphaned toernooi-nummers: {orphanScanResult.orphanTournamentNumbers.join(', ')}
+                  </p>
+                )}
+                <div className="overflow-x-auto border border-violet-200 dark:border-violet-800 rounded">
+                  <table className="w-full text-xs">
+                    <thead className="bg-violet-100 dark:bg-violet-900/30">
+                      <tr>
+                        <th className="text-left px-2 py-1">Collectie</th>
+                        <th className="text-right px-2 py-1">Totaal</th>
+                        <th className="text-right px-2 py-1">Orphaned</th>
+                        <th className="text-left px-2 py-1">Toernooien</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(orphanScanResult.byCollection).map(([collectionName, info]) => (
+                        <tr key={collectionName} className="border-t border-violet-200 dark:border-violet-800">
+                          <td className="px-2 py-1 font-medium">{collectionName}</td>
+                          <td className="px-2 py-1 text-right">{info.totalDocs}</td>
+                          <td className="px-2 py-1 text-right">{info.orphanDocs}</td>
+                          <td className="px-2 py-1">{info.orphanTournamentNumbers.join(', ') || '–'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {orphanDeleteResult && (
+              <p className="mt-3 text-sm text-green-700 dark:text-green-300">
+                Verwijderd: {orphanDeleteResult.deletedTotal} orphaned docs (org {orphanDeleteResult.orgNummer}).
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
