@@ -7,18 +7,19 @@
 
 /**
  * Configurable list of admin emails.
- * - Entries starting with '@' are treated as domain patterns (matched with .includes())
+ * - Entries starting with '@' are treated as domain patterns (matched with .endsWith())
  * - Full email addresses are matched exactly (case-insensitive)
  */
 export const ADMIN_EMAILS: string[] = [
-  '@de-boer.net',
+  'p@de-boer.net',
+  'pierre@de-boer.net',
   'hanseekels@gmail.com',
 ];
 
 /**
  * Check if an email address belongs to a super admin.
  * Super admins are users whose organization email (org_wl_email) matches
- * any entry in ADMIN_EMAILS — domain patterns use .includes(), full
+ * any entry in ADMIN_EMAILS — domain patterns use .endsWith(), full
  * email addresses use exact (case-insensitive) match.
  */
 export function isSuperAdmin(email: string | null | undefined): boolean {
@@ -27,8 +28,8 @@ export function isSuperAdmin(email: string | null | undefined): boolean {
   return ADMIN_EMAILS.some((entry) => {
     const normalizedEntry = entry.toLowerCase().trim();
     if (normalizedEntry.startsWith('@')) {
-      // Domain pattern: check if the email contains this domain
-      return normalizedEmail.includes(normalizedEntry);
+      // Domain pattern: require the email to end with the configured domain.
+      return normalizedEmail.endsWith(normalizedEntry);
     }
     // Full email address: exact match
     return normalizedEmail === normalizedEntry;
