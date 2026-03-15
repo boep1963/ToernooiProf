@@ -7,6 +7,7 @@ import {
   MAX_IMAGES_PER_ISSUE,
 } from '@/lib/issueImageUtils';
 import { addEmailToQueue, generateIssueDoneEmail } from '@/lib/emailQueue';
+import { logMutationAudit } from '@/lib/mutationAudit';
 import type { AdminIssue, IssueStatus, IssueType } from '../../route';
 
 interface RouteParams {
@@ -195,12 +196,25 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const authResult = await validateSuperAdmin(request);
   if (authResult instanceof NextResponse) return authResult;
 
+  const actorOrgNummer = authResult.orgNummer;
+  let issueId = 'unknown';
+
   try {
     const { id } = await params;
+    issueId = id;
     const docRef = db.collection('admin_issues').doc(id);
     const snap = await docRef.get();
 
     if (!snap.exists) {
+      logMutationAudit({
+        action: 'admin_delete_issue',
+        orgNummer: actorOrgNummer,
+        resourceType: 'admin_issues',
+        resourceId: id,
+        success: false,
+        actor: `super_admin_org_${actorOrgNummer}`,
+        details: { reason: 'not_found' },
+      });
       return NextResponse.json(
         { error: 'Issue niet gevonden.' },
         { status: 404 }
@@ -208,8 +222,25 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await docRef.delete();
+    logMutationAudit({
+      action: 'admin_delete_issue',
+      orgNummer: actorOrgNummer,
+      resourceType: 'admin_issues',
+      resourceId: id,
+      success: true,
+      actor: `super_admin_org_${actorOrgNummer}`,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
+    logMutationAudit({
+      action: 'admin_delete_issue',
+      orgNummer: actorOrgNummer,
+      resourceType: 'admin_issues',
+      resourceId: issueId,
+      success: false,
+      actor: `super_admin_org_${actorOrgNummer}`,
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
     console.error('[ADMIN ISSUES] DELETE error:', error);
     return NextResponse.json(
       { error: 'Fout bij verwijderen issue.' },

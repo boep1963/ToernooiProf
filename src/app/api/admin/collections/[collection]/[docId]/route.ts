@@ -3,6 +3,7 @@ import { validateSuperAdmin } from '@/lib/admin';
 import db from '@/lib/db';
 import { isValidAdminCollection } from '@/lib/admin-collections';
 import { sanitizeAdminDocumentUpdate } from '@/lib/adminUpdatePolicy';
+import { logMutationAudit } from '@/lib/mutationAudit';
 
 /**
  * GET /api/admin/collections/[collection]/[docId]
@@ -140,10 +141,25 @@ export async function DELETE(
     return authResult; // Return 401/403 error response
   }
 
+  const actorOrgNummer = authResult.orgNummer;
+  let collectionName = 'unknown';
+  let resourceId = 'unknown';
+
   try {
     const { collection, docId } = await params;
+    collectionName = collection;
+    resourceId = docId;
 
     if (!isValidAdminCollection(collection)) {
+      logMutationAudit({
+        action: 'admin_delete_document',
+        orgNummer: actorOrgNummer,
+        resourceType: collection,
+        resourceId: docId,
+        success: false,
+        actor: `super_admin_org_${actorOrgNummer}`,
+        details: { reason: 'invalid_collection' },
+      });
       return NextResponse.json(
         { error: 'Ongeldige collectie naam.' },
         { status: 400 }
@@ -156,6 +172,15 @@ export async function DELETE(
     // Check if document exists
     const doc = await docRef.get();
     if (!doc.exists) {
+      logMutationAudit({
+        action: 'admin_delete_document',
+        orgNummer: actorOrgNummer,
+        resourceType: collection,
+        resourceId: docId,
+        success: false,
+        actor: `super_admin_org_${actorOrgNummer}`,
+        details: { reason: 'not_found' },
+      });
       return NextResponse.json(
         { error: 'Document niet gevonden.' },
         { status: 404 }
@@ -164,12 +189,29 @@ export async function DELETE(
 
     // Delete document
     await docRef.delete();
+    logMutationAudit({
+      action: 'admin_delete_document',
+      orgNummer: actorOrgNummer,
+      resourceType: collection,
+      resourceId: docId,
+      success: true,
+      actor: `super_admin_org_${actorOrgNummer}`,
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Document succesvol verwijderd.',
     });
   } catch (error) {
+    logMutationAudit({
+      action: 'admin_delete_document',
+      orgNummer: actorOrgNummer,
+      resourceType: collectionName,
+      resourceId,
+      success: false,
+      actor: `super_admin_org_${actorOrgNummer}`,
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
     console.error('[ADMIN] Error deleting document:', error);
     return NextResponse.json(
       { error: 'Fout bij verwijderen document.' },
