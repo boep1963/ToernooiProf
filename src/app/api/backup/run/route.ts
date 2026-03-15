@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createBackup } from '@/lib/backup';
+import { backupErrorToStatus, createBackup } from '@/lib/backup';
 import { validateSuperAdmin } from '@/lib/admin';
 
 /**
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
           error: result.error,
           backupName: result.backupName,
         },
-        { status: 500 }
+        { status: backupErrorToStatus(result.errorCode) }
       );
     }
   } catch (error) {

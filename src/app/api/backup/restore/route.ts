@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { restoreBackup, createBackup } from '@/lib/backup';
+import { backupErrorToStatus, restoreBackup, createBackup } from '@/lib/backup';
 import { validateSuperAdmin } from '@/lib/admin';
 
 /**
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           error: `Pre-restore backup failed: ${preRestoreResult.error}`,
           phase: 'pre-restore-backup',
         },
-        { status: 500 }
+        { status: backupErrorToStatus(preRestoreResult.errorCode) }
       );
     }
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           preRestoreBackup: preRestoreResult.backupName,
           phase: 'restore',
         },
-        { status: 500 }
+        { status: backupErrorToStatus(restoreResult.errorCode) }
       );
     }
   } catch (error) {

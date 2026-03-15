@@ -25,6 +25,7 @@ export default function BackupsPage() {
   const { isSuperAdmin } = useSuperAdmin();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creatingBackup, setCreatingBackup] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Restore dialog state
@@ -59,6 +60,30 @@ export default function BackupsPage() {
       setError(err instanceof Error ? err.message : 'Failed to load backups');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCreateBackup() {
+    try {
+      setCreatingBackup(true);
+      setError(null);
+
+      const response = await fetch('/api/backup/run', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || `Backup starten mislukt (${response.status})`);
+      }
+
+      await fetchBackups();
+      alert(`Backup succesvol aangemaakt:\n${result.backupName}`);
+    } catch (err) {
+      console.error('Failed to create backup:', err);
+      setError(err instanceof Error ? err.message : 'Handmatige backup starten mislukt');
+    } finally {
+      setCreatingBackup(false);
     }
   }
 
@@ -174,12 +199,21 @@ export default function BackupsPage() {
             Bekijk en herstel backups van uw Firestore data
           </p>
         </div>
-        <button
-          onClick={() => router.back()}
-          className="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-        >
-          Terug
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCreateBackup}
+            disabled={creatingBackup || restoring}
+            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+          >
+            {creatingBackup ? 'Backup wordt gemaakt...' : 'Maak handmatige backup'}
+          </button>
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            Terug
+          </button>
+        </div>
       </div>
 
       {loading && (

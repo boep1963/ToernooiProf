@@ -27,29 +27,77 @@ export interface BackupListItem {
   metadata?: BackupMetadata;
 }
 
+export type BackupErrorCode = 'CONFIG' | 'NOT_FOUND' | 'PERMISSION' | 'UNKNOWN';
+
+function classifyBackupError(error: unknown): { message: string; code: BackupErrorCode } {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  const status = Number((error as { code?: number | string } | null | undefined)?.code);
+
+  if (message.includes('FIREBASE_SERVICE_ACCOUNT_KEY')) {
+    return { message, code: 'CONFIG' };
+  }
+  if (status === 404 || /not found/i.test(message)) {
+    return { message, code: 'NOT_FOUND' };
+  }
+  if (status === 401 || status === 403 || /permission|forbidden|unauthorized|denied/i.test(message)) {
+    return { message, code: 'PERMISSION' };
+  }
+  return { message, code: 'UNKNOWN' };
+}
+
+export function backupErrorToStatus(code?: BackupErrorCode): number {
+  if (code === 'CONFIG') return 500;
+  if (code === 'NOT_FOUND') return 404;
+  if (code === 'PERMISSION') return 403;
+  return 500;
+}
+
 /**
  * Initialize Cloud Storage client using the same credentials as Firebase Admin
  */
 function getStorageClient(): Storage {
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
   if (!serviceAccountKey) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
+    // Fallback naar ADC (Cloud Run / GCP service account / local gcloud auth)
+    return new Storage();
   }
 
-  const credentials = JSON.parse(serviceAccountKey);
-
-  return new Storage({
-    projectId: credentials.project_id,
-    credentials: credentials,
-  });
+  try {
+    const credentials = JSON.parse(serviceAccountKey);
+    return new Storage({
+      projectId: credentials.project_id,
+      credentials,
+    });
+  } catch (error) {
+    console.warn('[Backup] Invalid FIREBASE_SERVICE_ACCOUNT_KEY, falling back to default credentials:', error);
+    return new Storage();
+  }
 }
 
 /**
  * Get the backup bucket name from environment or use default
  */
 function getBucketName(): string {
-  return process.env.BACKUP_BUCKET_NAME || 'backuptoernooiprof';
+  if (process.env.BACKUP_BUCKET_NAME) {
+    return process.env.BACKUP_BUCKET_NAME;
+  }
+  if (process.env.FIREBASE_STORAGE_BUCKET) {
+    return process.env.FIREBASE_STORAGE_BUCKET;
+  }
+  if (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+    return process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  }
+  if (process.env.FIREBASE_CONFIG) {
+    try {
+      const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG) as { storageBucket?: string };
+      if (firebaseConfig.storageBucket) {
+        return firebaseConfig.storageBucket;
+      }
+    } catch {
+      // Ignore invalid FIREBASE_CONFIG and use final fallback.
+    }
+  }
+  return 'backuptoernooiprof';
 }
 
 /**
@@ -78,6 +126,7 @@ export async function createBackup(): Promise<{
   backupName: string;
   metadata: BackupMetadata;
   error?: string;
+  errorCode?: BackupErrorCode;
 }> {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
@@ -165,6 +214,7 @@ export async function createBackup(): Promise<{
     };
   } catch (error) {
     console.error('[Backup] Failed:', error);
+    const classified = classifyBackupError(error);
     return {
       success: false,
       backupName,
@@ -174,7 +224,8 @@ export async function createBackup(): Promise<{
         totalDocuments: 0,
         durationMs: Date.now() - startTime,
       },
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: classified.message,
+      errorCode: classified.code,
     };
   }
 }
@@ -274,6 +325,12 @@ export async function listBackups(): Promise<BackupListItem[]> {
       b.timestamp.localeCompare(a.timestamp)
     );
   } catch (error) {
+    // Als bucket niet bestaat of nog leeg/onbereikbaar is, toon liever lege lijst dan 500.
+    const maybeCode = Number((error as { code?: number | string })?.code);
+    if (maybeCode === 404) {
+      console.warn('[Backup] Backup bucket not found, returning empty list.');
+      return [];
+    }
     console.error('[Backup] Failed to list backups:', error);
     throw error;
   }
@@ -287,6 +344,7 @@ export async function restoreBackup(backupName: string): Promise<{
   collectionsRestored: number;
   documentsRestored: number;
   error?: string;
+  errorCode?: BackupErrorCode;
 }> {
   console.log(`[Restore] Starting restore from: ${backupName}`);
 
@@ -301,6 +359,16 @@ export async function restoreBackup(backupName: string): Promise<{
     const jsonFiles = files.filter(f =>
       f.name.endsWith('.json') && !f.name.endsWith('/_metadata.json')
     );
+
+    if (jsonFiles.length === 0) {
+      return {
+        success: false,
+        collectionsRestored: 0,
+        documentsRestored: 0,
+        error: `Backup niet gevonden of leeg: ${backupName}`,
+        errorCode: 'NOT_FOUND',
+      };
+    }
 
     console.log(`[Restore] Found ${jsonFiles.length} collection files to restore`);
 
@@ -368,11 +436,13 @@ export async function restoreBackup(backupName: string): Promise<{
     };
   } catch (error) {
     console.error('[Restore] Failed:', error);
+    const classified = classifyBackupError(error);
     return {
       success: false,
       collectionsRestored: 0,
       documentsRestored: 0,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: classified.message,
+      errorCode: classified.code,
     };
   }
 }
