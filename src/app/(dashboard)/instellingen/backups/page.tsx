@@ -20,12 +20,26 @@ interface Backup {
   metadata?: BackupMetadata;
 }
 
+interface BackupDiagnostics {
+  bucketName: string;
+  keepCount: number;
+  authMode: 'service-account' | 'application-default';
+  hasServiceAccountKey: boolean;
+  serviceAccountKeyValidJson: boolean;
+  bucketExists: boolean;
+  canList: boolean;
+  listErrorCode?: number | string;
+  listErrorMessage?: string;
+}
+
 export default function BackupsPage() {
   const router = useRouter();
   const { isSuperAdmin } = useSuperAdmin();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingBackup, setCreatingBackup] = useState(false);
+  const [loadingDiagnostics, setLoadingDiagnostics] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<BackupDiagnostics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Restore dialog state
@@ -84,6 +98,25 @@ export default function BackupsPage() {
       setError(err instanceof Error ? err.message : 'Handmatige backup starten mislukt');
     } finally {
       setCreatingBackup(false);
+    }
+  }
+
+  async function handleDiagnostics() {
+    try {
+      setLoadingDiagnostics(true);
+      setError(null);
+
+      const response = await fetch('/api/backup/debug');
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || `Diagnose mislukt (${response.status})`);
+      }
+      setDiagnostics(result.diagnostics ?? null);
+    } catch (err) {
+      console.error('Failed to load backup diagnostics:', err);
+      setError(err instanceof Error ? err.message : 'Storage-diagnose laden mislukt');
+    } finally {
+      setLoadingDiagnostics(false);
     }
   }
 
@@ -201,6 +234,13 @@ export default function BackupsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={handleDiagnostics}
+            disabled={loadingDiagnostics || creatingBackup || restoring}
+            className="px-4 py-2 text-sm bg-violet-600 hover:bg-violet-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+          >
+            {loadingDiagnostics ? 'Diagnose laden...' : 'Diagnose storage'}
+          </button>
+          <button
             onClick={handleCreateBackup}
             disabled={creatingBackup || restoring}
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
@@ -225,6 +265,29 @@ export default function BackupsPage() {
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-900 dark:text-red-200">Fout: {error}</p>
+        </div>
+      )}
+
+      {diagnostics && (
+        <div className="mt-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-4">
+          <h2 className="text-sm font-semibold text-violet-900 dark:text-violet-200 mb-2">
+            Storage diagnose
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <p className="text-violet-900 dark:text-violet-200">Bucket: <span className="font-mono">{diagnostics.bucketName}</span></p>
+            <p className="text-violet-900 dark:text-violet-200">Retentie: {diagnostics.keepCount}</p>
+            <p className="text-violet-900 dark:text-violet-200">Auth mode: {diagnostics.authMode}</p>
+            <p className="text-violet-900 dark:text-violet-200">Service key aanwezig: {diagnostics.hasServiceAccountKey ? 'ja' : 'nee'}</p>
+            <p className="text-violet-900 dark:text-violet-200">Service key geldig JSON: {diagnostics.serviceAccountKeyValidJson ? 'ja' : 'nee'}</p>
+            <p className="text-violet-900 dark:text-violet-200">Bucket bestaat: {diagnostics.bucketExists ? 'ja' : 'nee'}</p>
+            <p className="text-violet-900 dark:text-violet-200">Kan lijst ophalen: {diagnostics.canList ? 'ja' : 'nee'}</p>
+            <p className="text-violet-900 dark:text-violet-200">Error code: {diagnostics.listErrorCode ?? '-'}</p>
+          </div>
+          {diagnostics.listErrorMessage && (
+            <p className="mt-2 text-xs text-violet-800 dark:text-violet-300 break-words">
+              {diagnostics.listErrorMessage}
+            </p>
+          )}
         </div>
       )}
 

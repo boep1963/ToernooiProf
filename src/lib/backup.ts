@@ -28,6 +28,19 @@ export interface BackupListItem {
 }
 
 export type BackupErrorCode = 'CONFIG' | 'NOT_FOUND' | 'PERMISSION' | 'UNKNOWN';
+export type BackupAuthMode = 'service-account' | 'application-default';
+
+export interface BackupAccessDiagnostics {
+  bucketName: string;
+  keepCount: number;
+  authMode: BackupAuthMode;
+  hasServiceAccountKey: boolean;
+  serviceAccountKeyValidJson: boolean;
+  bucketExists: boolean;
+  canList: boolean;
+  listErrorCode?: number | string;
+  listErrorMessage?: string;
+}
 
 function classifyBackupError(error: unknown): { message: string; code: BackupErrorCode } {
   const message = error instanceof Error ? error.message : 'Unknown error';
@@ -125,6 +138,67 @@ async function getCollectionsToBackup(): Promise<string[]> {
     'poules',
     'uitslagen',
   ];
+}
+
+export async function diagnoseBackupAccess(): Promise<BackupAccessDiagnostics> {
+  const rawServiceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const hasServiceAccountKey = Boolean(rawServiceAccountKey);
+  let serviceAccountKeyValidJson = false;
+  let authMode: BackupAuthMode = 'application-default';
+  let storage: Storage;
+
+  if (!rawServiceAccountKey) {
+    storage = new Storage();
+  } else {
+    try {
+      const credentials = JSON.parse(rawServiceAccountKey);
+      serviceAccountKeyValidJson = true;
+      authMode = 'service-account';
+      storage = new Storage({
+        projectId: credentials.project_id,
+        credentials,
+      });
+    } catch {
+      storage = new Storage();
+    }
+  }
+
+  const bucketName = getBucketName();
+  const bucket = storage.bucket(bucketName);
+  let bucketExists = false;
+  let canList = false;
+  let listErrorCode: number | string | undefined;
+  let listErrorMessage: string | undefined;
+
+  try {
+    const [exists] = await bucket.exists();
+    bucketExists = Boolean(exists);
+  } catch (error) {
+    const err = error as { code?: number | string; message?: string };
+    listErrorCode = err.code;
+    listErrorMessage = err.message;
+  }
+
+  try {
+    await bucket.getFiles({ prefix: 'backup-', maxResults: 1 });
+    canList = true;
+  } catch (error) {
+    const err = error as { code?: number | string; message?: string };
+    listErrorCode = err.code;
+    listErrorMessage = err.message;
+  }
+
+  return {
+    bucketName,
+    keepCount: getBackupKeepCount(),
+    authMode,
+    hasServiceAccountKey,
+    serviceAccountKeyValidJson,
+    bucketExists,
+    canList,
+    listErrorCode,
+    listErrorMessage,
+  };
 }
 
 /**
@@ -243,7 +317,7 @@ export async function createBackup(): Promise<{
 /**
  * Clean up old backups, keeping only the last 5
  */
-async function cleanupOldBackups(bucket: any): Promise<void> {
+async function cleanupOldBackups(bucket: any, maxBackups: number = 5): Promise<void> {
   try {
     console.log('[Backup] Checking for old backups to clean up...');
 
@@ -263,9 +337,9 @@ async function cleanupOldBackups(bucket: any): Promise<void> {
 
     console.log(`[Backup] Found ${backups.length} existing backups`);
 
-    // If we have more than 5 backups, delete the oldest ones
-    if (backups.length > 5) {
-      const backupsToDelete = backups.slice(5); // Keep first 5, delete the rest
+    // If we have more than maxBackups backups, delete the oldest ones
+    if (backups.length > maxBackups) {
+      const backupsToDelete = backups.slice(maxBackups); // Keep newest maxBackups, delete the rest
 
       console.log(`[Backup] Deleting ${backupsToDelete.length} old backups`);
 
@@ -281,7 +355,7 @@ async function cleanupOldBackups(bucket: any): Promise<void> {
 
       console.log(`[Backup] Cleanup complete - ${backupsToDelete.length} old backups removed`);
     } else {
-      console.log('[Backup] No cleanup needed - less than 6 backups exist');
+      console.log(`[Backup] No cleanup needed - ${backups.length} backups, keepCount=${maxBackups}`);
     }
   } catch (error) {
     console.error('[Backup] Cleanup failed:', error);
