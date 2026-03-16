@@ -66,10 +66,23 @@ export async function POST(request: NextRequest) {
     const orgData = orgDoc.data();
 
     // Update last login date
+    const timestamp = new Date().toISOString();
     console.log('[AUTH] Updating login date in database...');
     await orgDoc.ref.update({
-      date_inlog: new Date().toISOString(),
+      date_inlog: timestamp,
     });
+
+    // Log login for dashboard (last 10 logins). In Firestore: ToernooiProf/data/login_log
+    try {
+      await db.collection('login_log').add({
+        org_nummer: orgData?.org_nummer,
+        org_naam: orgData?.org_naam ?? '',
+        timestamp,
+      });
+      if (db.isFirestore) console.log('[AUTH] login_log written for org', orgData?.org_nummer);
+    } catch (err) {
+      console.error('[AUTH] login_log write failed:', err instanceof Error ? err.message : err);
+    }
 
     // Create session response with org data from the document we looked up (same org as org_code)
     const response = NextResponse.json({
