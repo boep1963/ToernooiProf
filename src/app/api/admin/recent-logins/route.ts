@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { validateSuperAdmin } from '@/lib/admin';
 
 const LIMIT = 10;
+const FETCH_LIMIT = 200;
 
 export async function GET(request: NextRequest) {
   const auth = await validateSuperAdmin(request);
@@ -11,17 +12,26 @@ export async function GET(request: NextRequest) {
   try {
     const snapshot = await db.collection('login_log')
       .orderBy('timestamp', 'desc')
-      .limit(LIMIT)
+      .limit(FETCH_LIMIT)
       .get();
 
-    const logins = snapshot.docs.map((doc) => {
+    const allLogins = snapshot.docs.map((doc) => {
       const d = doc.data();
       return {
-        org_nummer: d?.org_nummer ?? 0,
+        org_nummer: Number(d?.org_nummer ?? 0),
         org_naam: (d?.org_naam ?? '') as string,
         timestamp: (d?.timestamp ?? '') as string,
       };
     });
+
+    // Keep only the newest login per organization.
+    const seen = new Set<number>();
+    const logins = allLogins.filter((login) => {
+      if (!Number.isFinite(login.org_nummer) || login.org_nummer <= 0) return false;
+      if (seen.has(login.org_nummer)) return false;
+      seen.add(login.org_nummer);
+      return true;
+    }).slice(0, LIMIT);
 
     return NextResponse.json({ logins });
   } catch (error) {
