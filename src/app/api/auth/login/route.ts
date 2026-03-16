@@ -91,6 +91,14 @@ export async function POST(request: NextRequest) {
       date_inlog: new Date().toISOString(),
     });
 
+    // Log login for dashboard (last 10 logins, superadmin only)
+    const timestamp = new Date().toISOString();
+    void db.collection('login_log').add({
+      org_nummer: orgData?.org_nummer,
+      org_naam: orgData?.org_naam ?? '',
+      timestamp,
+    }).catch(() => {});
+
     const response = NextResponse.json({
       success: true,
       orgNummer: orgData?.org_nummer,

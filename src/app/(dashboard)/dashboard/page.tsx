@@ -71,6 +71,8 @@ export default function DashboardPage() {
   const [orphanError, setOrphanError] = useState<string | null>(null);
   const [orphanScanResult, setOrphanScanResult] = useState<OrphanScanResult | null>(null);
   const [orphanDeleteResult, setOrphanDeleteResult] = useState<OrphanDeleteResult | null>(null);
+  const [recentLogins, setRecentLogins] = useState<Array<{ org_nummer: number; org_naam: string; timestamp: string }>>([]);
+  const [recentLoginsLoading, setRecentLoginsLoading] = useState(false);
 
   useEffect(() => {
     if (!orgNummer) {
@@ -109,6 +111,28 @@ export default function DashboardPage() {
 
     fetchStats();
   }, [orgNummer]);
+
+  // Fetch last 10 logins (superadmin only)
+  useEffect(() => {
+    if (showAdminOrgSearch !== true) return;
+    let cancelled = false;
+    setRecentLoginsLoading(true);
+    apiFetch('/api/admin/recent-logins', { credentials: 'include' })
+      .then((res) => res.ok ? res.json() : { logins: [] })
+      .then((data) => {
+        if (!cancelled) setRecentLogins(data.logins ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setRecentLogins([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRecentLoginsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [showAdminOrgSearch]);
+
+  // Zet op true om de kaart "Orphaned toernooi-documenten" weer te tonen op het dashboard.
+  const SHOW_ORPHAN_CARD = false;
 
   const competitionCount = competitions.length;
   const lastOpenedCompNr = orgNummer != null ? getLastOpenedTournament(orgNummer) : null;
@@ -305,6 +329,41 @@ export default function DashboardPage() {
       </div>
 
       {showAdminOrgSearch === true && (
+        <>
+        <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            Laatste 10 logins
+          </h2>
+          {recentLoginsLoading ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Laden...</p>
+          ) : recentLogins.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Nog geen logins geregistreerd.</p>
+          ) : (
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-700/50">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Org</th>
+                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Naam</th>
+                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Datum en tijd</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {recentLogins.map((login, i) => (
+                    <tr key={`${login.timestamp}-${i}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                      <td className="px-4 py-2 text-slate-900 dark:text-white tabular-nums">{login.org_nummer}</td>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{login.org_naam || '–'}</td>
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        {login.timestamp ? new Date(login.timestamp).toLocaleString('nl-NL') : '–'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Organisatie opzoeken (beheerder)
@@ -394,8 +453,9 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {SHOW_ORPHAN_CARD && (
           <div className="mt-6 border border-violet-200 dark:border-violet-800 rounded-lg p-4 bg-violet-50 dark:bg-violet-900/20">
-            <h3 className="font-semibold text-violet-900 dark:text-violet-200 mb-3">
+            <h3 className="font-semibold text-violet-900 dark:text-violet-200 mb-1">
               Orphaned toernooi-documenten (superadmin)
             </h3>
             <form onSubmit={handleOrphanScan} className="flex flex-wrap gap-2 items-center mb-3">
@@ -470,7 +530,9 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+          )}
         </div>
+        </>
       )}
     </div>
   );
