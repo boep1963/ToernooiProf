@@ -91,13 +91,17 @@ export async function POST(request: NextRequest) {
       date_inlog: new Date().toISOString(),
     });
 
-    // Log login for dashboard (last 10 logins, superadmin only)
+    // Log login for dashboard (last 10 logins). In Firestore: ToernooiProf/data/login_log
     const timestamp = new Date().toISOString();
     void db.collection('login_log').add({
       org_nummer: orgData?.org_nummer,
       org_naam: orgData?.org_naam ?? '',
       timestamp,
-    }).catch(() => {});
+    }).then(() => {
+      if (db.isFirestore) console.log('[AUTH] login_log written for org', orgData?.org_nummer);
+    }).catch((err) => {
+      console.error('[AUTH] login_log write failed:', err instanceof Error ? err.message : err);
+    });
 
     const response = NextResponse.json({
       success: true,
