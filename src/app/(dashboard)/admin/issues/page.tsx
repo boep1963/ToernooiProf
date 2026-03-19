@@ -77,7 +77,7 @@ export default function AdminIssuesPage() {
   const [printType, setPrintType] = useState<'bug' | 'feature' | 'both'>('both');
   const [printFilterResult, setPrintFilterResult] = useState<AdminIssue[] | null>(null);
 
-  const [listStatusFilter, setListStatusFilter] = useState<IssueStatus | ''>('');
+  const [listStatusFilter, setListStatusFilter] = useState<IssueStatus | ''>('not_started');
 
   const filteredIssues = listStatusFilter
     ? issues.filter((i) => i.status === listStatusFilter)
