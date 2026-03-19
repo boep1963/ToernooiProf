@@ -53,6 +53,7 @@ interface OrphanDeleteResult {
 }
 
 export default function DashboardPage() {
+  const INITIAL_LOGIN_LIMIT = 10;
   const { organization, orgNummer } = useAuth();
   const [showAdminOrgSearch, setShowAdminOrgSearch] = useState<boolean | null>(null);
 
@@ -73,6 +74,7 @@ export default function DashboardPage() {
   const [orphanDeleteResult, setOrphanDeleteResult] = useState<OrphanDeleteResult | null>(null);
   const [recentLogins, setRecentLogins] = useState<Array<{ org_nummer: number; org_naam: string; timestamp: string }>>([]);
   const [recentLoginsLoading, setRecentLoginsLoading] = useState(false);
+  const [showAllRecentLogins, setShowAllRecentLogins] = useState(false);
 
   useEffect(() => {
     if (!orgNummer) {
@@ -120,10 +122,16 @@ export default function DashboardPage() {
     apiFetch('/api/admin/recent-logins', { credentials: 'include' })
       .then((res) => res.ok ? res.json() : { logins: [] })
       .then((data) => {
-        if (!cancelled) setRecentLogins(data.logins ?? []);
+        if (!cancelled) {
+          setRecentLogins(data.logins ?? []);
+          setShowAllRecentLogins(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setRecentLogins([]);
+        if (!cancelled) {
+          setRecentLogins([]);
+          setShowAllRecentLogins(false);
+        }
       })
       .finally(() => {
         if (!cancelled) setRecentLoginsLoading(false);
@@ -349,7 +357,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {recentLogins.map((login, i) => (
+                  {(showAllRecentLogins ? recentLogins : recentLogins.slice(0, INITIAL_LOGIN_LIMIT)).map((login, i) => (
                     <tr key={`${login.timestamp}-${i}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
                       <td className="px-4 py-2 text-slate-900 dark:text-white tabular-nums">{login.org_nummer}</td>
                       <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{login.org_naam || '–'}</td>
@@ -360,6 +368,17 @@ export default function DashboardPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {!recentLoginsLoading && !showAllRecentLogins && recentLogins.length > INITIAL_LOGIN_LIMIT && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setShowAllRecentLogins(true)}
+                className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Toon meer ({recentLogins.length - INITIAL_LOGIN_LIMIT} extra)
+              </button>
             </div>
           )}
         </div>

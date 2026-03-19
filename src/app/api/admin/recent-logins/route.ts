@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { validateSuperAdmin } from '@/lib/admin';
 
-const LIMIT = 10;
 const FETCH_LIMIT = 200;
 
 export async function GET(request: NextRequest) {
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
       if (seen.has(login.org_nummer)) return false;
       seen.add(login.org_nummer);
       return true;
-    }).slice(0, LIMIT);
+    });
 
     return NextResponse.json({ logins });
   } catch (error) {

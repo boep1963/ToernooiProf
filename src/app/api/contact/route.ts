@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import {
+  addEmailToQueue,
+  buildDashboardContactEmailBody,
+  getNotificationToEmail,
+} from '@/lib/emailQueue';
 import { cookies } from 'next/headers';
 import { decodeSessionCookie, SESSION_COOKIE_NAME } from '@/lib/session';
 
@@ -61,11 +66,13 @@ export async function POST(request: NextRequest) {
     let orgEmail = '';
     let orgContactPersoon = '';
     let orgCode = '';
+    let orgName = auth.orgName;
     if (!orgSnapshot.empty) {
       const orgData = orgSnapshot.docs[0].data();
       orgEmail = (orgData?.org_wl_email as string) || '';
       orgContactPersoon = (orgData?.org_wl_naam as string) || '';
       orgCode = (orgData?.org_code as string) || '';
+      orgName = (orgData?.org_naam as string) || auth.orgName;
     }
 
     const now = new Date().toISOString();
@@ -76,7 +83,7 @@ export async function POST(request: NextRequest) {
       onderwerp_label: ONDERWERP_LABELS[onderwerp] || onderwerp,
       bericht: bericht.trim(),
       org_nummer: auth.orgNummer,
-      org_naam: auth.orgName,
+      org_naam: orgName,
       org_contactpersoon: orgContactPersoon,
       org_email: orgEmail,
       org_code: orgCode,
@@ -86,14 +93,32 @@ export async function POST(request: NextRequest) {
     // Store in Firestore
     const docRef = await db.collection('contact_messages').add(contactData);
 
-    // Log email to console (in production this would send an actual email)
-    console.log(`[CONTACT] New contact message from org ${auth.orgNummer} (${auth.orgName})`);
-    console.log(`[CONTACT] Programma: ${programma}`);
-    console.log(`[CONTACT] Onderwerp: ${ONDERWERP_LABELS[onderwerp] || onderwerp}`);
-    console.log(`[CONTACT] Contactpersoon: ${orgContactPersoon}`);
-    console.log(`[CONTACT] Email: ${orgEmail}`);
-    console.log(`[CONTACT] Inlogcode: ${orgCode}`);
-    console.log(`[CONTACT] Message: ${bericht.trim()}`);
+    const onderwerpLabel = ONDERWERP_LABELS[onderwerp] || onderwerp;
+
+    try {
+      await addEmailToQueue({
+        to: getNotificationToEmail(),
+        subject: `[ToernooiProf] Contact: ${onderwerpLabel} (${orgName || `org ${auth.orgNummer}`})`,
+        body: buildDashboardContactEmailBody({
+          appLabel: 'ToernooiProf',
+          programmaLabel: programma,
+          onderwerpLabel,
+          bericht: bericht.trim(),
+          contactMessageId: docRef.id,
+          org_naam: orgName,
+          org_nummer: auth.orgNummer,
+          org_code: orgCode,
+          org_contactpersoon: orgContactPersoon,
+          org_email: orgEmail,
+        }),
+        type: 'notification',
+        org_nummer: auth.orgNummer,
+      });
+    } catch (queueErr) {
+      console.error('[CONTACT] Kon notificatie niet in email_queue zetten:', queueErr);
+    }
+
+    console.log(`[CONTACT] New contact message from org ${auth.orgNummer} (${orgName})`);
     console.log(`[CONTACT] Stored as document: ${docRef.id}`);
 
     return NextResponse.json({

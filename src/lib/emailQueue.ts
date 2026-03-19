@@ -37,6 +37,48 @@ export interface EmailQueueDocument {
  * @param email - Email queue document to add
  * @returns Promise with the created document ID
  */
+/**
+ * Platte-tekst body voor notificatie-e-mail bij contactformulier (dashboard).
+ * Bevat een duidelijk afgebakend blok met organisatiegegevens voor de ontvanger.
+ */
+export function buildDashboardContactEmailBody(params: {
+  appLabel: string;
+  programmaLabel: string;
+  onderwerpLabel: string;
+  bericht: string;
+  contactMessageId: string;
+  org_naam: string;
+  org_nummer: number;
+  org_code: string;
+  org_contactpersoon: string;
+  org_email: string;
+}): string {
+  const card = [
+    '┌── Gegevens ingelogde gebruiker ────────────────',
+    `│ Naam organisatie: ${params.org_naam || '–'}`,
+    `│ Organisatiecode: ${params.org_nummer}`,
+    `│ Inlogcode:       ${params.org_code || '–'}`,
+    '└────────────────────────────────────────────────',
+  ].join('\n');
+
+  return `
+Nieuw contactbericht via ${params.appLabel}
+
+Contactbericht-ID: ${params.contactMessageId}
+
+${card}
+
+Contactpersoon: ${params.org_contactpersoon || '–'}
+Antwoord e-mail: ${params.org_email || '–'}
+
+Programma: ${params.programmaLabel}
+Onderwerp: ${params.onderwerpLabel}
+
+Bericht:
+${params.bericht}
+  `.trim();
+}
+
 export async function addEmailToQueue(email: Omit<EmailQueueDocument, 'status' | 'created_at'>): Promise<string> {
   const emailDoc: EmailQueueDocument = {
     ...email,
