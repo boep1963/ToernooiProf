@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import logo from '../../../../public/ToernooiProf.png';
@@ -22,17 +22,33 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showLoginCode, setShowLoginCode] = useState(false);
+  // Standaard tekst: script-focus + mobiel toetsenbord werkt niet betrouwbaar op type=password zonder tap.
+  const [showLoginCode, setShowLoginCode] = useState(true);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const showCodeLogin = loginMethod === 'code' || !SHOW_EMAIL_LOGIN;
-  useEffect(() => {
-    if (showCodeLogin) {
-      loginCodeRef.current?.focus();
-    }
+  useLayoutEffect(() => {
+    if (!showCodeLogin) return;
+    const focusCode = () => {
+      const el = loginCodeRef.current ?? document.getElementById('loginCode');
+      el?.focus({ preventScroll: true });
+    };
+    focusCode();
+    let innerRaf = 0;
+    const outerRaf = requestAnimationFrame(() => {
+      innerRaf = requestAnimationFrame(focusCode);
+    });
+    const t = window.setTimeout(focusCode, 0);
+    const t2 = window.setTimeout(focusCode, 50);
+    return () => {
+      cancelAnimationFrame(outerRaf);
+      cancelAnimationFrame(innerRaf);
+      window.clearTimeout(t);
+      window.clearTimeout(t2);
+    };
   }, [showCodeLogin]);
 
   // Niet automatisch naar dashboard redirecten bij geldige sessie: dat veroorzaakt
@@ -230,6 +246,7 @@ export default function LoginPage() {
                     required
                     aria-required="true"
                     autoComplete="one-time-code"
+                    autoFocus={showCodeLogin}
                     className="w-full px-4 py-2.5 pr-12 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-colors"
                   />
                   <button
