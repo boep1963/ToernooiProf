@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import logo from '../../../../public/ToernooiProf.png';
@@ -16,6 +16,7 @@ const SHOW_TURNSTILE_AFTER_FAILURES = 3;
 const SHOW_EMAIL_LOGIN = false; // Later mogelijk weer inschakelen
 
 export default function LoginPage() {
+  const loginCodeRef = useRef<HTMLInputElement>(null);
   const [loginMethod, setLoginMethod] = useState<'code' | 'email'>('code');
   const [loginCode, setLoginCode] = useState('');
   const [email, setEmail] = useState('');
@@ -26,6 +27,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const showCodeLogin = loginMethod === 'code' || !SHOW_EMAIL_LOGIN;
+  useEffect(() => {
+    if (showCodeLogin) {
+      loginCodeRef.current?.focus();
+    }
+  }, [showCodeLogin]);
 
   // Niet automatisch naar dashboard redirecten bij geldige sessie: dat veroorzaakt
   // een loop (dashboard toont loading, sessiecheck 401 → inloggen → sessie ok → dashboard → …).
@@ -205,14 +213,15 @@ export default function LoginPage() {
             </div>
           )}
 
-          {(loginMethod === 'code' || !SHOW_EMAIL_LOGIN) ? (
+          {showCodeLogin ? (
             <form onSubmit={handleCodeLogin} className="space-y-4">
               <div>
-                <label htmlFor="loginCode"className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="loginCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Inlogcode
                 </label>
                 <div className="relative" suppressHydrationWarning>
                   <input
+                    ref={loginCodeRef}
                     id="loginCode"
                     type={showLoginCode ? 'text' : 'password'}
                     value={loginCode}
