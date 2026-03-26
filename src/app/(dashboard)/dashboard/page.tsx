@@ -75,6 +75,8 @@ export default function DashboardPage() {
   const [recentLogins, setRecentLogins] = useState<Array<{ org_nummer: number; org_naam: string; timestamp: string }>>([]);
   const [recentLoginsLoading, setRecentLoginsLoading] = useState(false);
   const [showAllRecentLogins, setShowAllRecentLogins] = useState(false);
+  const [recentLoginsExpanded, setRecentLoginsExpanded] = useState(false);
+  const [hasFetchedRecentLogins, setHasFetchedRecentLogins] = useState(false);
 
   useEffect(() => {
     if (!orgNummer) {
@@ -114,9 +116,9 @@ export default function DashboardPage() {
     fetchStats();
   }, [orgNummer]);
 
-  // Fetch last 10 logins (superadmin only)
+  // Fetch recent logins only when the accordion is expanded (superadmin only).
   useEffect(() => {
-    if (showAdminOrgSearch !== true) return;
+    if (showAdminOrgSearch !== true || !recentLoginsExpanded || hasFetchedRecentLogins) return;
     let cancelled = false;
     setRecentLoginsLoading(true);
     apiFetch('/api/admin/recent-logins', { credentials: 'include' })
@@ -125,19 +127,21 @@ export default function DashboardPage() {
         if (!cancelled) {
           setRecentLogins(data.logins ?? []);
           setShowAllRecentLogins(false);
+          setHasFetchedRecentLogins(true);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setRecentLogins([]);
           setShowAllRecentLogins(false);
+          setHasFetchedRecentLogins(true);
         }
       })
       .finally(() => {
         if (!cancelled) setRecentLoginsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [showAdminOrgSearch]);
+  }, [showAdminOrgSearch, recentLoginsExpanded, hasFetchedRecentLogins]);
 
   // Zet op true om de kaart "Orphaned toernooi-documenten" weer te tonen op het dashboard.
   const SHOW_ORPHAN_CARD = false;
@@ -340,51 +344,6 @@ export default function DashboardPage() {
         <>
         <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Laatste 10 logins
-          </h2>
-          {recentLoginsLoading ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Laden...</p>
-          ) : recentLogins.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Nog geen logins geregistreerd.</p>
-          ) : (
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-700/50">
-                  <tr>
-                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Org</th>
-                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Naam</th>
-                    <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Datum en tijd</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {(showAllRecentLogins ? recentLogins : recentLogins.slice(0, INITIAL_LOGIN_LIMIT)).map((login, i) => (
-                    <tr key={`${login.timestamp}-${i}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                      <td className="px-4 py-2 text-slate-900 dark:text-white tabular-nums">{login.org_nummer}</td>
-                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{login.org_naam || '–'}</td>
-                      <td className="px-4 py-2 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {login.timestamp ? new Date(login.timestamp).toLocaleString('nl-NL') : '–'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {!recentLoginsLoading && !showAllRecentLogins && recentLogins.length > INITIAL_LOGIN_LIMIT && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => setShowAllRecentLogins(true)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-              >
-                Toon meer ({recentLogins.length - INITIAL_LOGIN_LIMIT} extra)
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Organisatie opzoeken (beheerder)
           </h2>
           <form onSubmit={handleOrgSearch} className="flex flex-wrap items-center gap-3 mb-4">
@@ -549,6 +508,72 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+          )}
+        </div>
+
+        <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between gap-3 text-left"
+            onClick={() => setRecentLoginsExpanded((prev) => !prev)}
+            aria-expanded={recentLoginsExpanded}
+            aria-controls="recent-logins-content"
+          >
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Laatste logins
+            </h2>
+            <svg
+              className={`w-5 h-5 text-slate-500 dark:text-slate-400 transition-transform ${recentLoginsExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {recentLoginsExpanded && (
+            <div id="recent-logins-content" className="mt-4">
+              {recentLoginsLoading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Laden...</p>
+              ) : recentLogins.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Nog geen logins geregistreerd.</p>
+              ) : (
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-700/50">
+                      <tr>
+                        <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Org</th>
+                        <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Naam</th>
+                        <th className="text-left px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">Datum en tijd</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                      {(showAllRecentLogins ? recentLogins : recentLogins.slice(0, INITIAL_LOGIN_LIMIT)).map((login, i) => (
+                        <tr key={`${login.timestamp}-${i}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                          <td className="px-4 py-2 text-slate-900 dark:text-white tabular-nums">{login.org_nummer}</td>
+                          <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{login.org_naam || '–'}</td>
+                          <td className="px-4 py-2 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                            {login.timestamp ? new Date(login.timestamp).toLocaleString('nl-NL') : '–'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {!recentLoginsLoading && !showAllRecentLogins && recentLogins.length > INITIAL_LOGIN_LIMIT && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllRecentLogins(true)}
+                    className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    Toon meer ({recentLogins.length - INITIAL_LOGIN_LIMIT} extra)
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
         </>
